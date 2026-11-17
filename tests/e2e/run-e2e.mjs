@@ -45,13 +45,16 @@ async function run() {
     });
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
-    // 1. Direct Entry to Dashboard (Light Workspace default)
+    // 1. Direct Entry to Dashboard (Light Workspace default & empty state without Demo button)
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.waitForURL('**/dashboard');
     await page.getByText('Workspace Anda siap digunakan').waitFor({ state: 'visible' });
+    const demoBtnCount = await page.getByRole('button', { name: /Muat Proyek Contoh/i }).count();
+    assert(demoBtnCount === 0, 'Demo workspace button should be removed');
     const initialTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     assert(initialTheme === 'light', `Default theme should be light, got ${initialTheme}`);
-    results.push('Direct Entry: opens straight to /dashboard with Light Workspace default theme');
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_desktop_empty_light.png') });
+    results.push('Direct Entry: opens straight to /dashboard with Light Workspace default and clean empty state');
 
     // 2. Quick Add Task using custom Dropdown
     await page.getByRole('button', { name: /Quick Add Task/i }).click();
@@ -163,14 +166,19 @@ async function run() {
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_dashboard_monochrome.png') });
     results.push('Themes & Persistence: Light Workspace default -> Monochrome switch + reload persistence verified');
 
-    // 11. Mobile 375x812 Verification: Animated Drawer + Settings Tabs Alignment + Zero Overflow
+    // 11. Mobile 375x812 Verification: Solid Header, Dense Liquid Glass Nav, Settings Outlines, Analytics Tabs
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(`${baseUrl}/settings`, { waitUntil: 'networkidle' });
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_settings_tabs_mobile.png') });
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_settings_scrolled_monochrome.png') });
     const overflowSettings = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowSettings, 'Mobile Settings must not horizontally overflow 375px viewport');
 
     await page.getByRole('button', { name: /Tema 1: Light Workspace/i }).click();
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_settings_light_mobile.png') });
+
     await page.goto(`${baseUrl}/dashboard`, { waitUntil: 'networkidle' });
     const overflowDash = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowDash, 'Mobile Dashboard must not horizontally overflow 375px viewport');
@@ -190,7 +198,7 @@ async function run() {
     await dock.getByRole('link', { name: 'Analytics' }).click();
     await page.waitForURL('**/analytics');
     await page.waitForTimeout(200);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_mobile_analytics_light.png') });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_mobile_analytics_light.png') });
 
     await dock.getByRole('link', { name: 'Kanban Board' }).click();
     await page.waitForURL('**/board');

@@ -66,7 +66,7 @@ export function AnalyticsPage() {
         <div
           role="tablist"
           aria-label="Pilih granulasi tren"
-          className="inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1"
+          className="grid w-full grid-cols-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1 sm:inline-flex sm:w-auto"
         >
           {[
             { id: 'daily', label: 'Harian' },
@@ -79,7 +79,7 @@ export function AnalyticsPage() {
               role="tab"
               aria-selected={cadence === c.id}
               onClick={() => setCadence(c.id)}
-              className={`min-h-[36px] rounded-full px-4 text-xs font-semibold transition-colors ${
+              className={`min-h-[38px] rounded-full px-3 sm:px-4 text-center text-xs font-semibold transition-colors ${
                 cadence === c.id
                   ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)]'
                   : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'

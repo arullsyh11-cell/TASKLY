@@ -241,8 +241,8 @@ export function AppShell() {
           </div>
         </header>
 
-        {/* Mobile Top Bar with Liquid Glass & Safe-Area Support */}
-        <header className="liquid-glass sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between border-b px-4 pt-[env(safe-area-inset-top)] md:hidden">
+        {/* Mobile Top Bar Solid Surface & Safe-Area Support */}
+        <header className="sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)] px-4 pt-[env(safe-area-inset-top)] md:hidden">
           <div className="flex items-center gap-2.5">
             <button
               ref={menuBtnRef}

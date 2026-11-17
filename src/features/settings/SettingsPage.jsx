@@ -296,11 +296,11 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Segmented Navigation Tabs - Flush aligned grid on mobile, inline pill strip on desktop */}
+      {/* Segmented Navigation Tabs - Outlined grid on mobile, outlined inline pill strip on desktop */}
       <div
         role="tablist"
         aria-label="Kategori pengaturan"
-        className="grid w-full grid-cols-2 gap-1.5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 sm:inline-flex sm:w-auto sm:flex-nowrap sm:items-center sm:gap-1 sm:rounded-full sm:p-1"
+        className="grid w-full grid-cols-2 gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 sm:inline-flex sm:w-auto sm:flex-nowrap sm:items-center sm:gap-1.5 sm:rounded-full sm:p-1.5"
       >
         {TABS.map((t, index) => (
           <button
@@ -309,12 +309,12 @@ export function SettingsPage() {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`min-h-[40px] whitespace-nowrap rounded-[var(--radius-md)] px-3.5 text-center text-xs font-semibold transition-colors sm:rounded-full ${
+            className={`min-h-[40px] whitespace-nowrap rounded-[var(--radius-md)] border px-3.5 text-center text-xs font-semibold transition-colors sm:rounded-full ${
               index === TABS.length - 1 ? 'col-span-2 sm:col-span-1' : ''
             } ${
               tab === t.id
-                ? 'bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-xs'
-                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'
+                ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-xs'
+                : 'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             {t.label}

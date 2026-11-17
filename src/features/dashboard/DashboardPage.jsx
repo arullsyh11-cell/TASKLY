@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   AlertCircle,
@@ -17,7 +17,6 @@ import {
   Timer,
   Zap,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { repo } from '../../services/repositories/index.js';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { useUiStore } from '../../stores/useUiStore.js';
@@ -67,7 +66,6 @@ export function DashboardPage() {
   const openTaskDrawer = useUiStore((s) => s.openTaskDrawer);
   const selectTimerTask = useTimerStore((s) => s.selectTask);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [mobileQuery, setMobileQuery] = useState('');
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -79,15 +77,6 @@ export function DashboardPage() {
     queryKey: ['tasks', { mobileDashSearch: mobileQuery }],
     queryFn: () => repo.tasks.list({ search: mobileQuery }),
     enabled: mobileQuery.trim().length > 0,
-  });
-
-  const seedMutation = useMutation({
-    mutationFn: () => repo.settings.seedSampleWorkspace(),
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      toast.success('Proyek contoh dimuat ke workspace.');
-    },
-    onError: (err) => toast.error(err.message),
   });
 
   if (isLoading) {
@@ -264,7 +253,7 @@ export function DashboardPage() {
         <EmptyState
           icon={FolderPlus}
           title="Workspace Anda siap digunakan"
-          description="Belum ada tugas atau sprint yang tercatat. Buat tugas pertama Anda, susun sprint berbatas waktu, atau muat proyek contoh opsional untuk mengeksplorasi seluruh fitur."
+          description="Belum ada tugas atau sprint yang tercatat. Buat tugas pertama Anda atau susun sprint berbatas waktu untuk mulai mengatur alur kerja."
           action={
             <Button onClick={() => openQuickAdd()} className="rounded-full px-5">
               <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -272,15 +261,10 @@ export function DashboardPage() {
             </Button>
           }
           secondaryAction={
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => navigate('/sprints')} className="rounded-full">
-                <Zap className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Rencanakan Sprint</span>
-              </Button>
-              <Button variant="outline" isLoading={seedMutation.isPending} onClick={() => seedMutation.mutate()} className="rounded-full">
-                Muat Proyek Contoh (Demo)
-              </Button>
-            </div>
+            <Button variant="secondary" onClick={() => navigate('/sprints')} className="rounded-full px-5">
+              <Zap className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+              <span>Rencanakan Sprint</span>
+            </Button>
           }
         />
       ) : (

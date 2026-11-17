@@ -143,7 +143,7 @@ export function CalendarPage() {
           </h2>
         </div>
 
-        <div role="tablist" aria-label="Pilih tampilan kalender" className="flex gap-1.5">
+        <div role="tablist" aria-label="Pilih tampilan kalender" className="grid w-full grid-cols-3 gap-1.5 sm:flex sm:w-auto">
           {[
             { id: 'month', label: 'Bulanan' },
             { id: 'week', label: 'Mingguan' },
@@ -155,7 +155,7 @@ export function CalendarPage() {
               role="tab"
               aria-selected={view === opt.id}
               onClick={() => setView(opt.id)}
-              className={`min-h-[36px] rounded-[var(--radius-sm)] border px-3 text-xs font-semibold transition-colors ${
+              className={`min-h-[38px] sm:min-h-[36px] rounded-[var(--radius-sm)] border px-3 text-center text-xs font-semibold transition-colors ${
                 view === opt.id
                   ? 'border-[var(--color-primary)] bg-[var(--color-secondary)] text-[var(--color-text-primary)]'
                   : 'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)]'

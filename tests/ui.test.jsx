@@ -20,6 +20,7 @@ describe('TASKLY UI Components & States', () => {
     render(<App />);
     expect(await screen.findByText(/Workspace Anda siap digunakan/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Masuk ke Workspace/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Muat Proyek Contoh/i })).not.toBeInTheDocument();
   });
 
   it('renders Loading, Empty, and Error states with clear actions', () => {
