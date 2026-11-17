@@ -9,7 +9,30 @@
     border-color: var(--color-border);
   }
 
-  html,
+  html {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: clip;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html:fullscreen,
+  html:-webkit-full-screen {
+    height: 100%;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+  }
+
   body {
     margin: 0;
     padding: 0;
@@ -19,23 +42,12 @@
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-    overscroll-behavior-y: contain;
-    -webkit-tap-highlight-color: transparent;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
-  /* Eliminate 300ms mobile tap delay across interactive elements */
-  a,
-  button,
-  [role='button'],
-  [role='tab'],
-  [role='switch'],
-  summary,
-  input,
-  textarea {
-    touch-action: manipulation;
+  #root {
+    min-height: 100dvh;
   }
 
   /* Accessible interaction affordances (R-39) */

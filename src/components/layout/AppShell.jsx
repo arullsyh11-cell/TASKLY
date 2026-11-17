@@ -291,7 +291,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 px-4 py-5 pb-[calc(6.25rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-6 md:pb-8">
+        <main className="flex-1 min-w-0 px-4 py-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-6 md:pb-10">
           <div className="mx-auto max-w-[1360px]">
             <Outlet />
           </div>

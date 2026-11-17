@@ -279,6 +279,8 @@ export function Dropdown({
                       onMouseEnter={() => setActiveIndex(idx)}
                       onMouseDown={(e) => {
                         e.preventDefault();
+                      }}
+                      onClick={() => {
                         selectOption(opt);
                       }}
                       className={`flex min-h-[44px] sm:min-h-[38px] cursor-pointer items-center justify-between gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-xs transition-colors ${

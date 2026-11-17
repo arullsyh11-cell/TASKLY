@@ -148,7 +148,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`hidden md:flex flex-col shrink-0 overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-bg)] transition-[width] duration-[var(--duration-normal)] ease-[var(--ease-standard)] ${
+      className={`hidden md:sticky md:top-0 md:flex md:h-[100dvh] flex-col shrink-0 overflow-x-hidden overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-bg)] transition-[width] duration-[var(--duration-normal)] ease-[var(--ease-standard)] ${
         collapsed ? 'w-[72px]' : 'w-[248px]'
       }`}
     >

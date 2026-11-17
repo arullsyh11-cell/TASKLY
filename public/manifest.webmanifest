@@ -1,9 +1,10 @@
 {
+  "id": "/",
   "name": "TASKLY Workspace",
   "short_name": "TASKLY",
   "description": "Smart Productivity & Workflow Management Platform dengan Kanban Board, Sprint Management, dan Focus Mode.",
   "lang": "id",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen", "minimal-ui"],

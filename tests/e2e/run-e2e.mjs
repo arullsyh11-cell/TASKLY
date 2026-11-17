@@ -206,14 +206,19 @@ async function run() {
     const manifestRes = await page.evaluate(async () => {
       const m = await fetch('/manifest.webmanifest');
       const icon = await fetch('/icon-192.png');
+      const sw = await fetch('/sw.js');
       return {
         manifestOk: m.ok,
         manifest: await m.json(),
         iconOk: icon.ok,
+        swOk: sw.ok,
       };
     });
-    assert(manifestRes.manifestOk && manifestRes.manifest.display === 'standalone', 'PWA manifest must be standalone');
-    assert(manifestRes.iconOk, 'PWA icon-192.png must be served');
+    assert(
+      manifestRes.manifestOk && manifestRes.manifest.display === 'standalone' && manifestRes.manifest.start_url === '/',
+      'PWA manifest must be standalone with start_url /'
+    );
+    assert(manifestRes.iconOk && manifestRes.swOk, 'PWA icon-192.png and sw.js must be served');
 
     for (const route of ['/tasks', '/sprints', '/calendar', '/focus']) {
       await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle' });
@@ -232,6 +237,27 @@ async function run() {
     }
 
     results.push('Mobile 375px & PWA Fullscreen: manifest standalone, all 8 routes overflow-free, immersive Focus fullscreen verified');
+
+    // 13. Real Scroll Verification on Compact Mobile (375x667) & Desktop (1280x560)
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto(`${baseUrl}/dashboard`, { waitUntil: 'networkidle' });
+    const bodyOverflowY = await page.evaluate(() => getComputedStyle(document.body).overflowY);
+    assert(bodyOverflowY === 'visible', `body overflowY must be visible so scroll is never trapped, got ${bodyOverflowY}`);
+    await page.mouse.move(180, 300);
+    await page.mouse.wheel(0, 400);
+    await page.waitForTimeout(150);
+    const mobileScrollY = await page.evaluate(() => window.scrollY);
+    assert(mobileScrollY > 80, `Mobile page must scroll freely on wheel/touch, got scrollY=${mobileScrollY}`);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v6_mobile_dashboard_scrolled.png') });
+
+    await page.setViewportSize({ width: 1280, height: 560 });
+    await page.goto(`${baseUrl}/settings`, { waitUntil: 'networkidle' });
+    await page.mouse.move(640, 300);
+    await page.mouse.wheel(0, 350);
+    await page.waitForTimeout(150);
+    const desktopScrollY = await page.evaluate(() => window.scrollY);
+    assert(desktopScrollY > 80, `Desktop page must scroll freely on wheel, got scrollY=${desktopScrollY}`);
+    results.push(`Vertical Scroll Verified: mobile scrollY=${Math.round(mobileScrollY)}px, desktop scrollY=${Math.round(desktopScrollY)}px`);
 
     assert(consoleErrors.length === 0, `Console errors detected: ${consoleErrors.join('; ')}`);
     assert(pageErrors.length === 0, `Page errors detected: ${pageErrors.join('; ')}`);

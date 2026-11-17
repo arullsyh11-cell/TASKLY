@@ -88,7 +88,7 @@ describe('TASKLY UI Components & States', () => {
     const listbox = screen.getByRole('listbox');
     expect(listbox).toBeInTheDocument();
 
-    fireEvent.mouseDown(screen.getByRole('option', { name: 'High' }));
+    fireEvent.click(screen.getByRole('option', { name: 'High' }));
     expect(onChange).toHaveBeenCalledWith('high');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
