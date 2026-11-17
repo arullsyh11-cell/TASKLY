@@ -1,7 +1,7 @@
 import { forwardRef, useId } from 'react';
 
 const baseFieldClass =
-  'w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)] disabled:opacity-50';
+  'w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)] disabled:opacity-50';
 
 export const Input = forwardRef(function Input({ label, error, id, className = '', hint, ...props }, ref) {
   const autoId = useId();

@@ -25,6 +25,11 @@ export function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    const color = theme === 'monochrome' ? '#0b0b0b' : '#ffffff';
+    document.getElementById('taskly-theme-color')?.setAttribute('content', color);
+    document
+      .getElementById('taskly-apple-status')
+      ?.setAttribute('content', theme === 'monochrome' ? 'black-translucent' : 'default');
   }, [theme]);
 
   return (

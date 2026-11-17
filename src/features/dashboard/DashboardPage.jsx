@@ -198,7 +198,7 @@ export function DashboardPage() {
           value={mobileQuery}
           onChange={(e) => setMobileQuery(e.target.value)}
           placeholder="Cari tugas atau label..."
-          className="h-11 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] pl-11 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
+          className="h-11 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] pl-11 pr-4 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
         />
         {mobileQuery.trim().length > 0 && (
           <div className="mt-2 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] p-2">

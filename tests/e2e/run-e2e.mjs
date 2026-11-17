@@ -201,7 +201,37 @@ async function run() {
     await page.getByRole('button', { name: /Pindah Status/i }).first().click();
     await page.getByRole('dialog', { name: /Pindahkan Status Tugas/i }).waitFor({ state: 'visible' });
     await page.getByRole('button', { name: /^Done$/i }).click();
-    results.push('Mobile 375px: Floating Bottom Pill Dock, zero horizontal overflow, and Status Sheet verified');
+
+    // 12. PWA Manifest + Mobile 375px Sweep Across Remaining Routes & Immersive Focus Fullscreen
+    const manifestRes = await page.evaluate(async () => {
+      const m = await fetch('/manifest.webmanifest');
+      const icon = await fetch('/icon-192.png');
+      return {
+        manifestOk: m.ok,
+        manifest: await m.json(),
+        iconOk: icon.ok,
+      };
+    });
+    assert(manifestRes.manifestOk && manifestRes.manifest.display === 'standalone', 'PWA manifest must be standalone');
+    assert(manifestRes.iconOk, 'PWA icon-192.png must be served');
+
+    for (const route of ['/tasks', '/sprints', '/calendar', '/focus']) {
+      await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle' });
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      assert(!overflow, `Mobile route ${route} must not horizontally overflow 375px viewport`);
+      if (route === '/tasks') {
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v5_mobile_tasks.png') });
+      }
+      if (route === '/focus') {
+        await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).click();
+        await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).waitFor({ state: 'visible' });
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v5_mobile_focus_fullscreen.png') });
+        await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).click();
+        await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).waitFor({ state: 'visible' });
+      }
+    }
+
+    results.push('Mobile 375px & PWA Fullscreen: manifest standalone, all 8 routes overflow-free, immersive Focus fullscreen verified');
 
     assert(consoleErrors.length === 0, `Console errors detected: ${consoleErrors.join('; ')}`);
     assert(pageErrors.length === 0, `Page errors detected: ${pageErrors.join('; ')}`);

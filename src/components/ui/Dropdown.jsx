@@ -251,7 +251,7 @@ export function Dropdown({
                     }
                   }}
                   placeholder={searchPlaceholder}
-                  className="w-full bg-transparent text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                  className="w-full bg-transparent text-base sm:text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
                 />
               </div>
             )}
@@ -260,7 +260,7 @@ export function Dropdown({
               id={listboxId}
               role="listbox"
               aria-label={label || ariaLabel || 'Daftar pilihan'}
-              className="max-h-60 overflow-y-auto space-y-0.5"
+              className="max-h-[min(240px,42dvh)] overflow-y-auto space-y-0.5"
             >
               {filteredOptions.length === 0 ? (
                 <li className="px-3 py-2.5 text-center text-xs text-[var(--color-text-muted)]">
@@ -281,7 +281,7 @@ export function Dropdown({
                         e.preventDefault();
                         selectOption(opt);
                       }}
-                      className={`flex min-h-[38px] cursor-pointer items-center justify-between gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-xs transition-colors ${
+                      className={`flex min-h-[44px] sm:min-h-[38px] cursor-pointer items-center justify-between gap-2 rounded-[var(--radius-sm)] px-3 py-2 text-xs transition-colors ${
                         opt.disabled
                           ? 'opacity-45 cursor-not-allowed'
                           : isSelected

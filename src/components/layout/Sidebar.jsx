@@ -23,6 +23,7 @@ import { useTimerStore } from '../../stores/useTimerStore.js';
 import { formatSecondsClock } from '../../utils/dateUtils.js';
 import { repo } from '../../services/repositories/index.js';
 import { useQueryClient } from '@tanstack/react-query';
+import { acquireBodyScrollLock } from '../ui/Modal.jsx';
 
 const NAV_GROUPS = [
   {
@@ -254,7 +255,7 @@ export function MobileBottomDock() {
   return (
     <nav
       aria-label="Navigasi cepat mobile"
-      className="liquid-glass fixed bottom-3 left-3 right-3 z-40 mx-auto max-w-md rounded-full border p-1.5 md:hidden"
+      className="liquid-glass fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-40 mx-auto max-w-md rounded-full border p-1.5 md:hidden"
     >
       <ul className="flex items-center justify-between gap-1">
         {MOBILE_DOCK_ITEMS.map((item) => {
@@ -297,6 +298,11 @@ export function MobileNavSheet({ open, onClose, returnFocusRef }) {
 
   const [rendered, setRendered] = useState(open);
   const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (!rendered) return undefined;
+    return acquireBodyScrollLock();
+  }, [rendered]);
 
   useEffect(() => {
     if (open) {
@@ -346,7 +352,7 @@ export function MobileNavSheet({ open, onClose, returnFocusRef }) {
         role="dialog"
         aria-modal="true"
         aria-label="Menu navigasi"
-        className={`flex h-full w-72 max-w-[85vw] flex-col border-r border-[var(--color-border)] bg-[var(--color-bg)] shadow-2xl ${
+        className={`flex h-[100dvh] w-72 max-w-[85vw] flex-col border-r border-[var(--color-border)] bg-[var(--color-bg)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl ${
           isClosing ? 'drawer-panel-exit' : 'drawer-panel-enter'
         }`}
       >

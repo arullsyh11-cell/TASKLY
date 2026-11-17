@@ -13,6 +13,7 @@
   body {
     margin: 0;
     padding: 0;
+    min-height: 100dvh;
     background-color: var(--color-bg);
     color: var(--color-text-primary);
     font-family: var(--font-sans);
@@ -21,6 +22,20 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Eliminate 300ms mobile tap delay across interactive elements */
+  a,
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='switch'],
+  summary,
+  input,
+  textarea {
+    touch-action: manipulation;
   }
 
   /* Accessible interaction affordances (R-39) */

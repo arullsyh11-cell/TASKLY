@@ -1,9 +1,35 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
+let bodyLockCount = 0;
+let previousBodyOverflow = '';
+
+export function acquireBodyScrollLock() {
+  if (typeof document === 'undefined') return () => {};
+  if (bodyLockCount === 0) {
+    previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  bodyLockCount += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    bodyLockCount = Math.max(0, bodyLockCount - 1);
+    if (bodyLockCount === 0) {
+      document.body.style.overflow = previousBodyOverflow;
+    }
+  };
+}
+
 export function Modal({ open, onClose, title, subtitle, maxWidth = 'max-w-lg', children }) {
   const panelRef = useRef(null);
   const triggerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    return acquireBodyScrollLock();
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -49,7 +75,7 @@ export function Modal({ open, onClose, title, subtitle, maxWidth = 'max-w-lg', c
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`w-full ${maxWidth} max-h-[92vh] overflow-y-auto rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)]`}
+        className={`w-full ${maxWidth} max-h-[92dvh] overflow-y-auto rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)]`}
         style={{ boxShadow: 'var(--shadow-overlay)' }}
       >
         <div className="flex items-start justify-between gap-4 border-b border-[var(--color-border)] px-5 py-4">
@@ -62,12 +88,12 @@ export function Modal({ open, onClose, title, subtitle, maxWidth = 'max-w-lg', c
             data-close-modal="true"
             onClick={onClose}
             aria-label="Tutup dialog"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
           >
             <X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">{children}</div>
       </div>
     </div>
   );
@@ -76,6 +102,11 @@ export function Modal({ open, onClose, title, subtitle, maxWidth = 'max-w-lg', c
 export function Drawer({ open, onClose, title, subtitle, children }) {
   const panelRef = useRef(null);
   const triggerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    return acquireBodyScrollLock();
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -118,7 +149,7 @@ export function Drawer({ open, onClose, title, subtitle, children }) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="flex h-full w-full max-w-xl flex-col border-l border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)]"
+        className="flex h-full w-full max-w-xl flex-col border-l border-[var(--color-border)] bg-[var(--color-surface-elevated)] pt-[env(safe-area-inset-top)] text-[var(--color-text-primary)]"
         style={{ boxShadow: 'var(--shadow-overlay)' }}
       >
         <div className="flex items-start justify-between gap-4 border-b border-[var(--color-border)] px-5 py-4 shrink-0">
@@ -135,7 +166,7 @@ export function Drawer({ open, onClose, title, subtitle, children }) {
             <X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+        <div className="flex-1 overflow-y-auto p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">{children}</div>
       </div>
     </div>
   );

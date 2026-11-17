@@ -18,6 +18,18 @@ function getInitialCollapsed() {
   }
 }
 
+function syncThemeMetaTags(val) {
+  try {
+    const color = val === 'monochrome' ? '#0b0b0b' : '#ffffff';
+    document.getElementById('taskly-theme-color')?.setAttribute('content', color);
+    document
+      .getElementById('taskly-apple-status')
+      ?.setAttribute('content', val === 'monochrome' ? 'black-translucent' : 'default');
+  } catch {
+    // ignore in non-browser contexts
+  }
+}
+
 export const useUiStore = create((set, get) => ({
   theme: getInitialTheme(),
   sidebarCollapsed: getInitialCollapsed(),
@@ -29,6 +41,7 @@ export const useUiStore = create((set, get) => ({
   setTheme(nextTheme) {
     const val = nextTheme === 'monochrome' ? 'monochrome' : 'light';
     document.documentElement.setAttribute('data-theme', val);
+    syncThemeMetaTags(val);
     try {
       localStorage.setItem('taskly_theme', val);
     } catch {

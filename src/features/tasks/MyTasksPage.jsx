@@ -142,7 +142,7 @@ export function MyTasksPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari judul, deskripsi, atau label..."
-              className="min-h-[42px] w-full rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
+              className="min-h-[42px] w-full rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-4 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
             />
           </div>
 
@@ -197,9 +197,9 @@ export function MyTasksPage() {
           />
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="w-44">
+        <div className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <div className="w-full sm:w-44">
               <Dropdown
                 compact
                 aria-label="Filter kategori"
@@ -212,7 +212,7 @@ export function MyTasksPage() {
               />
             </div>
 
-            <div className="w-44">
+            <div className="w-full sm:w-44">
               <Dropdown
                 compact
                 aria-label="Filter tenggat waktu"
@@ -229,7 +229,7 @@ export function MyTasksPage() {
             </div>
 
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="col-span-2 sm:col-span-1 justify-self-start">
                 <X className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
                 <span>Reset Filter</span>
               </Button>

@@ -128,7 +128,7 @@ export function CalendarPage() {
 
       {/* Calendar Controls */}
       <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" aria-label="Periode sebelumnya" onClick={() => navigatePeriod(-1)}>
             <ChevronLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
           </Button>
@@ -138,7 +138,7 @@ export function CalendarPage() {
           <Button variant="outline" size="sm" aria-label="Periode berikutnya" onClick={() => navigatePeriod(1)}>
             <ChevronRight className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
           </Button>
-          <h2 className="ml-2 text-sm font-semibold capitalize text-[var(--color-text-primary)] sm:text-base">
+          <h2 className="text-sm font-semibold capitalize text-[var(--color-text-primary)] sm:ml-2 sm:text-base">
             {headerTitle}
           </h2>
         </div>

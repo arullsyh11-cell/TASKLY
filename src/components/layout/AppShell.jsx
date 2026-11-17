@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Contrast, Menu, Plus, Search, Sun, Timer, X } from 'lucide-react';
+import { Contrast, Maximize2, Menu, Minimize2, Plus, Search, Sun, Timer, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { MobileBottomDock, MobileNavSheet, Sidebar } from './Sidebar.jsx';
 import { TasklyLogo } from '../brand/TasklyLogo.jsx';
 import { useUiStore } from '../../stores/useUiStore.js';
@@ -12,6 +13,7 @@ import { TaskDetailDrawer } from '../../features/tasks/TaskDetailDrawer.jsx';
 import { GlobalTimerEngine } from '../../features/focus/GlobalTimerEngine.jsx';
 import { repo } from '../../services/repositories/index.js';
 import { formatSecondsClock } from '../../utils/dateUtils.js';
+import { getFullscreenElement, isStandalonePwa, toggleNativeFullscreen } from '../../utils/fullscreenUtils.js';
 
 function GlobalSearchBar() {
   const [query, setQuery] = useState('');
@@ -50,7 +52,7 @@ function GlobalSearchBar() {
           setOpen(true);
         }}
         placeholder="Cari tugas atau label..."
-        className="h-10 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] pl-10 pr-8 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)]"
+        className="h-10 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] pl-10 pr-8 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)]"
       />
       {query && (
         <button
@@ -111,6 +113,29 @@ export function AppShell() {
   const menuBtnRef = useRef(null);
   const location = useLocation();
   const initials = (user?.full_name || 'P').trim().charAt(0).toUpperCase();
+  const [isNativeFullscreen, setIsNativeFullscreen] = useState(() => Boolean(getFullscreenElement()));
+  const standaloneMode = isStandalonePwa();
+
+  useEffect(() => {
+    function syncFs() {
+      setIsNativeFullscreen(Boolean(getFullscreenElement()));
+    }
+    document.addEventListener('fullscreenchange', syncFs);
+    document.addEventListener('webkitfullscreenchange', syncFs);
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFs);
+      document.removeEventListener('webkitfullscreenchange', syncFs);
+    };
+  }, []);
+
+  async function handleAppFullscreenToggle() {
+    const res = await toggleNativeFullscreen();
+    if (res.supported) {
+      setIsNativeFullscreen(res.active);
+    } else {
+      toast.info('Untuk layar penuh di browser ini, ketuk Bagikan > Tambah ke Layar Utama (Add to Home Screen).');
+    }
+  }
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -137,7 +162,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)]">
+    <div className="flex min-h-[100dvh] bg-[var(--color-bg)] text-[var(--color-text-primary)]">
       <GlobalTimerEngine />
       <Sidebar />
 
@@ -189,6 +214,22 @@ export function AppShell() {
               )}
             </button>
 
+            {!standaloneMode && (
+              <button
+                type="button"
+                onClick={handleAppFullscreenToggle}
+                aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Masuk layar penuh aplikasi'}
+                title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Mode layar penuh aplikasi'}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/80 text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+              >
+                {isNativeFullscreen ? (
+                  <Minimize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                )}
+              </button>
+            )}
+
             <Link
               to="/settings"
               aria-label="Profil Workspace"
@@ -200,8 +241,8 @@ export function AppShell() {
           </div>
         </header>
 
-        {/* Mobile Top Bar with Liquid Glass */}
-        <header className="liquid-glass sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 md:hidden">
+        {/* Mobile Top Bar with Liquid Glass & Safe-Area Support */}
+        <header className="liquid-glass sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between border-b px-4 pt-[env(safe-area-inset-top)] md:hidden">
           <div className="flex items-center gap-2.5">
             <button
               ref={menuBtnRef}
@@ -217,11 +258,26 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!standaloneMode && (
+              <button
+                type="button"
+                onClick={handleAppFullscreenToggle}
+                aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Tampilan layar penuh aplikasi'}
+                title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Layar Penuh Aplikasi'}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] active:scale-95"
+              >
+                {isNativeFullscreen ? (
+                  <Minimize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                )}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => openQuickAdd()}
               aria-label="Tambah tugas cepat"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] active:scale-95"
             >
               <Plus className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
             </button>
@@ -235,7 +291,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-6 md:pb-8">
+        <main className="flex-1 min-w-0 px-4 py-5 pb-[calc(6.25rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-6 md:pb-8">
           <div className="mx-auto max-w-[1360px]">
             <Outlet />
           </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, BellRing, CheckCircle2, Clock, Maximize2, Minimize2, Pause, Play, RotateCcw, StopCircle, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,6 +11,11 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog.jsx';
 import { formatDurationHuman, formatRelativeDateTime, formatSecondsClock } from '../../utils/dateUtils.js';
+import {
+  enterNativeFullscreen,
+  exitNativeFullscreen,
+  getFullscreenElement,
+} from '../../utils/fullscreenUtils.js';
 import {
   getNotificationPermissionState,
   playFocusChime,
@@ -136,17 +141,34 @@ export function FocusModePage() {
     }
   }
 
-  async function handleToggleFullscreen() {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-      } else {
-        await document.exitFullscreen();
+  useEffect(() => {
+    function onFsChange() {
+      if (!getFullscreenElement()) {
         setIsFullscreen(false);
       }
-    } catch {
-      setIsFullscreen((v) => !v);
+    }
+    function onKeyDown(e) {
+      if (e.key === 'Escape' && isFullscreen && !getFullscreenElement()) {
+        setIsFullscreen(false);
+      }
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isFullscreen]);
+
+  async function handleToggleFullscreen() {
+    if (!isFullscreen) {
+      setIsFullscreen(true);
+      await enterNativeFullscreen();
+    } else {
+      setIsFullscreen(false);
+      await exitNativeFullscreen();
     }
   }
 
@@ -201,8 +223,14 @@ export function FocusModePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className={
+        isFullscreen
+          ? 'fixed inset-0 z-[60] flex flex-col justify-start sm:justify-center gap-6 overflow-y-auto bg-[var(--color-bg)] px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:p-8'
+          : 'space-y-8'
+      }
+    >
+      <header className="mx-auto flex w-full max-w-2xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:max-w-none">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Focus Mode</h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
@@ -444,7 +472,7 @@ export function FocusModePage() {
             disabled={status === 'running'}
             value={customMinDraft}
             onChange={(e) => setCustomMinDraft(e.target.value)}
-            className="h-9 w-20 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-center font-mono-num text-sm text-[var(--color-text-primary)] disabled:opacity-50"
+            className="h-10 w-20 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-center font-mono-num text-base sm:text-sm text-[var(--color-text-primary)] disabled:opacity-50"
           />
           <Button type="submit" size="sm" variant="outline" disabled={status === 'running'}>
             Terapkan
@@ -453,7 +481,8 @@ export function FocusModePage() {
       </section>
 
       {/* Daily Focus Stats + Session History */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {!isFullscreen && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-4">
           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Statistik Fokus Harian</h2>
           {statsLoading ? (
@@ -520,6 +549,7 @@ export function FocusModePage() {
           )}
         </section>
       </div>
+      )}
 
       <ConfirmationDialog
         open={confirmResetOpen}

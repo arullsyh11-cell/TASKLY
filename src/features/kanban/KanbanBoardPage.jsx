@@ -478,7 +478,7 @@ export function KanbanBoardPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari kartu di papan..."
-            className="min-h-[38px] h-9 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-3.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
+            className="min-h-[40px] h-10 sm:min-h-[38px] sm:h-9 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-3.5 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
           />
         </div>
 
