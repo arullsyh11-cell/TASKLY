@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   BarChart3,
@@ -49,6 +49,17 @@ const NAV_GROUPS = [
       { to: '/settings', label: 'Settings', icon: Settings },
     ],
   },
+];
+
+const RADIAL_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard, desktopAngle: -90 },
+  { to: '/tasks', label: 'My Tasks', shortLabel: 'Tasks', icon: CheckSquare, desktopAngle: -45 },
+  { to: '/board', label: 'Kanban Board', shortLabel: 'Board', icon: Columns3, desktopAngle: 0 },
+  { to: '/sprints', label: 'Sprints', shortLabel: 'Sprints', icon: Zap, desktopAngle: 45 },
+  { to: '/calendar', label: 'Calendar', shortLabel: 'Calendar', icon: CalendarDays, desktopAngle: 90 },
+  { to: '/focus', label: 'Focus Mode', shortLabel: 'Focus', icon: Timer, desktopAngle: 135 },
+  { to: '/analytics', label: 'Analytics', shortLabel: 'Stats', icon: BarChart3, desktopAngle: 180 },
+  { to: '/settings', label: 'Settings', shortLabel: 'Settings', icon: Settings, desktopAngle: -135 },
 ];
 
 const MOBILE_DOCK_ITEMS = [
@@ -120,6 +131,7 @@ function NavGroupList({ collapsed, onNavigate }) {
 }
 
 export function Sidebar() {
+  const navStyle = useUiStore((s) => s.navStyle);
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const theme = useUiStore((s) => s.theme);
@@ -131,13 +143,15 @@ export function Sidebar() {
   const queryClient = useQueryClient();
   const isLocalMode = repo.mode === 'local';
 
+  if (navStyle !== 'sidebar') return null;
+
   async function handleThemeToggle() {
     const next = toggleTheme();
     try {
       await repo.settings.update({ theme: next });
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     } catch {
-      // local preference already applied
+      // ignore
     }
   }
 
@@ -288,7 +302,7 @@ export function MobileBottomDock() {
   );
 }
 
-export function MobileNavSheet({ open, onClose, returnFocusRef }) {
+function SlideNavDrawer({ open, onClose, returnFocusRef }) {
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const user = useAuthStore((s) => s.user);
@@ -308,7 +322,9 @@ export function MobileNavSheet({ open, onClose, returnFocusRef }) {
     if (open) {
       setRendered(true);
       setIsClosing(false);
-    } else if (rendered) {
+      return undefined;
+    }
+    if (rendered) {
       setIsClosing(true);
       const timer = setTimeout(() => {
         setRendered(false);
@@ -316,6 +332,7 @@ export function MobileNavSheet({ open, onClose, returnFocusRef }) {
       }, 190);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [open, rendered]);
 
   function closeSheet() {
@@ -327,6 +344,7 @@ export function MobileNavSheet({ open, onClose, returnFocusRef }) {
     const next = toggleTheme();
     try {
       await repo.settings.update({ theme: next });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
     } catch {
       // ignore
     }
@@ -405,4 +423,312 @@ export function MobileNavSheet({ open, onClose, returnFocusRef }) {
       </div>
     </div>
   );
+}
+
+function RadialNavSheet({ open, onClose, returnFocusRef }) {
+  const theme = useUiStore((s) => s.theme);
+  const toggleTheme = useUiStore((s) => s.toggleTheme);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const timerStatus = useTimerStore((s) => s.status);
+  const remainingSec = useTimerStore((s) => s.remainingSec);
+  const queryClient = useQueryClient();
+  const isLocalMode = repo.mode === 'local';
+  const containerRef = useRef(null);
+
+  const [rendered, setRendered] = useState(open);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          setExpanded(true);
+        });
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        if (raf2) cancelAnimationFrame(raf2);
+      };
+    }
+    if (rendered) {
+      setExpanded(false);
+      const timer = setTimeout(() => {
+        setRendered(false);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [open, rendered]);
+
+  // Close when clicking outside the radial sidebar without blocking/covering the page with a fullscreen overlay
+  useEffect(() => {
+    if (!open) return undefined;
+    function handleOutsideMouseDown(e) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target) &&
+        !returnFocusRef?.current?.contains(e.target)
+      ) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideMouseDown);
+    return () => document.removeEventListener('mousedown', handleOutsideMouseDown);
+  }, [open, onClose, returnFocusRef]);
+
+  function closeSheet() {
+    onClose();
+    setTimeout(() => returnFocusRef?.current?.focus?.(), 260);
+  }
+
+  async function handleThemeToggle() {
+    const next = toggleTheme();
+    try {
+      await repo.settings.update({ theme: next });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    } catch {
+      // ignore
+    }
+  }
+
+  async function handleLogout() {
+    queryClient.clear();
+    await logout();
+  }
+
+  if (!rendered) return null;
+
+  // Compact mobile semicircle radius (122px inside a 172x336 semicircle stage)
+  const mobileRadius = 122;
+  const desktopRadius = 134;
+
+  return (
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="false"
+      aria-label="Menu navigasi"
+      className={`fixed left-0 md:left-5 top-1/2 z-50 -translate-y-1/2 flex flex-col items-start md:items-center gap-3 ${
+        expanded ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}
+    >
+      {/* Compact Half-Circle on Mobile (<768px) anchored to left edge; Full Circle on Web (>=768px) docked on the left */}
+      <nav
+        aria-label="Navigasi utama"
+        className={`radial-stage relative h-[336px] w-[172px] rounded-r-[168px] border-y border-r border-[var(--color-border-strong)] md:h-[384px] md:w-[384px] md:rounded-full md:border select-none overflow-visible ${
+          expanded ? 'scale-100 opacity-100' : 'scale-75 opacity-0'
+        }`}
+      >
+        {/* Compact Mobile Half-Circle Dashed Orbit SVG (<768px) */}
+        <svg
+          viewBox="0 0 172 336"
+          aria-hidden="true"
+          className={`radial-ring-svg pointer-events-none absolute inset-0 h-full w-full md:hidden ${
+            expanded ? 'scale-100 opacity-100' : 'scale-75 opacity-0'
+          }`}
+        >
+          <circle
+            cx="18"
+            cy="168"
+            r={mobileRadius}
+            fill="none"
+            stroke="var(--radial-ring-stroke)"
+            strokeWidth="1.75"
+            strokeDasharray="5 6"
+            strokeLinecap="round"
+          />
+          <circle
+            cx="18"
+            cy="168"
+            r="36"
+            fill="none"
+            stroke="var(--color-border)"
+            strokeWidth="1"
+            strokeOpacity="0.65"
+          />
+        </svg>
+
+        {/* Web/Desktop Full-Circle Dashed Orbit SVG (>=768px) */}
+        <svg
+          viewBox="0 0 384 384"
+          aria-hidden="true"
+          className={`radial-ring-svg pointer-events-none absolute inset-0 hidden h-full w-full md:block ${
+            expanded ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-12 opacity-0'
+          }`}
+        >
+          <circle
+            cx="192"
+            cy="192"
+            r={desktopRadius}
+            fill="none"
+            stroke="var(--radial-ring-stroke)"
+            strokeWidth="2"
+            strokeDasharray="7 8"
+            strokeLinecap="round"
+          />
+          <circle
+            cx="192"
+            cy="192"
+            r="56"
+            fill="none"
+            stroke="var(--color-border)"
+            strokeWidth="1.25"
+            strokeOpacity="0.6"
+          />
+        </svg>
+
+        {/* 8 Satellite Navigation Nodes */}
+        <ul className="contents">
+          {RADIAL_ITEMS.map((item, idx) => {
+            const Icon = item.icon;
+            // Mobile semicircle angle: -80.5 deg (top) to +80.5 deg (bottom), 23 deg step
+            const mobileAngleDeg = -80.5 + idx * 23;
+            const mRad = (mobileAngleDeg * Math.PI) / 180;
+            const mx = `${(Math.cos(mRad) * mobileRadius).toFixed(1)}px`;
+            const my = `${(Math.sin(mRad) * mobileRadius).toFixed(1)}px`;
+
+            // Desktop full-circle angle: -90 deg (top) clockwise 45 deg step
+            const dRad = (item.desktopAngle * Math.PI) / 180;
+            const dx = `${(Math.cos(dRad) * desktopRadius).toFixed(1)}px`;
+            const dy = `${(Math.sin(dRad) * desktopRadius).toFixed(1)}px`;
+
+            const delayMs = expanded ? idx * 18 : (RADIAL_ITEMS.length - 1 - idx) * 10;
+
+            return (
+              <li
+                key={item.to}
+                style={{
+                  '--mx': mx,
+                  '--my': my,
+                  '--dx': dx,
+                  '--dy': dy,
+                  transitionDelay: `${delayMs}ms`,
+                }}
+                className={`radial-node absolute left-[18px] top-1/2 -ml-[17px] -mt-[17px] md:left-1/2 md:-ml-[27px] md:-mt-[27px] ${
+                  expanded ? 'radial-node-open' : 'radial-node-closed'
+                }`}
+              >
+                <NavLink
+                  to={item.to}
+                  onClick={closeSheet}
+                  aria-label={item.label}
+                  title={item.label}
+                  className={({ isActive }) =>
+                    `radial-disc group relative flex h-[34px] w-[34px] md:h-[54px] md:w-[54px] items-center justify-center rounded-full after:absolute after:-inset-1.5 after:content-[''] ${
+                      isActive
+                        ? 'radial-disc-active text-[var(--color-accent-text)]'
+                        : 'text-[var(--color-text-primary)] hover:text-[var(--color-accent-text)]'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon className="h-[15px] w-[15px] md:h-5 md:w-5 shrink-0" strokeWidth={1.85} aria-hidden="true" />
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute -bottom-3 md:-bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-1.5 py-0 text-[8px] leading-[13px] md:py-[0.5px] md:text-[10.5px] md:leading-tight font-semibold shadow-xs transition-colors ${
+                          isActive
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)]'
+                            : 'border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] group-hover:border-[var(--color-primary)] group-hover:text-[var(--color-text-primary)]'
+                        }`}
+                      >
+                        {item.shortLabel}
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Mobile Inner-Arc Quick Theme Switcher (<768px) */}
+        <button
+          type="button"
+          onClick={handleThemeToggle}
+          aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
+          title={theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace'}
+          className={`absolute left-[68px] top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] text-[var(--color-accent-text)] shadow-md transition-all duration-300 md:hidden ${
+            expanded ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
+          }`}
+        >
+          {theme === 'light' ? (
+            <Contrast className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+          ) : (
+            <Sun className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+          )}
+        </button>
+
+        {/* Center Glowing Close Hub (X) - at (18px, 50%) on Mobile Half-Circle, and (50%, 50%) on Desktop Circle */}
+        <button
+          type="button"
+          onClick={closeSheet}
+          aria-label="Tutup menu navigasi"
+          className={`radial-hub absolute left-[18px] top-1/2 z-10 -ml-5 -mt-5 inline-flex h-10 w-10 md:left-1/2 md:-ml-8 md:-mt-8 md:h-16 md:w-16 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] active:scale-95 hover:bg-[var(--color-primary-hover)] ${
+            expanded ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-90 opacity-0'
+          }`}
+        >
+          <X className="h-4 w-4 md:h-7 md:w-7" strokeWidth={2.25} aria-hidden="true" />
+        </button>
+      </nav>
+
+      {/* Compact Desktop Utility Pill Under the Left-Docked Radial Wheel */}
+      <div
+        className={`hidden md:flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)]/95 px-3 py-1.5 shadow-lg transition-all duration-300 ${
+          expanded ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={handleThemeToggle}
+          aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
+          className="inline-flex min-h-[34px] items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-semibold text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-strong)]"
+        >
+          {theme === 'light' ? (
+            <Contrast className="h-3.5 w-3.5 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
+          ) : (
+            <Sun className="h-3.5 w-3.5 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
+          )}
+          <span>{theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace'}</span>
+        </button>
+
+        {(timerStatus === 'running' || timerStatus === 'paused') && (
+          <NavLink
+            to="/focus"
+            onClick={closeSheet}
+            className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] px-3 text-xs font-semibold text-[var(--color-accent-text)]"
+          >
+            <Timer className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+            <span className="font-mono-num">{formatSecondsClock(remainingSec)}</span>
+          </NavLink>
+        )}
+
+        <div className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-xs">
+          <span className="font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'Pengguna'}</span>
+          <span className="text-[11px] text-[var(--color-text-muted)]">({isLocalMode ? 'Lokal' : user?.email})</span>
+          {!isLocalMode && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Keluar dari akun"
+              className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]"
+            >
+              <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function MobileNavSheet(props) {
+  const navStyle = useUiStore((s) => s.navStyle);
+  if (navStyle === 'sidebar') {
+    return <SlideNavDrawer {...props} />;
+  }
+  return <RadialNavSheet {...props} />;
 }

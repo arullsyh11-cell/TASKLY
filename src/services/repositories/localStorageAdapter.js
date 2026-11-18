@@ -21,6 +21,7 @@ function createInitialStore() {
     },
     settings: {
       theme: 'light',
+      nav_style: 'radial',
       pomodoro_focus_min: 25,
       pomodoro_short_break_min: 5,
       pomodoro_long_break_min: 15,

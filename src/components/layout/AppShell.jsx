@@ -103,6 +103,7 @@ function GlobalSearchBar() {
 export function AppShell() {
   const mobileNavOpen = useUiStore((s) => s.mobileNavOpen);
   const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen);
+  const navStyle = useUiStore((s) => s.navStyle);
   const openQuickAdd = useUiStore((s) => s.openQuickAdd);
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
@@ -167,16 +168,40 @@ export function AppShell() {
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Desktop Top Utility Bar with Liquid Glass */}
-        <header className="liquid-glass sticky top-0 z-30 hidden h-16 items-center justify-between gap-4 border-b px-6 lg:px-8 md:flex">
-          <GlobalSearchBar />
+        {/* Top Bar (Solid on Mobile, Frosted on Desktop) */}
+        <header className="sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-4 pt-[env(safe-area-inset-top)] sm:px-6 lg:px-8 md:liquid-glass">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {navStyle === 'sidebar' && (
+              <button
+                ref={menuBtnRef}
+                type="button"
+                onClick={() => setMobileNavOpen((v) => !v)}
+                aria-expanded={mobileNavOpen}
+                aria-label="Buka menu navigasi"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition-transform duration-150 active:scale-95 hover:border-[var(--color-border-strong)] md:hidden"
+              >
+                <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
+              </button>
+            )}
+            <Link
+              to="/dashboard"
+              aria-label="TASKLY Dashboard"
+              className={`inline-flex items-center ${navStyle === 'sidebar' ? 'md:hidden' : ''}`}
+            >
+              <TasklyLogo variant="lockup" size="sm" />
+            </Link>
+          </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="hidden flex-1 justify-center px-4 md:flex">
+            <GlobalSearchBar />
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
               to="/focus"
               aria-label="Focus Mode"
               title="Buka Focus Mode"
-              className={`inline-flex h-10 items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors ${
+              className={`hidden sm:inline-flex h-10 items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors ${
                 timerStatus === 'running'
                   ? 'border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-[var(--color-accent-text)]'
                   : 'border-[var(--color-border)] bg-[var(--color-surface)]/80 text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]'
@@ -192,20 +217,10 @@ export function AppShell() {
 
             <button
               type="button"
-              onClick={() => openQuickAdd()}
-              aria-label="Tambah tugas cepat"
-              title="Tambah tugas cepat"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] transition-colors hover:bg-[var(--color-primary-hover)]"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            </button>
-
-            <button
-              type="button"
               onClick={handleTopThemeToggle}
               aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
               title={theme === 'light' ? 'Tema: Light Workspace (Klik untuk Monochrome)' : 'Tema: Monochrome (Klik untuk Light Workspace)'}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/80 text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+              className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/80 text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
             >
               {theme === 'light' ? (
                 <Contrast className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -218,9 +233,9 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={handleAppFullscreenToggle}
-                aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Masuk layar penuh aplikasi'}
-                title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Mode layar penuh aplikasi'}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/80 text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+                aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Tampilan layar penuh aplikasi'}
+                title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Layar Penuh Aplikasi'}
+                className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors active:scale-95 hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
               >
                 {isNativeFullscreen ? (
                   <Minimize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -229,62 +244,22 @@ export function AppShell() {
                 )}
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => openQuickAdd()}
+              aria-label="Tambah tugas cepat"
+              title="Tambah tugas cepat"
+              className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] transition-colors active:scale-95 hover:bg-[var(--color-primary-hover)]"
+            >
+              <Plus className="h-5 w-5 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden="true" />
+            </button>
 
             <Link
               to="/settings"
               aria-label="Profil Workspace"
               title={user?.full_name || 'Profil Workspace'}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-sm font-bold text-[var(--color-accent-text)]"
-            >
-              {initials}
-            </Link>
-          </div>
-        </header>
-
-        {/* Mobile Top Bar Solid Surface & Safe-Area Support */}
-        <header className="sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)] px-4 pt-[env(safe-area-inset-top)] md:hidden">
-          <div className="flex items-center gap-2.5">
-            <button
-              ref={menuBtnRef}
-              type="button"
-              onClick={() => setMobileNavOpen(true)}
-              aria-expanded={mobileNavOpen}
-              aria-label="Buka menu navigasi"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition-transform duration-150 active:scale-95 hover:border-[var(--color-border-strong)]"
-            >
-              <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
-            </button>
-            <TasklyLogo variant="lockup" size="sm" />
-          </div>
-
-          <div className="flex items-center gap-2">
-            {!standaloneMode && (
-              <button
-                type="button"
-                onClick={handleAppFullscreenToggle}
-                aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Tampilan layar penuh aplikasi'}
-                title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Layar Penuh Aplikasi'}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] active:scale-95"
-              >
-                {isNativeFullscreen ? (
-                  <Minimize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                )}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => openQuickAdd()}
-              aria-label="Tambah tugas cepat"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] active:scale-95"
-            >
-              <Plus className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
-            </button>
-            <Link
-              to="/settings"
-              aria-label="Profil Workspace"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-sm font-bold text-[var(--color-accent-text)]"
+              className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-sm font-bold text-[var(--color-accent-text)]"
             >
               {initials}
             </Link>
@@ -297,6 +272,23 @@ export function AppShell() {
           </div>
         </main>
       </div>
+
+      {/* Floating Middle-Left Radial Sidebar Trigger Button (when navStyle === 'radial') */}
+      {navStyle !== 'sidebar' && (
+        <button
+          ref={menuBtnRef}
+          type="button"
+          onClick={() => setMobileNavOpen((v) => !v)}
+          aria-expanded={mobileNavOpen}
+          aria-label="Buka menu navigasi"
+          title="Buka Radial Sidebar"
+          className={`fixed left-2 sm:left-4 top-1/2 z-40 -translate-y-1/2 inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)] shadow-lg transition-all duration-200 active:scale-95 hover:border-[var(--color-primary)] hover:scale-105 ${
+            mobileNavOpen ? 'scale-75 opacity-0 pointer-events-none' : 'scale-100 opacity-100'
+          }`}
+        >
+          <Menu className="h-5 w-5" strokeWidth={1.85} aria-hidden="true" />
+        </button>
+      )}
 
       <MobileBottomDock />
       <MobileNavSheet open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} returnFocusRef={menuBtnRef} />

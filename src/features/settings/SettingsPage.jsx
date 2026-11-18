@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowDown,
   ArrowUp,
+  Compass,
   Contrast,
   Download,
+  PanelLeft,
   Plus,
   Sun,
   Trash2,
@@ -31,6 +33,8 @@ export function SettingsPage() {
   const logout = useAuthStore((s) => s.logout);
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const navStyle = useUiStore((s) => s.navStyle);
+  const setNavStyle = useUiStore((s) => s.setNavStyle);
   const syncDurations = useTimerStore((s) => s.syncDurationsFromSettings);
   const queryClient = useQueryClient();
 
@@ -397,6 +401,67 @@ export function SettingsPage() {
                 ))}
               </div>
             </button>
+          </div>
+
+          <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                Gaya Navigasi Sidebar (Web &amp; Mobile)
+              </h3>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                Pilih antara menu melingkar (Radial Sidebar) atau sidebar geser klasik untuk desktop dan mobile.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setNavStyle('radial');
+                  updateSettingsMutation.mutate({ nav_style: 'radial' });
+                }}
+                aria-pressed={navStyle === 'radial'}
+                className={`flex flex-col gap-2 rounded-[var(--radius-md)] border p-4 text-left transition-colors ${
+                  navStyle === 'radial'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-surface-warm)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-border-strong)]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Compass className="h-5 w-5 shrink-0 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Versi 1: Radial Sidebar</p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                      Setengah lingkaran di mobile &amp; melingkar di tepi kiri web
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setNavStyle('sidebar');
+                  updateSettingsMutation.mutate({ nav_style: 'sidebar' });
+                }}
+                aria-pressed={navStyle === 'sidebar'}
+                className={`flex flex-col gap-2 rounded-[var(--radius-md)] border p-4 text-left transition-colors ${
+                  navStyle === 'sidebar'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-surface-warm)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-border-strong)]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <PanelLeft className="h-5 w-5 shrink-0 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Versi 2: Slide Sidebar</p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                      Sidebar bergeser/lipat di web &amp; slide drawer di mobile
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="max-w-xs pt-2">

@@ -18,6 +18,16 @@ function getInitialCollapsed() {
   }
 }
 
+function getInitialNavStyle() {
+  try {
+    const saved = localStorage.getItem('taskly_nav_style');
+    if (saved === 'radial' || saved === 'sidebar') return saved;
+  } catch {
+    // ignore
+  }
+  return 'radial';
+}
+
 function syncThemeMetaTags(val) {
   try {
     const color = val === 'monochrome' ? '#0b0b0b' : '#ffffff';
@@ -32,11 +42,22 @@ function syncThemeMetaTags(val) {
 
 export const useUiStore = create((set, get) => ({
   theme: getInitialTheme(),
+  navStyle: getInitialNavStyle(),
   sidebarCollapsed: getInitialCollapsed(),
   mobileNavOpen: false,
   activeTaskId: null,
   quickAddOpen: false,
   quickAddDefaults: {},
+
+  setNavStyle(nextStyle) {
+    const val = nextStyle === 'sidebar' ? 'sidebar' : 'radial';
+    try {
+      localStorage.setItem('taskly_nav_style', val);
+    } catch {
+      // ignore
+    }
+    set({ navStyle: val, mobileNavOpen: false });
+  },
 
   setTheme(nextTheme) {
     const val = nextTheme === 'monochrome' ? 'monochrome' : 'light';

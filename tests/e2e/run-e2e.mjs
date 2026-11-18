@@ -78,17 +78,29 @@ async function run() {
     await page.getByRole('dialog').waitFor({ state: 'detached' });
     results.push('Task Detail Drawer: custom dropdowns, subtask added, closed cleanly with Escape');
 
-    // 4. My Tasks: custom filter dropdowns + global search
-    await page.getByRole('link', { name: 'My Tasks' }).click();
+    async function openRadialAndNavigate(label, screenshotName) {
+      await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
+      const radialDialog = page.getByRole('dialog', { name: 'Menu navigasi' });
+      await radialDialog.waitFor({ state: 'visible' });
+      if (screenshotName) {
+        await page.waitForTimeout(420);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, screenshotName) });
+      }
+      await page.getByRole('navigation', { name: 'Navigasi utama' }).getByRole('link', { name: label }).click();
+      await radialDialog.waitFor({ state: 'detached' });
+    }
+
+    // 4. My Tasks: Radial Sidebar navigation + custom filter dropdowns
+    await openRadialAndNavigate('My Tasks', 'v8_desktop_radial_light.png');
     await page.waitForURL('**/tasks');
     await page.getByRole('combobox', { name: 'Filter prioritas' }).click();
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v2_dropdown_open.png') });
     await page.getByRole('option', { name: 'High' }).click();
     await page.getByText('Finalisasi integrasi Sprint & Kanban').first().waitFor({ state: 'visible' });
-    results.push('My Tasks: custom Filter Prioritas dropdown works without clipping');
+    results.push('My Tasks: Radial Sidebar navigation + custom Filter Prioritas dropdown work without clipping');
 
     // 5. Kanban Board + Custom Column
-    await page.getByRole('link', { name: 'Kanban Board' }).click();
+    await openRadialAndNavigate('Kanban Board');
     await page.waitForURL('**/board');
     await page.getByRole('heading', { name: 'Backlog' }).waitFor({ state: 'visible' });
     await page.getByRole('button', { name: /Tambah Kolom/i }).click();
@@ -98,7 +110,7 @@ async function run() {
     results.push('Kanban Board: displays default columns & custom column QA Staging');
 
     // 6. Sprints + Burndown
-    await page.getByRole('link', { name: 'Sprints' }).click();
+    await openRadialAndNavigate('Sprints');
     await page.waitForURL('**/sprints');
     await page.getByRole('button', { name: /Buat Sprint Baru/i }).click();
     await page.getByLabel('Nama Sprint').fill('Sprint 01 Verifikasi');
@@ -117,7 +129,7 @@ async function run() {
     results.push('Sprint Management: creates sprint, starts sprint, assigns task, renders Burndown');
 
     // 7. Focus Mode with searchable custom dropdown + alert test
-    await page.getByRole('navigation', { name: 'Navigasi utama' }).getByRole('link', { name: 'Focus Mode' }).click();
+    await openRadialAndNavigate('Focus Mode');
     await page.waitForURL('**/focus');
     await page.getByRole('combobox', { name: /Tugas yang Dikerjakan/i }).click();
     await page.getByRole('option', { name: /Finalisasi integrasi Sprint & Kanban/i }).click();
@@ -128,7 +140,7 @@ async function run() {
     results.push('Focus Mode: searchable custom task dropdown, ringtone/notif preview, Start/Reset work cleanly');
 
     // 8. Calendar
-    await page.getByRole('link', { name: 'Calendar' }).click();
+    await openRadialAndNavigate('Calendar');
     await page.waitForURL('**/calendar');
     await page.getByRole('tab', { name: 'Mingguan' }).click();
     await page.getByRole('tab', { name: 'Harian' }).click();
@@ -136,7 +148,7 @@ async function run() {
     results.push('Calendar: Monthly, Weekly, Daily views render cleanly');
 
     // 9. Analytics: Screen 2 Hero Chart + Custom Range Dropdown + Screenshot
-    await page.getByRole('link', { name: 'Analytics' }).click();
+    await openRadialAndNavigate('Analytics');
     await page.waitForURL('**/analytics');
     await page.getByRole('combobox', { name: /Pilih rentang waktu analisis/i }).click();
     await page.getByRole('option', { name: '30 Hari Terakhir' }).click();
@@ -146,7 +158,7 @@ async function run() {
     results.push('Analytics: segmented tabs, custom range dropdown, and peak-highlighted chart render');
 
     // 10. Settings: Profile Card + Aligned Tabs + Monochrome Toggle + Persistence
-    await page.getByRole('link', { name: 'Settings' }).click();
+    await openRadialAndNavigate('Settings');
     await page.waitForURL('**/settings');
     await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor({ state: 'visible' });
     await page.getByRole('button', { name: /Ubah Nama/i }).waitFor({ state: 'visible' });
@@ -166,7 +178,7 @@ async function run() {
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_dashboard_monochrome.png') });
     results.push('Themes & Persistence: Light Workspace default -> Monochrome switch + reload persistence verified');
 
-    // 11. Mobile 375x812 Verification: Solid Header, Dense Liquid Glass Nav, Settings Outlines, Analytics Tabs
+    // 11. Mobile 375x812 Verification: Solid Header, Dense Liquid Glass Nav, Settings Outlines, Radial Sidebar
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(`${baseUrl}/settings`, { waitUntil: 'networkidle' });
     await page.mouse.wheel(0, 120);
@@ -175,21 +187,42 @@ async function run() {
     const overflowSettings = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowSettings, 'Mobile Settings must not horizontally overflow 375px viewport');
 
+    // Verify Compact Radial Sidebar in Monochrome on Mobile 375px + Center X Close button
+    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
+    const drawerDialog = page.getByRole('dialog', { name: 'Menu navigasi' });
+    await drawerDialog.waitFor({ state: 'visible' });
+    await page.waitForTimeout(420);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_mobile_radial_compact_mono.png') });
+    await page.getByRole('button', { name: 'Tutup menu navigasi' }).click();
+    await drawerDialog.waitFor({ state: 'detached' });
+
     await page.getByRole('button', { name: /Tema 1: Light Workspace/i }).click();
     await page.waitForTimeout(150);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_settings_light_mobile.png') });
+
+    // Switch to Versi 2: Slide Sidebar and verify classic slide drawer works, then switch back to Versi 1: Radial Sidebar
+    await page.getByRole('button', { name: /Versi 2: Slide Sidebar/i }).click();
+    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
+    await drawerDialog.waitFor({ state: 'visible' });
+    await page.waitForTimeout(260);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_mobile_slide_drawer.png') });
+    await page.keyboard.press('Escape');
+    await drawerDialog.waitFor({ state: 'detached' });
+    await page.waitForTimeout(250);
+
+    await page.getByRole('button', { name: /Versi 1: Radial Sidebar/i }).click();
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_settings_light_mobile.png') });
 
     await page.goto(`${baseUrl}/dashboard`, { waitUntil: 'networkidle' });
     const overflowDash = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowDash, 'Mobile Dashboard must not horizontally overflow 375px viewport');
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_mobile_dashboard_light.png') });
 
-    // Verify animated mobile sidebar drawer open & Escape close
+    // Verify Compact Radial Sidebar in Light Workspace on Mobile 375px & Escape close
     await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
-    const drawerDialog = page.getByRole('dialog', { name: 'Menu navigasi' });
     await drawerDialog.waitFor({ state: 'visible' });
-    await page.waitForTimeout(260);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_mobile_drawer.png') });
+    await page.waitForTimeout(420);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_mobile_radial_compact_light.png') });
     await page.keyboard.press('Escape');
     await drawerDialog.waitFor({ state: 'detached' });
 
