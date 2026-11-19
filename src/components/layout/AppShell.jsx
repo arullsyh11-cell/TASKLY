@@ -11,8 +11,10 @@ import { useTimerStore } from '../../stores/useTimerStore.js';
 import { QuickAddTaskModal } from '../../features/tasks/QuickAddTaskModal.jsx';
 import { TaskDetailDrawer } from '../../features/tasks/TaskDetailDrawer.jsx';
 import { GlobalTimerEngine } from '../../features/focus/GlobalTimerEngine.jsx';
+import { FocusExpandedPopup } from '../../features/focus/FocusDynamicIsland.jsx';
+import { GlobalReminderEngine } from '../../features/reminders/GlobalReminderEngine.jsx';
+import { ReminderBellMenu } from '../../features/reminders/ReminderBellMenu.jsx';
 import { repo } from '../../services/repositories/index.js';
-import { formatSecondsClock } from '../../utils/dateUtils.js';
 import { getFullscreenElement, isStandalonePwa, toggleNativeFullscreen } from '../../utils/fullscreenUtils.js';
 
 function GlobalSearchBar() {
@@ -109,7 +111,7 @@ export function AppShell() {
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const user = useAuthStore((s) => s.user);
   const timerStatus = useTimerStore((s) => s.status);
-  const remainingSec = useTimerStore((s) => s.remainingSec);
+  const setIslandMode = useTimerStore((s) => s.setIslandMode);
 
   const menuBtnRef = useRef(null);
   const location = useLocation();
@@ -165,12 +167,14 @@ export function AppShell() {
   return (
     <div className="flex min-h-[100dvh] bg-[var(--color-bg)] text-[var(--color-text-primary)]">
       <GlobalTimerEngine />
+      <GlobalReminderEngine />
+      <FocusExpandedPopup />
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Bar (Solid on Mobile, Frosted on Desktop) */}
-        <header className="sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-4 pt-[env(safe-area-inset-top)] sm:px-6 lg:px-8 md:liquid-glass">
-          <div className="flex items-center gap-2.5 sm:gap-3">
+        <header className="sticky top-0 z-30 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg)] px-3 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-6 lg:px-8 md:liquid-glass">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             {navStyle === 'sidebar' && (
               <button
                 ref={menuBtnRef}
@@ -178,7 +182,7 @@ export function AppShell() {
                 onClick={() => setMobileNavOpen((v) => !v)}
                 aria-expanded={mobileNavOpen}
                 aria-label="Buka menu navigasi"
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition-transform duration-150 active:scale-95 hover:border-[var(--color-border-strong)] md:hidden"
+                className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition-transform duration-150 active:scale-95 hover:border-[var(--color-border-strong)] after:absolute after:-inset-0.5 after:content-[''] md:hidden"
               >
                 <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
               </button>
@@ -196,9 +200,14 @@ export function AppShell() {
             <GlobalSearchBar />
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
             <Link
               to="/focus"
+              onClick={() => {
+                if (timerStatus === 'running' || timerStatus === 'paused') {
+                  setIslandMode('expanded');
+                }
+              }}
               aria-label="Focus Mode"
               title="Buka Focus Mode"
               className={`hidden sm:inline-flex h-10 items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors ${
@@ -208,12 +217,10 @@ export function AppShell() {
               }`}
             >
               <Timer className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              {timerStatus === 'running' || timerStatus === 'paused' ? (
-                <span className="font-mono-num">{formatSecondsClock(remainingSec)}</span>
-              ) : (
-                <span>Fokus</span>
-              )}
+              <span>Fokus</span>
             </Link>
+
+            <ReminderBellMenu />
 
             <button
               type="button"
@@ -235,7 +242,7 @@ export function AppShell() {
                 onClick={handleAppFullscreenToggle}
                 aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Tampilan layar penuh aplikasi'}
                 title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Layar Penuh Aplikasi'}
-                className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors active:scale-95 hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors active:scale-95 hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] after:absolute after:-inset-0.5 after:content-['']"
               >
                 {isNativeFullscreen ? (
                   <Minimize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -250,16 +257,16 @@ export function AppShell() {
               onClick={() => openQuickAdd()}
               aria-label="Tambah tugas cepat"
               title="Tambah tugas cepat"
-              className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] transition-colors active:scale-95 hover:bg-[var(--color-primary-hover)]"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] transition-colors active:scale-95 hover:bg-[var(--color-primary-hover)] after:absolute after:-inset-0.5 after:content-['']"
             >
-              <Plus className="h-5 w-5 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden="true" />
+              <Plus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             </button>
 
             <Link
               to="/settings"
               aria-label="Profil Workspace"
               title={user?.full_name || 'Profil Workspace'}
-              className="inline-flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-sm font-bold text-[var(--color-accent-text)]"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-sm font-bold text-[var(--color-accent-text)] after:absolute after:-inset-0.5 after:content-['']"
             >
               {initials}
             </Link>

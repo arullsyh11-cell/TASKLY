@@ -26,6 +26,8 @@ function createInitialStore() {
       pomodoro_short_break_min: 5,
       pomodoro_long_break_min: 15,
       sound_enabled: true,
+      reminder_enabled: true,
+      default_reminder_days: 1,
       default_calendar_view: 'month',
       updated_at: now,
     },
@@ -60,6 +62,10 @@ function readStore() {
       const initial = createInitialStore();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
       return initial;
+    }
+    if (parsed.settings) {
+      if (parsed.settings.reminder_enabled === undefined) parsed.settings.reminder_enabled = true;
+      if (parsed.settings.default_reminder_days === undefined) parsed.settings.default_reminder_days = 1;
     }
     return parsed;
   } catch {
@@ -456,6 +462,16 @@ export const localStorageAdapter = {
       }
 
       const store = readStore();
+      const defaultReminderDays = store.settings?.default_reminder_days ?? 1;
+      const reminderDaysBefore =
+        payload.reminder_days_before === undefined
+          ? defaultReminderDays
+          : payload.reminder_days_before === null || payload.reminder_days_before === ''
+          ? null
+          : Math.max(0, Math.min(60, Math.round(Number(payload.reminder_days_before))));
+      if (reminderDaysBefore !== null && !Number.isFinite(reminderDaysBefore)) {
+        throw new Error('Hari pengingat tidak valid.');
+      }
       const col =
         (payload.column_id ? store.columns.find((c) => c.id === payload.column_id) : null) ||
         store.columns.find((c) => c.semantic_type === 'todo') ||
@@ -478,6 +494,7 @@ export const localStorageAdapter = {
         priority: payload.priority || 'medium',
         start_date: startDate,
         due_date: dueDate,
+        reminder_days_before: reminderDaysBefore,
         position_in_column: typeof payload.position_in_column === 'number' ? payload.position_in_column : maxPos + 1000,
         label_ids: Array.isArray(payload.label_ids) ? [...new Set(payload.label_ids)] : [],
         completed_at: col.semantic_type === 'done' ? now : null,
@@ -546,6 +563,17 @@ export const localStorageAdapter = {
       if (Array.isArray(payload.label_ids)) task.label_ids = [...new Set(payload.label_ids)];
       task.start_date = startDate;
       task.due_date = dueDate;
+      if (payload.reminder_days_before !== undefined) {
+        if (payload.reminder_days_before === null || payload.reminder_days_before === '') {
+          task.reminder_days_before = null;
+        } else {
+          const parsedRem = Math.round(Number(payload.reminder_days_before));
+          if (!Number.isFinite(parsedRem) || parsedRem < 0 || parsedRem > 60) {
+            throw new Error('Hari pengingat harus antara 0 sampai 60 hari.');
+          }
+          task.reminder_days_before = parsedRem;
+        }
+      }
       task.column_id = nextColumnId;
 
       if (nextCol.semantic_type === 'done' && prevCol?.semantic_type !== 'done') {
@@ -1066,6 +1094,13 @@ export const localStorageAdapter = {
       if (next.pomodoro_focus_min < 1 || next.pomodoro_focus_min > 180) {
         throw new Error('Durasi fokus harus antara 1 sampai 180 menit.');
       }
+      if (next.default_reminder_days !== undefined) {
+        const rd = Math.round(Number(next.default_reminder_days));
+        if (!Number.isFinite(rd) || rd < 0 || rd > 60) {
+          throw new Error('Hari default pengingat harus antara 0 sampai 60 hari.');
+        }
+        next.default_reminder_days = rd;
+      }
       store.settings = next;
       writeStore(store);
       return next;
@@ -1089,7 +1124,7 @@ export const localStorageAdapter = {
     async exportCsv() {
       const store = readStore();
       const tasks = enrichTasks(store, store.tasks);
-      const headers = ['ID', 'Judul', 'Status Kolom', 'Prioritas', 'Kategori', 'Sprint', 'Tanggal Mulai', 'Tenggat', 'Subtask Selesai', 'Total Subtask', 'Selesai Pada', 'Dibuat Pada'];
+      const headers = ['ID', 'Judul', 'Status Kolom', 'Prioritas', 'Kategori', 'Sprint', 'Tanggal Mulai', 'Tenggat', 'Pengingat (Hari Sebelum)', 'Subtask Selesai', 'Total Subtask', 'Selesai Pada', 'Dibuat Pada'];
       const lines = [headers.map(csvCell).join(',')];
       tasks.forEach((t) => {
         lines.push(
@@ -1102,6 +1137,7 @@ export const localStorageAdapter = {
             t.sprint_name || '',
             t.start_date || '',
             t.due_date || '',
+            t.reminder_days_before ?? '',
             t.subtasks.filter((s) => s.is_completed).length,
             t.subtasks.length,
             t.completed_at || '',

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Input, Textarea } from '../../components/ui/Input.jsx';
 import { Dropdown } from '../../components/ui/Dropdown.jsx';
+import { ReminderField } from '../../components/ui/ReminderField.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { useUiStore } from '../../stores/useUiStore.js';
 import { repo } from '../../services/repositories/index.js';
@@ -21,6 +22,7 @@ const schema = z
     sprint_id: z.string().optional(),
     start_date: z.string().optional(),
     due_date: z.string().optional(),
+    reminder_days_before: z.number().int().min(0).max(60).nullable().optional(),
   })
   .refine(
     (vals) => !vals.start_date || !vals.due_date || vals.due_date >= vals.start_date,
@@ -58,6 +60,13 @@ export function QuickAddTaskModal() {
     enabled: open,
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => repo.settings.get(),
+    enabled: open,
+  });
+
+  const defaultReminderDays = settings?.default_reminder_days ?? 1;
   const defaultTodoCol = columns.find((c) => c.semantic_type === 'todo')?.id || columns[0]?.id || '';
 
   const {
@@ -65,6 +74,7 @@ export function QuickAddTaskModal() {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -77,8 +87,11 @@ export function QuickAddTaskModal() {
       sprint_id: '',
       start_date: '',
       due_date: '',
+      reminder_days_before: 1,
     },
   });
+
+  const watchedDueDate = watch('due_date');
 
   useEffect(() => {
     if (open) {
@@ -91,9 +104,10 @@ export function QuickAddTaskModal() {
         sprint_id: defaults.sprintId || '',
         start_date: '',
         due_date: defaults.dueDate || '',
+        reminder_days_before: defaultReminderDays,
       });
     }
-  }, [open, defaults, defaultTodoCol, reset]);
+  }, [open, defaults, defaultTodoCol, defaultReminderDays, reset]);
 
   const mutation = useMutation({
     mutationFn: (payload) => repo.tasks.create(payload),
@@ -119,6 +133,7 @@ export function QuickAddTaskModal() {
       sprint_id: values.sprint_id || null,
       start_date: values.start_date || null,
       due_date: values.due_date || null,
+      reminder_days_before: values.reminder_days_before === undefined ? defaultReminderDays : values.reminder_days_before,
     });
   }
 
@@ -214,6 +229,19 @@ export function QuickAddTaskModal() {
           <Input label="Tanggal Mulai" type="date" error={errors.start_date?.message} {...register('start_date')} />
           <Input label="Tenggat Waktu (Due Date)" type="date" error={errors.due_date?.message} {...register('due_date')} />
         </div>
+
+        <Controller
+          name="reminder_days_before"
+          control={control}
+          render={({ field }) => (
+            <ReminderField
+              dueDate={watchedDueDate}
+              value={field.value}
+              defaultDays={defaultReminderDays}
+              onChange={field.onChange}
+            />
+          )}
+        />
 
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--color-border)] pt-4 sm:flex-row sm:justify-end">
           <Button variant="outline" onClick={closeQuickAdd}>

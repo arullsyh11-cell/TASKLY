@@ -51,9 +51,9 @@ export function isTaskOverdue(dueDate, semanticType) {
   return dueDate < getTodayIso();
 }
 
-export function daysRemaining(endDateIso) {
+export function daysRemaining(endDateIso, fromDateIso = getTodayIso()) {
   if (!endDateIso) return 0;
-  const today = parseISO(`${getTodayIso()}T00:00:00`);
+  const today = parseISO(`${fromDateIso}T00:00:00`);
   const end = parseISO(`${endDateIso}T00:00:00`);
   return differenceInCalendarDays(end, today);
 }

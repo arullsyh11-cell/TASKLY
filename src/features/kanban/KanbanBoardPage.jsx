@@ -42,10 +42,11 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Dropdown } from '../../components/ui/Dropdown.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
-import { OverdueTag, PriorityBadge, StatusBadge } from '../../components/ui/Badge.jsx';
+import { OverdueTag, PriorityBadge, ReminderTag, StatusBadge } from '../../components/ui/Badge.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog.jsx';
 import { formatDateId, isTaskOverdue } from '../../utils/dateUtils.js';
+import { formatReminderBadgeLabel, resolveTaskReminderDays } from '../../utils/reminderUtils.js';
 
 function TaskCardContent({ task, onOpenDrawer, onOpenMoveSheet, isDragging = false }) {
   const doneSub = (task.subtasks || []).filter((s) => s.is_completed).length;
@@ -65,6 +66,9 @@ function TaskCardContent({ task, onOpenDrawer, onOpenMoveSheet, isDragging = fal
         <div className="flex flex-wrap items-center gap-1.5">
           <PriorityBadge priority={task.priority} />
           {task.category_name && <StatusBadge>{task.category_name}</StatusBadge>}
+          {task.due_date && task.semantic_type !== 'done' && resolveTaskReminderDays(task) !== null && (
+            <ReminderTag label={formatReminderBadgeLabel(resolveTaskReminderDays(task))} />
+          )}
           {overdue && <OverdueTag />}
         </div>
       </div>

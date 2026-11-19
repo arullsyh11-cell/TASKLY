@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowDown,
   ArrowUp,
+  Bell,
   Compass,
   Contrast,
   Download,
@@ -24,8 +26,14 @@ import { Dropdown } from '../../components/ui/Dropdown.jsx';
 import { ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog.jsx';
 import { downloadTextFile } from '../../utils/downloadUtils.js';
-import { formatDurationHuman, getTodayIso } from '../../utils/dateUtils.js';
-import { playFocusChime, requestFocusNotificationPermission } from '../../utils/focusAudio.js';
+import { addDaysIso, formatDateId, formatDurationHuman, getTodayIso } from '../../utils/dateUtils.js';
+import {
+  playFocusChime,
+  playReminderChime,
+  requestFocusNotificationPermission,
+  sendReminderNotification,
+} from '../../utils/focusAudio.js';
+import { REMINDER_PRESET_NUMBERS, clampReminderDays } from '../../utils/reminderUtils.js';
 
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
@@ -37,8 +45,16 @@ export function SettingsPage() {
   const setNavStyle = useUiStore((s) => s.setNavStyle);
   const syncDurations = useTimerStore((s) => s.syncDurationsFromSettings);
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
 
-  const [tab, setTab] = useState('appearance');
+  const [tab, setTab] = useState(() => searchParams.get('tab') || 'appearance');
+
+  useEffect(() => {
+    const qTab = searchParams.get('tab');
+    if (qTab && ['appearance', 'focus', 'workflow', 'account', 'data'].includes(qTab)) {
+      setTab(qTab);
+    }
+  }, [searchParams]);
 
   // Account / Profile Form
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -55,6 +71,9 @@ export function SettingsPage() {
   const [shortBreakMin, setShortBreakMin] = useState(5);
   const [longBreakMin, setLongBreakMin] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [defaultReminderDays, setDefaultReminderDays] = useState(1);
+  const [customDefaultMode, setCustomDefaultMode] = useState(false);
   const [calView, setCalView] = useState('month');
 
   // Workflow & Taxonomy Forms
@@ -99,6 +118,10 @@ export function SettingsPage() {
       setShortBreakMin(settings.pomodoro_short_break_min || 5);
       setLongBreakMin(settings.pomodoro_long_break_min || 15);
       setSoundEnabled(Boolean(settings.sound_enabled));
+      setReminderEnabled(settings.reminder_enabled !== false);
+      const dDays = settings.default_reminder_days ?? 1;
+      setDefaultReminderDays(dDays);
+      setCustomDefaultMode(!REMINDER_PRESET_NUMBERS.has(Number(dDays)));
       setCalView(settings.default_calendar_view || 'month');
     }
   }, [settings]);
@@ -238,7 +261,7 @@ export function SettingsPage() {
 
   const TABS = [
     { id: 'appearance', label: 'Tampilan & Tema' },
-    { id: 'focus', label: 'Focus Timer' },
+    { id: 'focus', label: 'Focus & Pengingat' },
     { id: 'workflow', label: 'Kolom & Taksonomi' },
     { id: 'account', label: isLocalMode ? 'Profil Workspace' : 'Akun & Keamanan' },
     { id: 'data', label: 'Data & Ekspor' },
@@ -483,101 +506,223 @@ export function SettingsPage() {
       )}
 
       {tab === 'focus' && (
-        <section className="max-w-xl rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Preset Durasi Pomodoro</h2>
-          <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-            Nilai default standar adalah 25 menit fokus, 5 menit istirahat pendek, dan 15 menit istirahat panjang.
-          </p>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Preset Durasi Pomodoro</h2>
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+              Nilai default standar adalah 25 menit fokus, 5 menit istirahat pendek, dan 15 menit istirahat panjang.
+            </p>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              updateSettingsMutation.mutate({
-                pomodoro_focus_min: Number(focusMin),
-                pomodoro_short_break_min: Number(shortBreakMin),
-                pomodoro_long_break_min: Number(longBreakMin),
-                sound_enabled: soundEnabled,
-              });
-            }}
-            className="mt-4 space-y-4"
-          >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Input
-                label="Focus (Menit)"
-                type="number"
-                min={1}
-                max={180}
-                value={focusMin}
-                onChange={(e) => setFocusMin(e.target.value)}
-              />
-              <Input
-                label="Short Break (Menit)"
-                type="number"
-                min={1}
-                max={60}
-                value={shortBreakMin}
-                onChange={(e) => setShortBreakMin(e.target.value)}
-              />
-              <Input
-                label="Long Break (Menit)"
-                type="number"
-                min={1}
-                max={90}
-                value={longBreakMin}
-                onChange={(e) => setLongBreakMin(e.target.value)}
-              />
-            </div>
-
-            {/* Settings row matching Screen 3 "Sound" toggle */}
-            <div className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]">
-                  <Volume2 className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">Notifikasi Suara &amp; Nada Dering</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">Bunyikan nada dering &amp; kirim notifikasi saat timer habis.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={soundEnabled}
-                aria-label="Aktifkan suara notifikasi timer"
-                onClick={() => setSoundEnabled((v) => !v)}
-                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                  soundEnabled
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]'
-                    : 'border-[var(--color-border-strong)] bg-[var(--color-surface-subtle)]'
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 rounded-full bg-[var(--color-bg)] shadow-xs transition-transform ${
-                    soundEnabled ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateSettingsMutation.mutate({
+                  pomodoro_focus_min: Number(focusMin),
+                  pomodoro_short_break_min: Number(shortBreakMin),
+                  pomodoro_long_break_min: Number(longBreakMin),
+                  sound_enabled: soundEnabled,
+                });
+              }}
+              className="mt-4 space-y-4"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Input
+                  label="Focus (Menit)"
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={focusMin}
+                  onChange={(e) => setFocusMin(e.target.value)}
                 />
-              </button>
-            </div>
+                <Input
+                  label="Short Break (Menit)"
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={shortBreakMin}
+                  onChange={(e) => setShortBreakMin(e.target.value)}
+                />
+                <Input
+                  label="Long Break (Menit)"
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={longBreakMin}
+                  onChange={(e) => setLongBreakMin(e.target.value)}
+                />
+              </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" isLoading={updateSettingsMutation.isPending} className="rounded-full px-6">
-                Simpan Pengaturan Focus
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={async () => {
-                  playFocusChime();
-                  await requestFocusNotificationPermission();
-                  toast.success('Pratinjau nada dering diputar.');
-                }}
-              >
-                <Volume2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Tes Nada Dering</span>
-              </Button>
-            </div>
-          </form>
-        </section>
+              {/* Settings row matching Screen 3 "Sound" toggle */}
+              <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]">
+                    <Volume2 className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Notifikasi Suara &amp; Nada Dering</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Bunyikan nada dering &amp; kirim notifikasi saat timer habis atau pengingat muncul.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={soundEnabled}
+                  aria-label="Aktifkan suara notifikasi timer"
+                  onClick={() => setSoundEnabled((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                    soundEnabled
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]'
+                      : 'border-[var(--color-border-strong)] bg-[var(--color-surface-subtle)]'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 rounded-full bg-[var(--color-bg)] shadow-xs transition-transform ${
+                      soundEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="submit" isLoading={updateSettingsMutation.isPending} className="rounded-full px-6">
+                  Simpan Pengaturan Focus
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    playFocusChime();
+                    await requestFocusNotificationPermission();
+                    toast.success('Pratinjau nada dering diputar.');
+                  }}
+                >
+                  <Volume2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                  <span>Tes Nada Dering</span>
+                </Button>
+              </div>
+            </form>
+          </section>
+
+          <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Pengingat Deadline (Reminder)</h2>
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+              Atur pengingat otomatis sebelum tanggal deadline tugas (default 1 hari sebelum deadline, atau custom jumlah hari).
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateSettingsMutation.mutate({
+                  reminder_enabled: reminderEnabled,
+                  default_reminder_days: clampReminderDays(defaultReminderDays, 1),
+                });
+              }}
+              className="mt-4 space-y-4"
+            >
+              <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]">
+                    <Bell className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Aktifkan Pengingat Otomatis</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Kirim notifikasi pengingat untuk tugas yang memasuki jadwal pengingat.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={reminderEnabled}
+                  aria-label="Aktifkan pengingat deadline otomatis"
+                  onClick={() => setReminderEnabled((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                    reminderEnabled
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]'
+                      : 'border-[var(--color-border-strong)] bg-[var(--color-surface-subtle)]'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 rounded-full bg-[var(--color-bg)] shadow-xs transition-transform ${
+                      reminderEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
+                <Dropdown
+                  label="Default Hari Pengingat"
+                  value={customDefaultMode ? 'custom' : String(defaultReminderDays)}
+                  onChange={(val) => {
+                    if (val === 'custom') {
+                      setCustomDefaultMode(true);
+                    } else {
+                      setCustomDefaultMode(false);
+                      setDefaultReminderDays(Number(val));
+                    }
+                  }}
+                  options={[
+                    { value: '1', label: '1 hari sebelum (Default)' },
+                    { value: '0', label: 'Hari H (tepat tanggal deadline)' },
+                    { value: '2', label: '2 hari sebelum deadline' },
+                    { value: '3', label: '3 hari sebelum deadline' },
+                    { value: '7', label: '7 hari sebelum deadline' },
+                    { value: 'custom', label: 'Custom jumlah hari...' },
+                  ]}
+                />
+
+                {customDefaultMode && (
+                  <Input
+                    label="Custom Hari Sebelum Deadline"
+                    type="number"
+                    min={0}
+                    max={60}
+                    value={defaultReminderDays}
+                    onChange={(e) => setDefaultReminderDays(clampReminderDays(e.target.value, 1))}
+                  />
+                )}
+              </div>
+
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-xs text-[var(--color-text-secondary)]">
+                <p className="font-semibold text-[var(--color-text-primary)]">Contoh Pesan Notifikasi:</p>
+                <p className="mt-0.5">
+                  &ldquo;Jangan lupa ada tugas yang deadlinenya tanggal{' '}
+                  {formatDateId(addDaysIso(getTodayIso(), Math.max(0, Number(defaultReminderDays || 1))), 'd MMMM yyyy')}
+                  .&rdquo;
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="submit" isLoading={updateSettingsMutation.isPending} className="rounded-full px-6">
+                  Simpan Pengingat
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    const targetDate = formatDateId(
+                      addDaysIso(getTodayIso(), Math.max(0, Number(defaultReminderDays || 1))),
+                      'd MMMM yyyy'
+                    );
+                    const sampleBody = `Jangan lupa ada tugas yang deadlinenya tanggal ${targetDate}.`;
+                    if (soundEnabled) playReminderChime();
+                    await requestFocusNotificationPermission();
+                    sendReminderNotification('Contoh Pengingat Deadline', sampleBody, 'taskly-rem-test');
+                    toast.warning('Contoh Pengingat Deadline', {
+                      description: sampleBody,
+                      duration: 6000,
+                    });
+                  }}
+                >
+                  <Bell className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                  <span>Tes Notifikasi Pengingat</span>
+                </Button>
+              </div>
+            </form>
+          </section>
+        </div>
       )}
 
       {tab === 'workflow' && (

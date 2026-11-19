@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useTimerStore } from '../src/stores/useTimerStore.js';
 import { dateRangeDays, formatDurationHuman, formatSecondsClock, isTaskOverdue } from '../src/utils/dateUtils.js';
+import {
+  evaluateTaskReminders,
+  formatReminderMessage,
+  getTaskReminderDateIso,
+  resolveTaskReminderDays,
+} from '../src/utils/reminderUtils.js';
 
 describe('Focus Timer Store & Date Utilities', () => {
   beforeEach(() => {
@@ -44,6 +50,65 @@ describe('Focus Timer Store & Date Utilities', () => {
     expect(tickRes.finished).toBe(true);
     expect(tickRes.sessionPayload.task_id).toBe('t-1');
     expect(useTimerStore.getState().status).toBe('completed');
+    expect(useTimerStore.getState().islandMode).toBe('expanded');
+
+    useTimerStore.getState().setIslandMode('compact');
+    expect(useTimerStore.getState().islandMode).toBe('compact');
+  });
+
+  it('evaluates H-1 default reminders, custom days before deadline, and natural reminder copy', () => {
+    const todayIso = '2026-11-19';
+    const tomorrowTask = {
+      id: 'rem-1',
+      title: 'Kirim Laporan Sprint',
+      due_date: '2026-11-20',
+      semantic_type: 'todo',
+    };
+    const customTask = {
+      id: 'rem-2',
+      title: 'Presentasi Roadmap',
+      due_date: '2026-11-22',
+      reminder_days_before: 3,
+      semantic_type: 'in_progress',
+    };
+    const futureTask = {
+      id: 'rem-3',
+      title: 'Audit Minggu Depan',
+      due_date: '2026-11-28',
+      reminder_days_before: 2,
+      semantic_type: 'todo',
+    };
+    const disabledTask = {
+      id: 'rem-4',
+      title: 'Tanpa Pengingat',
+      due_date: '2026-11-20',
+      reminder_days_before: null,
+      semantic_type: 'todo',
+    };
+
+    expect(resolveTaskReminderDays(tomorrowTask, 1)).toBe(1);
+    expect(getTaskReminderDateIso('2026-11-22', 3)).toBe('2026-11-19');
+
+    const { dueNow, scheduled } = evaluateTaskReminders(
+      [tomorrowTask, customTask, futureTask, disabledTask],
+      { todayIso, defaultDays: 1 }
+    );
+
+    expect(dueNow.map((x) => x.task.id)).toEqual(['rem-1', 'rem-2']);
+    expect(dueNow[0].badgeLabel).toBe('H-1');
+    expect(dueNow[0].message).toContain('Jangan lupa ada tugas "Kirim Laporan Sprint"');
+    expect(dueNow[0].message).toContain('20 November 2026');
+
+    expect(dueNow[1].badgeLabel).toBe('H-3');
+    expect(dueNow[1].message).toContain('22 November 2026');
+
+    expect(scheduled.length).toBe(1);
+    expect(scheduled[0].task.id).toBe('rem-3');
+    expect(scheduled[0].reminderDateIso).toBe('2026-11-26');
+
+    const todayCopy = formatReminderMessage({ title: 'Demo Client', due_date: '2026-11-19' }, todayIso);
+    expect(todayCopy.urgency).toBe('today');
+    expect(todayCopy.message).toContain('deadlinenya hari ini');
   });
 
   it('formats clocks, durations, date ranges, and overdue flags accurately', () => {

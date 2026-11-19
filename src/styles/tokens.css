@@ -70,6 +70,15 @@
   --radial-node-border: #8c7a6b;
   --radial-node-halo: rgba(213, 196, 174, 0.65);
 
+  /* Focus Dynamic Island Live Activity Tokens (R-01, R-13 themed halo) */
+  --island-bg: #13100e;
+  --island-frame-gradient: linear-gradient(135deg, rgba(232, 141, 72, 0.88) 0%, rgba(107, 74, 46, 0.6) 50%, rgba(213, 196, 174, 0.9) 100%);
+  --island-shadow: 0 20px 44px rgba(26, 18, 14, 0.34), 0 0 26px rgba(168, 132, 98, 0.28);
+  --island-ring-stroke: #e88d48;
+  --island-ring-track: rgba(255, 255, 255, 0.16);
+  --island-pause-bg: rgba(232, 141, 72, 0.25);
+  --island-pause-fg: #f4ad6a;
+
   /* Interactive Focus & Shadow */
   --color-focus-ring: #6b4a2e;
   --shadow-overlay: 0 16px 36px rgba(26, 18, 14, 0.16);
@@ -147,6 +156,15 @@
   --radial-node-bg: #1f1f1f;
   --radial-node-border: #8a8a8a;
   --radial-node-halo: rgba(255, 255, 255, 0.14);
+
+  /* Focus Dynamic Island Live Activity Tokens (Monochrome silver rim) */
+  --island-bg: #0c0c0c;
+  --island-frame-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(128, 128, 128, 0.36) 50%, rgba(255, 255, 255, 0.62) 100%);
+  --island-shadow: 0 20px 48px rgba(0, 0, 0, 0.78), 0 0 24px rgba(255, 255, 255, 0.16);
+  --island-ring-stroke: #ffffff;
+  --island-ring-track: rgba(255, 255, 255, 0.18);
+  --island-pause-bg: rgba(255, 255, 255, 0.2);
+  --island-pause-fg: #ffffff;
 
   /* Interactive Focus & Shadow */
   --color-focus-ring: #ffffff;

@@ -2,7 +2,8 @@ import express from 'express';
 import crypto from 'node:crypto';
 import { addDaysIso, getLocalTodayIso, logActivity, queryEnrichedTasks, sendError, withTransaction } from '../helpers.js';
 
-const VALID_THEMES = new Set(['dark', 'light']);
+const VALID_THEMES = new Set(['dark', 'light', 'monochrome']);
+const VALID_NAV_STYLES = new Set(['radial', 'sidebar']);
 const VALID_CAL_VIEWS = new Set(['month', 'week', 'day']);
 
 function csvCell(val) {
@@ -23,6 +24,8 @@ export function createSettingsRouter(db) {
       settings: {
         ...row,
         sound_enabled: Boolean(row.sound_enabled),
+        reminder_enabled: row.reminder_enabled !== undefined ? Boolean(row.reminder_enabled) : true,
+        default_reminder_days: row.default_reminder_days ?? 1,
       },
     });
   });
@@ -32,6 +35,7 @@ export function createSettingsRouter(db) {
     if (!current) return sendError(res, 404, 'NOT_FOUND', 'Pengaturan tidak ditemukan.');
 
     const theme = req.body?.theme !== undefined ? String(req.body.theme) : current.theme;
+    const navStyle = req.body?.nav_style !== undefined ? String(req.body.nav_style) : current.nav_style || 'radial';
     const focusMin =
       req.body?.pomodoro_focus_min !== undefined
         ? Number(req.body.pomodoro_focus_min)
@@ -46,6 +50,16 @@ export function createSettingsRouter(db) {
         : current.pomodoro_long_break_min;
     const soundEnabled =
       req.body?.sound_enabled !== undefined ? (req.body.sound_enabled ? 1 : 0) : current.sound_enabled;
+    const reminderEnabled =
+      req.body?.reminder_enabled !== undefined
+        ? req.body.reminder_enabled
+          ? 1
+          : 0
+        : current.reminder_enabled ?? 1;
+    const defaultReminderDays =
+      req.body?.default_reminder_days !== undefined
+        ? Number(req.body.default_reminder_days)
+        : current.default_reminder_days ?? 1;
     const defaultCalView =
       req.body?.default_calendar_view !== undefined
         ? String(req.body.default_calendar_view)
@@ -53,6 +67,18 @@ export function createSettingsRouter(db) {
 
     if (!VALID_THEMES.has(theme)) {
       return sendError(res, 400, 'VALIDATION_ERROR', 'Tema tidak valid.', 'theme');
+    }
+    if (!VALID_NAV_STYLES.has(navStyle)) {
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Gaya navigasi tidak valid.', 'nav_style');
+    }
+    if (!Number.isInteger(defaultReminderDays) || defaultReminderDays < 0 || defaultReminderDays > 60) {
+      return sendError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'Hari default pengingat harus antara 0 sampai 60 hari.',
+        'default_reminder_days'
+      );
     }
     if (!Number.isInteger(focusMin) || focusMin < 1 || focusMin > 180) {
       return sendError(res, 400, 'VALIDATION_ERROR', 'Durasi fokus harus antara 1 sampai 180 menit.', 'pomodoro_focus_min');
@@ -82,13 +108,31 @@ export function createSettingsRouter(db) {
     const now = new Date().toISOString();
     db.prepare(`
       UPDATE user_settings
-      SET theme = ?, pomodoro_focus_min = ?, pomodoro_short_break_min = ?, pomodoro_long_break_min = ?,
-          sound_enabled = ?, default_calendar_view = ?, updated_at = ?
+      SET theme = ?, nav_style = ?, pomodoro_focus_min = ?, pomodoro_short_break_min = ?, pomodoro_long_break_min = ?,
+          sound_enabled = ?, reminder_enabled = ?, default_reminder_days = ?, default_calendar_view = ?, updated_at = ?
       WHERE user_id = ?
-    `).run(theme, focusMin, shortBreakMin, longBreakMin, soundEnabled, defaultCalView, now, req.user.id);
+    `).run(
+      theme,
+      navStyle,
+      focusMin,
+      shortBreakMin,
+      longBreakMin,
+      soundEnabled,
+      reminderEnabled,
+      defaultReminderDays,
+      defaultCalView,
+      now,
+      req.user.id
+    );
 
     const updated = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(req.user.id);
-    res.json({ settings: { ...updated, sound_enabled: Boolean(updated.sound_enabled) } });
+    res.json({
+      settings: {
+        ...updated,
+        sound_enabled: Boolean(updated.sound_enabled),
+        reminder_enabled: Boolean(updated.reminder_enabled),
+      },
+    });
   });
 
   router.get('/export/json', (req, res) => {

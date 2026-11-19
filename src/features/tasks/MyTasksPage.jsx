@@ -8,10 +8,11 @@ import { useUiStore } from '../../stores/useUiStore.js';
 import { useTimerStore } from '../../stores/useTimerStore.js';
 import { Button } from '../../components/ui/Button.jsx';
 import { Dropdown } from '../../components/ui/Dropdown.jsx';
-import { OverdueTag, PriorityBadge, StatusBadge } from '../../components/ui/Badge.jsx';
+import { OverdueTag, PriorityBadge, ReminderTag, StatusBadge } from '../../components/ui/Badge.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog.jsx';
 import { formatDateId, isTaskOverdue } from '../../utils/dateUtils.js';
+import { formatReminderBadgeLabel, resolveTaskReminderDays } from '../../utils/reminderUtils.js';
 
 export function MyTasksPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -429,6 +430,9 @@ export function MyTasksPage() {
                           <span className="text-[var(--color-text-secondary)]">
                             {task.due_date ? formatDateId(task.due_date) : 'Tanpa tenggat'}
                           </span>
+                          {task.due_date && task.semantic_type !== 'done' && resolveTaskReminderDays(task) !== null && (
+                            <ReminderTag label={formatReminderBadgeLabel(resolveTaskReminderDays(task))} />
+                          )}
                           {overdue && <OverdueTag />}
                         </div>
                       </td>
@@ -480,6 +484,9 @@ export function MyTasksPage() {
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         <PriorityBadge priority={task.priority} />
                         <StatusBadge>{task.column_name}</StatusBadge>
+                        {task.due_date && task.semantic_type !== 'done' && resolveTaskReminderDays(task) !== null && (
+                          <ReminderTag label={formatReminderBadgeLabel(resolveTaskReminderDays(task))} />
+                        )}
                         {overdue && <OverdueTag />}
                       </div>
                     </div>

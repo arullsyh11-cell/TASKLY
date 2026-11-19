@@ -28,7 +28,21 @@ describe('TASKLY LocalStorage Adapter', () => {
     const cols = await localStorageAdapter.columns.list();
     const doneCol = cols.find((c) => c.semantic_type === 'done');
 
-    const task = await localStorageAdapter.tasks.create({ title: 'Selesaikan modul lokal', priority: 'high' });
+    const task = await localStorageAdapter.tasks.create({
+      title: 'Selesaikan modul lokal',
+      priority: 'high',
+      due_date: '2026-11-25',
+      reminder_days_before: 3,
+    });
+    expect(task.reminder_days_before).toBe(3);
+
+    await localStorageAdapter.settings.update({ default_reminder_days: 2, reminder_enabled: true });
+    const defaultRemTask = await localStorageAdapter.tasks.create({
+      title: 'Tugas ikuti default',
+      due_date: '2026-11-28',
+    });
+    expect(defaultRemTask.reminder_days_before).toBe(2);
+
     await localStorageAdapter.tasks.addSubtask(task.id, 'Cek simpanan browser');
 
     const sprint = await localStorageAdapter.sprints.create({
@@ -61,9 +75,10 @@ describe('TASKLY LocalStorage Adapter', () => {
 
     const exportedJson = await localStorageAdapter.settings.exportJson();
     expect(exportedJson.storage_mode).toBe('localStorage');
-    expect(exportedJson.tasks.length).toBe(1);
+    expect(exportedJson.tasks.length).toBe(2);
 
     const exportedCsv = await localStorageAdapter.settings.exportCsv();
     expect(exportedCsv).toContain('Selesaikan modul lokal');
+    expect(exportedCsv).toContain('Pengingat');
   });
 });

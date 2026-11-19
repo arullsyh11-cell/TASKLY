@@ -487,7 +487,7 @@ export const supabaseAdapter = {
     },
     async exportCsv() {
       const tasks = await supabaseAdapter.tasks.list();
-      return ['Judul,Status,Prioritas,Tenggat', ...tasks.map((t) => `"${t.title}",${t.column_name},${t.priority},${t.due_date || ''}`)].join('\n');
+      return ['Judul,Status,Prioritas,Tenggat,Pengingat', ...tasks.map((t) => `"${t.title}",${t.column_name},${t.priority},${t.due_date || ''},${t.reminder_days_before ?? ''}`)].join('\n');
     },
     async seedSampleWorkspace() {
       throw new Error('Gunakan pembuatan tugas & sprint langsung pada workspace Supabase.');

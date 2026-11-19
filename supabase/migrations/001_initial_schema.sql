@@ -16,11 +16,14 @@ CREATE TABLE IF NOT EXISTS public.users (
 -- 2. User Settings
 CREATE TABLE IF NOT EXISTS public.user_settings (
   user_id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
-  theme text NOT NULL DEFAULT 'dark' CHECK (theme IN ('dark', 'light')),
+  theme text NOT NULL DEFAULT 'light' CHECK (theme IN ('dark', 'light', 'monochrome')),
+  nav_style text NOT NULL DEFAULT 'radial' CHECK (nav_style IN ('radial', 'sidebar')),
   pomodoro_focus_min int NOT NULL DEFAULT 25 CHECK (pomodoro_focus_min BETWEEN 1 AND 180),
   pomodoro_short_break_min int NOT NULL DEFAULT 5 CHECK (pomodoro_short_break_min BETWEEN 1 AND 60),
   pomodoro_long_break_min int NOT NULL DEFAULT 15 CHECK (pomodoro_long_break_min BETWEEN 1 AND 90),
   sound_enabled boolean NOT NULL DEFAULT true,
+  reminder_enabled boolean NOT NULL DEFAULT true,
+  default_reminder_days int NOT NULL DEFAULT 1 CHECK (default_reminder_days BETWEEN 0 AND 60),
   default_calendar_view text NOT NULL DEFAULT 'month' CHECK (default_calendar_view IN ('month', 'week', 'day')),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -84,6 +87,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   priority text NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
   start_date date,
   due_date date,
+  reminder_days_before int DEFAULT 1 CHECK (reminder_days_before IS NULL OR (reminder_days_before BETWEEN 0 AND 60)),
   position_in_column double precision NOT NULL DEFAULT 1000,
   completed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),

@@ -26,11 +26,14 @@ export function createDatabase(dbPath = './data/taskly.db') {
 
     CREATE TABLE IF NOT EXISTS user_settings (
       user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-      theme TEXT NOT NULL DEFAULT 'dark' CHECK (theme IN ('dark', 'light')),
+      theme TEXT NOT NULL DEFAULT 'light' CHECK (theme IN ('dark', 'light', 'monochrome')),
+      nav_style TEXT NOT NULL DEFAULT 'radial' CHECK (nav_style IN ('radial', 'sidebar')),
       pomodoro_focus_min INTEGER NOT NULL DEFAULT 25 CHECK (pomodoro_focus_min BETWEEN 1 AND 180),
       pomodoro_short_break_min INTEGER NOT NULL DEFAULT 5 CHECK (pomodoro_short_break_min BETWEEN 1 AND 60),
       pomodoro_long_break_min INTEGER NOT NULL DEFAULT 15 CHECK (pomodoro_long_break_min BETWEEN 1 AND 90),
       sound_enabled INTEGER NOT NULL DEFAULT 1,
+      reminder_enabled INTEGER NOT NULL DEFAULT 1,
+      default_reminder_days INTEGER NOT NULL DEFAULT 1 CHECK (default_reminder_days BETWEEN 0 AND 60),
       default_calendar_view TEXT NOT NULL DEFAULT 'month' CHECK (default_calendar_view IN ('month', 'week', 'day')),
       updated_at TEXT NOT NULL
     );
@@ -90,6 +93,7 @@ export function createDatabase(dbPath = './data/taskly.db') {
       priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
       start_date TEXT,
       due_date TEXT,
+      reminder_days_before INTEGER DEFAULT 1 CHECK (reminder_days_before IS NULL OR (reminder_days_before BETWEEN 0 AND 60)),
       position_in_column REAL NOT NULL DEFAULT 1000,
       completed_at TEXT,
       created_at TEXT NOT NULL,
@@ -153,6 +157,22 @@ export function createDatabase(dbPath = './data/taskly.db') {
     CREATE INDEX IF NOT EXISTS idx_activity_user_created ON activity_logs (user_id, created_at DESC);
   `);
 
+  // Safe incremental column migrations for pre-existing local SQLite databases
+  const taskCols = new Set(db.prepare('PRAGMA table_info(tasks)').all().map((c) => c.name));
+  if (!taskCols.has('reminder_days_before')) {
+    db.exec('ALTER TABLE tasks ADD COLUMN reminder_days_before INTEGER DEFAULT 1');
+  }
+  const settingCols = new Set(db.prepare('PRAGMA table_info(user_settings)').all().map((c) => c.name));
+  if (!settingCols.has('default_reminder_days')) {
+    db.exec('ALTER TABLE user_settings ADD COLUMN default_reminder_days INTEGER NOT NULL DEFAULT 1');
+  }
+  if (!settingCols.has('reminder_enabled')) {
+    db.exec('ALTER TABLE user_settings ADD COLUMN reminder_enabled INTEGER NOT NULL DEFAULT 1');
+  }
+  if (!settingCols.has('nav_style')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN nav_style TEXT NOT NULL DEFAULT 'radial'");
+  }
+
   return db;
 }
 
@@ -160,9 +180,9 @@ export function bootstrapUserDefaults(db, userId) {
   const now = new Date().toISOString();
   db.prepare(`
     INSERT OR IGNORE INTO user_settings (
-      user_id, theme, pomodoro_focus_min, pomodoro_short_break_min, pomodoro_long_break_min,
-      sound_enabled, default_calendar_view, updated_at
-    ) VALUES (?, 'dark', 25, 5, 15, 1, 'month', ?)
+      user_id, theme, nav_style, pomodoro_focus_min, pomodoro_short_break_min, pomodoro_long_break_min,
+      sound_enabled, reminder_enabled, default_reminder_days, default_calendar_view, updated_at
+    ) VALUES (?, 'light', 'radial', 25, 5, 15, 1, 1, 1, 'month', ?)
   `).run(userId, now);
 
   const existingCols = db.prepare('SELECT COUNT(*) AS cnt FROM kanban_columns WHERE user_id = ?').get(userId);

@@ -80,13 +80,29 @@ describe('TASKLY Backend API & Data Isolation', () => {
     expect(custom.status).toBe(201);
     const customId = custom.data.column.id;
 
-    // Create task in custom column
+    // Create task in custom column with custom reminder days
     const taskRes = await req('/api/tasks', {
       method: 'POST',
       token: tokenA,
-      body: { title: 'Verifikasi Staging', column_id: customId, priority: 'high' },
+      body: {
+        title: 'Verifikasi Staging',
+        column_id: customId,
+        priority: 'high',
+        due_date: '2026-11-25',
+        reminder_days_before: 4,
+      },
     });
     expect(taskRes.status).toBe(201);
+    expect(taskRes.data.task.reminder_days_before).toBe(4);
+
+    // Update default reminder days in settings
+    const setRes = await req('/api/settings', {
+      method: 'PATCH',
+      token: tokenA,
+      body: { default_reminder_days: 2, reminder_enabled: true },
+    });
+    expect(setRes.status).toBe(200);
+    expect(setRes.data.settings.default_reminder_days).toBe(2);
 
     // Deleting without targetColumnId must be blocked
     const delFail = await req(`/api/columns/${customId}`, { method: 'DELETE', token: tokenA });

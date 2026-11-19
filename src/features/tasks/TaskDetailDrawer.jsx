@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Drawer } from '../../components/ui/Modal.jsx';
 import { Input, Textarea } from '../../components/ui/Input.jsx';
 import { Dropdown } from '../../components/ui/Dropdown.jsx';
+import { ReminderField } from '../../components/ui/ReminderField.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog.jsx';
@@ -31,6 +32,7 @@ export function TaskDetailDrawer() {
   const [sprintId, setSprintId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [reminderDaysBefore, setReminderDaysBefore] = useState(1);
   const [selectedLabelIds, setSelectedLabelIds] = useState([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newLabelName, setNewLabelName] = useState('');
@@ -73,6 +75,14 @@ export function TaskDetailDrawer() {
     enabled: Boolean(activeTaskId),
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => repo.settings.get(),
+    enabled: Boolean(activeTaskId),
+  });
+
+  const defaultReminderDays = settings?.default_reminder_days ?? 1;
+
   useEffect(() => {
     if (task) {
       setTitle(task.title || '');
@@ -83,10 +93,13 @@ export function TaskDetailDrawer() {
       setSprintId(task.sprint_id || '');
       setStartDate(task.start_date || '');
       setDueDate(task.due_date || '');
+      setReminderDaysBefore(
+        task.reminder_days_before === undefined ? defaultReminderDays : task.reminder_days_before
+      );
       setSelectedLabelIds((task.labels || []).map((l) => l.id));
       setDateError('');
     }
-  }, [task]);
+  }, [task, defaultReminderDays]);
 
   function invalidateAll() {
     queryClient.invalidateQueries({ queryKey: ['task', activeTaskId] });
@@ -170,6 +183,7 @@ export function TaskDetailDrawer() {
       sprint_id: sprintId || null,
       start_date: startDate || null,
       due_date: dueDate || null,
+      reminder_days_before: reminderDaysBefore,
       label_ids: selectedLabelIds,
     });
   }
@@ -290,6 +304,13 @@ export function TaskDetailDrawer() {
                   error={dateError}
                 />
               </div>
+
+              <ReminderField
+                dueDate={dueDate}
+                value={reminderDaysBefore}
+                defaultDays={defaultReminderDays}
+                onChange={setReminderDaysBefore}
+              />
 
               {/* Labels multi-select */}
               <div className="space-y-2">

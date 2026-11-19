@@ -42,6 +42,33 @@ export function playFocusChime() {
   }
 }
 
+export function playReminderChime() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [587.33, 880];
+    notes.forEach((freq, idx) => {
+      const startAt = now + idx * 0.14;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startAt);
+
+      gain.gain.setValueAtTime(0.001, startAt);
+      gain.gain.exponentialRampToValueAtTime(0.11, startAt + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startAt);
+      osc.stop(startAt + 0.5);
+    });
+  } catch {
+    // Ignore autoplay blocks gracefully
+  }
+}
+
 export function stopFocusRingtone() {
   if (activeRingInterval !== null) {
     clearInterval(activeRingInterval);
@@ -101,14 +128,14 @@ export async function requestFocusNotificationPermission() {
   }
 }
 
-export function sendFocusNotification(title, body) {
+export function sendFocusNotification(title, body, tag = 'taskly-focus-complete') {
   if (typeof window === 'undefined' || !('Notification' in window)) return false;
   if (Notification.permission !== 'granted') return false;
   try {
     const n = new Notification(title, {
       body,
-      icon: '/favicon.svg',
-      tag: 'taskly-focus-complete',
+      icon: '/icon-192.png',
+      tag,
     });
     n.onclick = () => {
       window.focus?.();
@@ -118,4 +145,8 @@ export function sendFocusNotification(title, body) {
   } catch {
     return false;
   }
+}
+
+export function sendReminderNotification(title, body, tag = 'taskly-deadline-reminder') {
+  return sendFocusNotification(title, body, tag);
 }

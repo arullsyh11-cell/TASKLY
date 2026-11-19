@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { cleanup, render, screen, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { EmptyState, ErrorState, LoadingState } from '../src/components/ui/States.jsx';
 import { Modal } from '../src/components/ui/Modal.jsx';
@@ -7,7 +7,10 @@ import { Input } from '../src/components/ui/Input.jsx';
 import { Dropdown } from '../src/components/ui/Dropdown.jsx';
 import { LoginPage } from '../src/features/auth/AuthPages.jsx';
 import { TasklyLogo } from '../src/components/brand/TasklyLogo.jsx';
+import { ReminderField } from '../src/components/ui/ReminderField.jsx';
+import { FocusExpandedPopup } from '../src/features/focus/FocusDynamicIsland.jsx';
 import { App } from '../src/app/App.jsx';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../src/stores/useAuthStore.js';
 
 afterEach(() => {
@@ -123,5 +126,45 @@ describe('TASKLY UI Components & States', () => {
     useTimerStore.getState().setRinging(true);
     useTimerStore.getState().reset();
     expect(useTimerStore.getState().isRinging).toBe(false);
+  });
+
+  it('supports default H-1 and custom reminder days in ReminderField', () => {
+    const onChange = vi.fn();
+    render(<ReminderField dueDate="2026-11-25" value={1} defaultDays={1} onChange={onChange} />);
+
+    const trigger = screen.getByRole('combobox', { name: /Pengingat Deadline/i });
+    expect(trigger).toHaveTextContent('1 hari sebelum deadline (Default)');
+
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('option', { name: /Custom jumlah hari/i }));
+
+    const numInput = screen.getByLabelText(/Custom Hari Sebelum Deadline/i);
+    fireEvent.change(numInput, { target: { value: '5' } });
+    expect(onChange).toHaveBeenCalledWith(5);
+  });
+
+  it('renders FocusExpandedPopup when timer runs and minimizes on Escape', async () => {
+    const { useTimerStore } = await import('../src/stores/useTimerStore.js');
+    useTimerStore.getState().selectTask('t-focus', 'Review Desain UI');
+    useTimerStore.getState().start();
+
+    const qc = new QueryClient();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/dashboard']}>
+          <FocusExpandedPopup />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole('region', { name: 'Popup timer Focus Mode' })).toBeInTheDocument();
+    expect(screen.getByText(/Sedang fokus: Review Desain UI/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Buka Fokus/i })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(useTimerStore.getState().islandMode).toBe('compact');
+    act(() => {
+      useTimerStore.getState().reset();
+    });
   });
 });

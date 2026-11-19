@@ -18,6 +18,14 @@ function normalizeDate(val) {
   return s;
 }
 
+function normalizeReminderDays(val, fallback) {
+  if (val === undefined) return fallback;
+  if (val === null || val === '') return null;
+  const num = Number(val);
+  if (!Number.isInteger(num) || num < 0 || num > 60) return undefined;
+  return num;
+}
+
 export function createTasksRouter(db) {
   const router = express.Router();
 
@@ -98,6 +106,10 @@ export function createTasksRouter(db) {
     const priority = req.body?.priority ? String(req.body.priority) : 'medium';
     const startDate = normalizeDate(req.body?.start_date ?? req.body?.startDate);
     const dueDate = normalizeDate(req.body?.due_date ?? req.body?.dueDate);
+    const userSettings = db.prepare('SELECT default_reminder_days FROM user_settings WHERE user_id = ?').get(req.user.id);
+    const defaultReminderDays = userSettings?.default_reminder_days ?? 1;
+    const rawReminder = req.body?.reminder_days_before ?? req.body?.reminderDaysBefore;
+    const reminderDaysBefore = normalizeReminderDays(rawReminder, defaultReminderDays);
 
     if (!title || title.length > 160) {
       return sendError(res, 400, 'VALIDATION_ERROR', 'Judul tugas wajib diisi (maks. 160 karakter).', 'title');
@@ -110,6 +122,15 @@ export function createTasksRouter(db) {
     }
     if (dueDate === undefined) {
       return sendError(res, 400, 'VALIDATION_ERROR', 'Format tenggat waktu tidak valid (YYYY-MM-DD).', 'due_date');
+    }
+    if (reminderDaysBefore === undefined) {
+      return sendError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'Hari pengingat harus berupa bilangan bulat antara 0 sampai 60 hari.',
+        'reminder_days_before'
+      );
     }
     if (startDate && dueDate && dueDate < startDate) {
       return sendError(
@@ -177,9 +198,9 @@ export function createTasksRouter(db) {
       db.prepare(`
         INSERT INTO tasks (
           id, user_id, column_id, category_id, sprint_id, assignee_id,
-          title, description, priority, start_date, due_date,
+          title, description, priority, start_date, due_date, reminder_days_before,
           position_in_column, completed_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         taskId,
         req.user.id,
@@ -192,6 +213,7 @@ export function createTasksRouter(db) {
         priority,
         startDate,
         dueDate,
+        reminderDaysBefore,
         position,
         completedAt,
         now,
@@ -331,9 +353,22 @@ export function createTasksRouter(db) {
       req.body?.due_date !== undefined || req.body?.dueDate !== undefined
         ? normalizeDate(req.body.due_date ?? req.body.dueDate)
         : existing.due_date;
+    const reminderDaysBefore =
+      req.body?.reminder_days_before !== undefined || req.body?.reminderDaysBefore !== undefined
+        ? normalizeReminderDays(req.body.reminder_days_before ?? req.body.reminderDaysBefore, existing.reminder_days_before)
+        : existing.reminder_days_before;
 
     if (startDate === undefined || dueDate === undefined) {
       return sendError(res, 400, 'VALIDATION_ERROR', 'Format tanggal tidak valid (YYYY-MM-DD).');
+    }
+    if (reminderDaysBefore === undefined) {
+      return sendError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'Hari pengingat harus berupa bilangan bulat antara 0 sampai 60 hari.',
+        'reminder_days_before'
+      );
     }
     if (startDate && dueDate && dueDate < startDate) {
       return sendError(
@@ -400,7 +435,7 @@ export function createTasksRouter(db) {
       db.prepare(`
         UPDATE tasks
         SET title = ?, description = ?, priority = ?, column_id = ?, category_id = ?, sprint_id = ?,
-            start_date = ?, due_date = ?, position_in_column = ?, completed_at = ?, updated_at = ?
+            start_date = ?, due_date = ?, reminder_days_before = ?, position_in_column = ?, completed_at = ?, updated_at = ?
         WHERE id = ? AND user_id = ?
       `).run(
         title,
@@ -411,6 +446,7 @@ export function createTasksRouter(db) {
         sprintId,
         startDate,
         dueDate,
+        reminderDaysBefore,
         positionInColumn,
         completedAt,
         now,

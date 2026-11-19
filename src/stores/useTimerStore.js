@@ -81,6 +81,11 @@ export const useTimerStore = create((set, get) => ({
   selectedTaskTitle: saved?.selectedTaskTitle || 'Fokus Umum',
   pendingSync: loadPendingSync(),
   isRinging: false,
+  islandMode: 'compact', // 'compact' | 'expanded'
+
+  setIslandMode(nextMode) {
+    set({ islandMode: nextMode === 'expanded' ? 'expanded' : 'compact' });
+  },
 
   setRinging(val) {
     set({ isRinging: Boolean(val) });
@@ -162,6 +167,7 @@ export const useTimerStore = create((set, get) => ({
       targetEndMs: now + sec * 1000,
       startedAtIso: state.startedAtIso || new Date(now).toISOString(),
       isRinging: false,
+      islandMode: 'expanded',
     };
     set(patch);
     saveTimer({ ...get(), ...patch });
@@ -202,6 +208,7 @@ export const useTimerStore = create((set, get) => ({
       targetEndMs: null,
       startedAtIso: null,
       isRinging: false,
+      islandMode: 'compact',
     };
     set(patch);
     saveTimer({ ...get(), ...patch });
@@ -216,6 +223,7 @@ export const useTimerStore = create((set, get) => ({
         remainingSec: 0,
         status: 'completed',
         targetEndMs: null,
+        islandMode: 'expanded',
       };
       set(patch);
       saveTimer({ ...get(), ...patch });

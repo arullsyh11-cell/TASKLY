@@ -56,27 +56,49 @@ async function run() {
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_desktop_empty_light.png') });
     results.push('Direct Entry: opens straight to /dashboard with Light Workspace default and clean empty state');
 
-    // 2. Quick Add Task using custom Dropdown
+    // 2. Quick Add Task using custom Dropdown & Tomorrow's deadline (triggers default H-1 Reminder)
     await page.getByRole('button', { name: /Quick Add Task/i }).click();
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const tomorrowLocal = await page.evaluate(() => {
+      const dt = new Date();
+      dt.setDate(dt.getDate() + 1);
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const d = String(dt.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    });
     await page.getByLabel('Judul Tugas').fill('Finalisasi integrasi Sprint & Kanban');
     await page.getByRole('combobox', { name: 'Prioritas' }).click();
     await page.getByRole('option', { name: 'High' }).click();
-    await page.getByLabel('Tenggat Waktu (Due Date)').fill(todayIso);
+    await page.getByLabel('Tenggat Waktu (Due Date)').fill(tomorrowLocal);
     await page.getByRole('button', { name: /Simpan Tugas/i }).click();
     await page.getByText('Finalisasi integrasi Sprint & Kanban').first().waitFor({ state: 'visible' });
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_dashboard_light.png') });
-    results.push('Dashboard Quick Add: custom Priority dropdown selects High and updates dashboard rings');
 
-    // 3. Task Detail Drawer + Subtask + Custom Dropdown + Escape
+    // Verify H-1 Reminder Notification Banner + Top Bar Bell Menu immediately triggers
+    await page.getByRole('region', { name: 'Pengingat deadline aktif' }).waitFor({ state: 'visible' });
+    await page.getByText(/Jangan lupa ada tugas "Finalisasi integrasi Sprint & Kanban"/i).first().waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: /Pengingat deadline/i }).click();
+    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'visible' });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_reminder_bell_desktop.png') });
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'detached' });
+
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_dashboard_light.png') });
+    results.push('Dashboard Quick Add + H-1 Reminder: default H-1 reminder triggers banner, toast & Bell dialog cleanly');
+
+    // 3. Task Detail Drawer + Subtask + Custom Reminder Days + Escape
     await page.getByRole('button', { name: 'Finalisasi integrasi Sprint & Kanban', exact: true }).first().click();
     await page.getByRole('dialog').waitFor({ state: 'visible' });
+    await page.getByRole('combobox', { name: /Pengingat Deadline/i }).click();
+    await page.getByRole('option', { name: /Custom jumlah hari/i }).click();
+    await page.getByLabel(/Custom Hari Sebelum Deadline/i).fill('2');
+    await page.getByRole('button', { name: /Simpan Perubahan/i }).click();
+    await page.getByText('Perubahan tugas disimpan.').first().waitFor({ state: 'visible' });
     await page.getByLabel('Tambah langkah subtask baru').fill('Uji dropdown & layout baru');
     await page.getByRole('button', { name: /^Tambah$/i }).click();
     await page.getByText('Uji dropdown & layout baru').waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
     await page.getByRole('dialog').waitFor({ state: 'detached' });
-    results.push('Task Detail Drawer: custom dropdowns, subtask added, closed cleanly with Escape');
+    results.push('Task Detail Drawer: custom reminder days saved, subtask added, closed cleanly with Escape');
 
     async function openRadialAndNavigate(label, screenshotName) {
       await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
@@ -128,16 +150,31 @@ async function run() {
     await page.getByText('Sisa tugas sprint terhadap target harian').waitFor({ state: 'visible' });
     results.push('Sprint Management: creates sprint, starts sprint, assigns task, renders Burndown');
 
-    // 7. Focus Mode with searchable custom dropdown + alert test
+    // 7. Focus Mode with searchable custom dropdown + Dynamic Island Live Popup (Image 1 & 2) + alert test
     await openRadialAndNavigate('Focus Mode');
     await page.waitForURL('**/focus');
     await page.getByRole('combobox', { name: /Tugas yang Dikerjakan/i }).click();
     await page.getByRole('option', { name: /Finalisasi integrasi Sprint & Kanban/i }).click();
     await page.getByRole('button', { name: /Tes Notif|Tes Nada/i }).click();
     await page.getByRole('button', { name: /Mulai Timer/i }).click();
-    await page.getByRole('button', { name: /Jeda/i }).waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: /Reset/i }).click();
-    results.push('Focus Mode: searchable custom task dropdown, ringtone/notif preview, Start/Reset work cleanly');
+
+    const focusPopup = page.getByRole('region', { name: 'Popup timer Focus Mode' });
+    await focusPopup.waitFor({ state: 'visible' });
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_expanded_light.png') });
+    await focusPopup.getByRole('button', { name: 'Pause sesi fokus' }).click();
+    await focusPopup.getByRole('button', { name: 'Resume sesi fokus' }).waitFor({ state: 'visible' });
+    await focusPopup.getByRole('button', { name: 'Sembunyikan popup timer' }).click();
+    await focusPopup.waitFor({ state: 'detached' });
+
+    const pillCount = await page.getByRole('button', { name: /Buka popup Dynamic Focus Timer/i }).count();
+    assert(pillCount === 0, 'Compact navbar capsule pill should be removed cleanly');
+
+    await page.getByRole('button', { name: /Tampilkan Popup/i }).click();
+    await focusPopup.waitFor({ state: 'visible' });
+    await focusPopup.getByRole('button', { name: 'Hentikan timer fokus' }).click();
+    await focusPopup.waitFor({ state: 'detached' });
+    results.push('Focus Mode: Focus popup opens on start, pauses/resumes, hides/reopens cleanly without header capsule pill');
 
     // 8. Calendar
     await openRadialAndNavigate('Calendar');
@@ -166,6 +203,9 @@ async function run() {
     await page.getByRole('tab', { name: /Profil Workspace/i }).click();
     await page.getByLabel('Nama Tampilan').fill('Raka');
     await page.getByRole('button', { name: /Simpan Profil/i }).click();
+    await page.getByRole('tab', { name: /Focus & Pengingat/i }).click();
+    await page.getByRole('button', { name: /Tes Notifikasi Pengingat/i }).click();
+    await page.getByText(/Contoh Pengingat Deadline/i).first().waitFor({ state: 'visible' });
     await page.getByRole('tab', { name: /Tampilan & Tema/i }).click();
     await page.getByRole('button', { name: /Tema 2: Monochrome/i }).click();
 
@@ -196,6 +236,16 @@ async function run() {
     await page.getByRole('button', { name: 'Tutup menu navigasi' }).click();
     await drawerDialog.waitFor({ state: 'detached' });
 
+    // Verify FocusExpandedPopup in Monochrome on Mobile 375px
+    await page.goto(`${baseUrl}/focus`, { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: /Mulai Timer/i }).click();
+    await page.getByRole('region', { name: 'Popup timer Focus Mode' }).waitFor({ state: 'visible' });
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_mobile_mono.png') });
+    await page.getByRole('button', { name: 'Hentikan timer fokus' }).click();
+    await page.getByRole('region', { name: 'Popup timer Focus Mode' }).waitFor({ state: 'detached' });
+
+    await page.goto(`${baseUrl}/settings`, { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /Tema 1: Light Workspace/i }).click();
     await page.waitForTimeout(150);
 
@@ -217,6 +267,13 @@ async function run() {
     const overflowDash = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowDash, 'Mobile Dashboard must not horizontally overflow 375px viewport');
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_mobile_dashboard_light.png') });
+
+    // Mobile Bell Menu check without horizontal overflow
+    await page.getByRole('button', { name: /Pengingat deadline/i }).click();
+    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'visible' });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_reminder_bell_mobile.png') });
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'detached' });
 
     // Verify Compact Radial Sidebar in Light Workspace on Mobile 375px & Escape close
     await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
@@ -269,11 +326,24 @@ async function run() {
         await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v5_mobile_tasks.png') });
       }
       if (route === '/focus') {
+        await page.getByRole('button', { name: /Mulai Timer/i }).click();
+        const mobilePopup = page.getByRole('region', { name: 'Popup timer Focus Mode' });
+        await mobilePopup.waitFor({ state: 'visible' });
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_mobile_light.png') });
+        await mobilePopup.getByRole('button', { name: 'Sembunyikan popup timer' }).click();
+        await mobilePopup.waitFor({ state: 'detached' });
+
+        const mobPillCount = await page.getByRole('button', { name: /Buka popup Dynamic Focus Timer/i }).count();
+        assert(mobPillCount === 0, 'Mobile header must remain free of timer capsule pills');
+
         await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).click();
         await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).waitFor({ state: 'visible' });
         await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v5_mobile_focus_fullscreen.png') });
         await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).click();
         await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).waitFor({ state: 'visible' });
+
+        await page.getByRole('button', { name: /Reset timer/i }).click();
       }
     }
 

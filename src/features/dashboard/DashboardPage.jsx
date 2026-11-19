@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   AlertCircle,
+  BellRing,
   CalendarClock,
+  Check,
   CheckCircle2,
   Clock,
   FolderPlus,
@@ -21,10 +23,13 @@ import { repo } from '../../services/repositories/index.js';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { useUiStore } from '../../stores/useUiStore.js';
 import { useTimerStore } from '../../stores/useTimerStore.js';
+import { useReminderStore } from '../../stores/useReminderStore.js';
+import { useReminders } from '../reminders/useReminders.js';
 import { Button } from '../../components/ui/Button.jsx';
 import { ProgressRing } from '../../components/ui/ProgressRing.jsx';
-import { OverdueTag, PriorityBadge, StatusBadge } from '../../components/ui/Badge.jsx';
+import { OverdueTag, PriorityBadge, ReminderTag, StatusBadge } from '../../components/ui/Badge.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States.jsx';
+import { formatReminderBadgeLabel, resolveTaskReminderDays } from '../../utils/reminderUtils.js';
 import {
   daysRemaining,
   formatDateId,
@@ -65,6 +70,8 @@ export function DashboardPage() {
   const openQuickAdd = useUiStore((s) => s.openQuickAdd);
   const openTaskDrawer = useUiStore((s) => s.openTaskDrawer);
   const selectTimerTask = useTimerStore((s) => s.selectTask);
+  const { unreadDueNow, defaultDays } = useReminders();
+  const markAcknowledged = useReminderStore((s) => s.markAcknowledged);
   const navigate = useNavigate();
   const [mobileQuery, setMobileQuery] = useState('');
 
@@ -215,6 +222,52 @@ export function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Active Deadline Reminder Banner (shown only when unread reminders are due today) */}
+      {unreadDueNow.length > 0 && (
+        <section
+          aria-label="Pengingat deadline aktif"
+          className="rounded-[var(--radius-lg)] border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] p-4"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-bg)] text-[var(--color-accent-text)]">
+                <BellRing className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[var(--color-accent-text)]">
+                  {unreadDueNow[0].title}
+                  {unreadDueNow.length > 1 ? ` (+${unreadDueNow.length - 1} pengingat lain)` : ''}
+                </p>
+                <p className="mt-0.5 text-sm font-medium text-[var(--color-text-primary)]">
+                  {unreadDueNow[0].message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  markAcknowledged(unreadDueNow[0].signature);
+                  openTaskDrawer(unreadDueNow[0].task.id);
+                }}
+              >
+                Lihat Tugas
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-[var(--color-bg)]"
+                onClick={() => markAcknowledged(unreadDueNow[0].signature)}
+              >
+                <Check className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
+                <span>Tandai Dibaca</span>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Ringkasan Hari Ini (Solid Tactile Stat Cards with Circular Progress Rings) */}
       <section aria-label="Ringkasan statistik hari ini" className="space-y-3">
@@ -399,6 +452,12 @@ export function DashboardPage() {
                               <span className="text-xs text-[var(--color-text-muted)]">
                                 {formatDateId(task.due_date)}
                               </span>
+                            )}
+                            {task.due_date && resolveTaskReminderDays(task, defaultDays) !== null && (
+                              <ReminderTag
+                                label={formatReminderBadgeLabel(resolveTaskReminderDays(task, defaultDays))}
+                                active={unreadDueNow.some((u) => u.task.id === task.id)}
+                              />
                             )}
                           </div>
                         </div>

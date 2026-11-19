@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellRing, CheckCircle2, Clock, Maximize2, Minimize2, Pause, Play, RotateCcw, StopCircle, Volume2 } from 'lucide-react';
+import { Bell, BellRing, CheckCircle2, Clock, Layers, Maximize2, Minimize2, Pause, Play, RotateCcw, StopCircle, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { repo } from '../../services/repositories/index.js';
 import { useTimerStore } from '../../stores/useTimerStore.js';
@@ -49,6 +49,8 @@ export function FocusModePage() {
   const reset = useTimerStore((s) => s.reset);
   const isRinging = useTimerStore((s) => s.isRinging);
   const stopRinging = useTimerStore((s) => s.stopRinging);
+  const islandMode = useTimerStore((s) => s.islandMode);
+  const setIslandMode = useTimerStore((s) => s.setIslandMode);
   const addPendingSync = useTimerStore((s) => s.addPendingSync);
 
   const openTaskDrawer = useUiStore((s) => s.openTaskDrawer);
@@ -238,6 +240,18 @@ export function FocusModePage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {(status === 'running' || status === 'paused' || status === 'completed' || isRinging) &&
+            islandMode !== 'expanded' && (
+              <Button
+                variant="outline"
+                size="sm"
+                data-focus-popup-trigger="true"
+                onClick={() => setIslandMode('expanded')}
+              >
+                <Layers className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+                <span>Tampilkan Popup</span>
+              </Button>
+            )}
           <Button variant="outline" size="sm" onClick={handleTestAlert}>
             <Bell className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
             <span>{notifPermission === 'granted' ? 'Tes Nada & Notif' : 'Aktifkan & Tes Notif'}</span>
@@ -351,7 +365,7 @@ export function FocusModePage() {
                   hint: `${t.priority.toUpperCase()} | ${t.column_name}`,
                 })),
               ]}
-              className="flex-1"
+              className="min-w-0 flex-1"
             />
             {selectedTaskId && (
               <Button variant="outline" onClick={() => openTaskDrawer(selectedTaskId)} className="min-h-[42px] shrink-0">
