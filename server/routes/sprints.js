@@ -108,7 +108,7 @@ export function createSprintsRouter(db) {
 
   router.get('/:id', (req, res) => {
     const sprint = db.prepare('SELECT * FROM sprints WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint tidak ditemukan.');
+    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint not found.');
 
     const today = getLocalTodayIso(req.query.today);
     const tasks = queryEnrichedTasks(
@@ -137,16 +137,16 @@ export function createSprintsRouter(db) {
     const status = req.body?.status && VALID_STATUSES.has(req.body.status) ? req.body.status : 'planned';
 
     if (!name || name.length > 100) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama sprint wajib diisi (maks. 100 karakter).', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Sprint name is required (max 100 characters).', 'name');
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tanggal mulai tidak valid.', 'start_date');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid start date.', 'start_date');
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tanggal selesai tidak valid.', 'end_date');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid end date.', 'end_date');
     }
     if (endDate < startDate) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tanggal selesai harus sama atau setelah tanggal mulai.', 'end_date');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'End date must be on or after the start date.', 'end_date');
     }
 
     if (status === 'active') {
@@ -156,7 +156,7 @@ export function createSprintsRouter(db) {
           res,
           409,
           'ACTIVE_SPRINT_EXISTS',
-          `Sprint "${existingActive.name}" masih aktif. Selesaikan sprint aktif terlebih dahulu atau buat sebagai Planned.`
+          `Sprint "${existingActive.name}" is still active. Complete it first or create this sprint as Planned.`
         );
       }
     }
@@ -194,7 +194,7 @@ export function createSprintsRouter(db) {
 
   router.patch('/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM sprints WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Sprint tidak ditemukan.');
+    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Sprint not found.');
 
     const name = req.body?.name !== undefined ? String(req.body.name).trim() : existing.name;
     const description = req.body?.description !== undefined ? String(req.body.description) : existing.description;
@@ -204,10 +204,10 @@ export function createSprintsRouter(db) {
     const status = req.body?.status && VALID_STATUSES.has(req.body.status) ? req.body.status : existing.status;
 
     if (!name || name.length > 100) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama sprint wajib diisi.', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Sprint name is required.', 'name');
     }
     if (endDate < startDate) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tanggal selesai harus sama atau setelah tanggal mulai.', 'end_date');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'End date must be on or after the start date.', 'end_date');
     }
 
     if (status === 'active' && existing.status !== 'active') {
@@ -219,7 +219,7 @@ export function createSprintsRouter(db) {
           res,
           409,
           'ACTIVE_SPRINT_EXISTS',
-          `Sprint "${otherActive.name}" masih aktif. Selesaikan sprint tersebut terlebih dahulu.`
+          `Sprint "${otherActive.name}" is still active. Complete that sprint first.`
         );
       }
     }
@@ -238,7 +238,7 @@ export function createSprintsRouter(db) {
 
   router.post('/:id/start', (req, res) => {
     const sprint = db.prepare('SELECT * FROM sprints WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint tidak ditemukan.');
+    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint not found.');
     if (sprint.status === 'active') {
       return res.json({ sprint: { ...sprint, ...computeSprintStats(db, req.user.id, sprint.id) } });
     }
@@ -251,7 +251,7 @@ export function createSprintsRouter(db) {
       return res.status(409).json({
         error: {
           code: 'ACTIVE_SPRINT_EXISTS',
-          message: `Sprint "${active.name}" masih berjalan. Selesaikan sprint aktif tersebut untuk memulai "${sprint.name}".`,
+          message: `Sprint "${active.name}" is still running. Complete the active sprint to start "${sprint.name}".`,
           activeSprint: active,
           retryable: false,
         },
@@ -282,20 +282,20 @@ export function createSprintsRouter(db) {
 
   router.post('/:id/complete', (req, res) => {
     const sprint = db.prepare('SELECT * FROM sprints WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint tidak ditemukan.');
+    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint not found.');
 
     const carryoverAction = req.body?.carryoverAction === 'sprint' ? 'sprint' : 'backlog';
     const targetSprintId = req.body?.targetSprintId || null;
 
     if (carryoverAction === 'sprint') {
       if (!targetSprintId || targetSprintId === sprint.id) {
-        return sendError(res, 400, 'INVALID_TARGET_SPRINT', 'Pilih sprint tujuan yang valid.', 'targetSprintId');
+        return sendError(res, 400, 'INVALID_TARGET_SPRINT', 'Select a valid destination sprint.', 'targetSprintId');
       }
       const target = db
         .prepare("SELECT id FROM sprints WHERE id = ? AND user_id = ? AND status IN ('planned', 'active')")
         .get(targetSprintId, req.user.id);
       if (!target) {
-        return sendError(res, 400, 'INVALID_TARGET_SPRINT', 'Sprint tujuan harus berstatus Planned atau Active.', 'targetSprintId');
+        return sendError(res, 400, 'INVALID_TARGET_SPRINT', 'Destination sprint must be Planned or Active.', 'targetSprintId');
       }
     }
 
@@ -345,12 +345,12 @@ export function createSprintsRouter(db) {
 
   router.post('/:id/tasks', (req, res) => {
     const sprint = db.prepare('SELECT * FROM sprints WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint tidak ditemukan.');
+    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint not found.');
 
     const taskId = req.body?.taskId;
     const action = req.body?.action === 'remove' ? 'remove' : 'add';
     const task = db.prepare('SELECT * FROM tasks WHERE id = ? AND user_id = ?').get(taskId, req.user.id);
-    if (!task) return sendError(res, 404, 'NOT_FOUND', 'Tugas tidak ditemukan.');
+    if (!task) return sendError(res, 404, 'NOT_FOUND', 'Task not found.');
 
     const now = new Date().toISOString();
     withTransaction(db, () => {
@@ -378,7 +378,7 @@ export function createSprintsRouter(db) {
 
   router.delete('/:id', (req, res) => {
     const sprint = db.prepare('SELECT * FROM sprints WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint tidak ditemukan.');
+    if (!sprint) return sendError(res, 404, 'NOT_FOUND', 'Sprint not found.');
 
     const now = new Date().toISOString();
     withTransaction(db, () => {

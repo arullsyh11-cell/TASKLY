@@ -15,7 +15,7 @@ import {
   subMonths,
   subWeeks,
 } from 'date-fns';
-import { id as idLocale } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Zap } from 'lucide-react';
 import { repo } from '../../services/repositories/index.js';
 import { useUiStore } from '../../stores/useUiStore.js';
@@ -24,7 +24,7 @@ import { OverdueTag, PriorityBadge, StatusBadge } from '../../components/ui/Badg
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { formatDateId, getTodayIso, isTaskOverdue } from '../../utils/dateUtils.js';
 
-const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function CalendarPage() {
   const [view, setView] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 'day' : 'month'));
@@ -50,7 +50,7 @@ export function CalendarPage() {
         rangeStartIso: format(gStart, 'yyyy-MM-dd'),
         rangeEndIso: format(gEnd, 'yyyy-MM-dd'),
         gridDays: days,
-        headerTitle: format(cursorDate, 'MMMM yyyy', { locale: idLocale }),
+        headerTitle: format(cursorDate, 'MMMM yyyy', { locale: enUS }),
       };
     }
 
@@ -67,8 +67,8 @@ export function CalendarPage() {
         rangeStartIso: format(wStart, 'yyyy-MM-dd'),
         rangeEndIso: format(wEnd, 'yyyy-MM-dd'),
         gridDays: days,
-        headerTitle: `${format(wStart, 'd MMM', { locale: idLocale })} - ${format(wEnd, 'd MMM yyyy', {
-          locale: idLocale,
+        headerTitle: `${format(wStart, 'MMM d', { locale: enUS })} - ${format(wEnd, 'MMM d, yyyy', {
+          locale: enUS,
         })}`,
       };
     }
@@ -78,7 +78,7 @@ export function CalendarPage() {
       rangeStartIso: iso,
       rangeEndIso: iso,
       gridDays: [cursorDate],
-      headerTitle: format(cursorDate, 'EEEE, d MMMM yyyy', { locale: idLocale }),
+      headerTitle: format(cursorDate, 'EEEE, MMMM d, yyyy', { locale: enUS }),
     };
   }, [view, cursorDate]);
 
@@ -117,25 +117,25 @@ export function CalendarPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Task Calendar</h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-            Visualisasi tenggat tugas dan rentang sprint dalam tampilan Bulanan, Mingguan, atau Harian.
+            Visualize task deadlines and sprint spans in Monthly, Weekly, or Daily view.
           </p>
         </div>
         <Button onClick={() => openQuickAdd({ dueDate: format(cursorDate, 'yyyy-MM-dd') })}>
           <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-          <span>Jadwalkan Tugas</span>
+          <span>Schedule Task</span>
         </Button>
       </header>
 
       {/* Calendar Controls */}
       <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" aria-label="Periode sebelumnya" onClick={() => navigatePeriod(-1)}>
+          <Button variant="outline" size="sm" aria-label="Previous period" onClick={() => navigatePeriod(-1)}>
             <ChevronLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
           </Button>
           <Button variant="outline" size="sm" onClick={() => setCursorDate(new Date())}>
-            Hari Ini
+            Today
           </Button>
-          <Button variant="outline" size="sm" aria-label="Periode berikutnya" onClick={() => navigatePeriod(1)}>
+          <Button variant="outline" size="sm" aria-label="Next period" onClick={() => navigatePeriod(1)}>
             <ChevronRight className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
           </Button>
           <h2 className="text-sm font-semibold capitalize text-[var(--color-text-primary)] sm:ml-2 sm:text-base">
@@ -143,11 +143,11 @@ export function CalendarPage() {
           </h2>
         </div>
 
-        <div role="tablist" aria-label="Pilih tampilan kalender" className="grid w-full grid-cols-3 gap-1.5 sm:flex sm:w-auto">
+        <div role="tablist" aria-label="Select calendar view" className="grid w-full grid-cols-3 gap-1.5 sm:flex sm:w-auto">
           {[
-            { id: 'month', label: 'Bulanan' },
-            { id: 'week', label: 'Mingguan' },
-            { id: 'day', label: 'Harian' },
+            { id: 'month', label: 'Monthly' },
+            { id: 'week', label: 'Weekly' },
+            { id: 'day', label: 'Daily' },
           ].map((opt) => (
             <button
               key={opt.id}
@@ -168,9 +168,9 @@ export function CalendarPage() {
       </div>
 
       {isLoading ? (
-        <LoadingState label="Memuat jadwal kalender..." rows={4} />
+        <LoadingState label="Loading calendar schedule..." rows={4} />
       ) : isError ? (
-        <ErrorState title="Gagal memuat kalender" message={error?.message} onRetry={refetch} />
+        <ErrorState title="Failed to load calendar" message={error?.message} onRetry={refetch} />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Calendar Grid */}
@@ -178,7 +178,7 @@ export function CalendarPage() {
             {/* Active/Visible Sprint Timeline Legend */}
             {sprints.length > 0 && (
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-[var(--color-text-muted)]">Timeline Sprint:</span>
+                <span className="text-xs font-medium text-[var(--color-text-muted)]">Sprint Timeline:</span>
                 {sprints.map((sp) => (
                   <Link
                     key={sp.id}
@@ -187,7 +187,7 @@ export function CalendarPage() {
                   >
                     <Zap className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
                     <span>
-                      {sp.name} ({formatDateId(sp.start_date, 'd MMM')} - {formatDateId(sp.end_date, 'd MMM')})
+                      {sp.name} ({formatDateId(sp.start_date, 'MMM d')} - {formatDateId(sp.end_date, 'MMM d')})
                     </span>
                   </Link>
                 ))}
@@ -234,7 +234,7 @@ export function CalendarPage() {
                             </button>
                             <button
                               type="button"
-                              aria-label={`Tambah tugas pada ${dayIso}`}
+                              aria-label={`Add task on ${dayIso}`}
                               onClick={() => openQuickAdd({ dueDate: dayIso })}
                               className="inline-flex h-6 w-6 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)]"
                             >
@@ -277,7 +277,7 @@ export function CalendarPage() {
                                 }}
                                 className="text-[11px] font-semibold text-[var(--color-accent-text)] hover:underline"
                               >
-                                +{dayTasks.length - 2} lainnya
+                                +{dayTasks.length - 2} more
                               </button>
                             )}
                           </div>
@@ -315,15 +315,15 @@ export function CalendarPage() {
                           className="text-left"
                         >
                           <p className="text-[11px] uppercase text-[var(--color-text-muted)]">
-                            {format(dayObj, 'EEE', { locale: idLocale })}
+                            {format(dayObj, 'EEE', { locale: enUS })}
                           </p>
                           <p className="font-mono-num text-sm font-semibold text-[var(--color-text-primary)]">
-                            {format(dayObj, 'd MMM', { locale: idLocale })}
+                            {format(dayObj, 'MMM d', { locale: enUS })}
                           </p>
                         </button>
                         <button
                           type="button"
-                          aria-label={`Tambah tugas pada ${dayIso}`}
+                          aria-label={`Add task on ${dayIso}`}
                           onClick={() => openQuickAdd({ dueDate: dayIso })}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]"
                         >
@@ -342,7 +342,7 @@ export function CalendarPage() {
 
                       <div className="mt-2.5 space-y-1.5">
                         {dayTasks.length === 0 ? (
-                          <p className="text-[11px] text-[var(--color-text-muted)]">Kosong</p>
+                          <p className="text-[11px] text-[var(--color-text-muted)]">Empty</p>
                         ) : (
                           dayTasks.map((t) => (
                             <button
@@ -379,15 +379,15 @@ export function CalendarPage() {
                   </div>
                   <Button size="sm" onClick={() => openQuickAdd({ dueDate: rangeStartIso })}>
                     <Plus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                    <span>Tambah di Tanggal Ini</span>
+                    <span>Add on This Date</span>
                   </Button>
                 </div>
 
                 {(tasksByDueDay.get(rangeStartIso) || []).length === 0 ? (
                   <EmptyState
                     icon={CalendarDays}
-                    title="Tidak ada tenggat tugas pada tanggal ini"
-                    description="Klik tombol di atas untuk menjadwalkan tugas pada tanggal ini."
+                    title="No tasks due on this date"
+                    description="Click the button above to schedule a task for this day."
                   />
                 ) : (
                   <ul className="divide-y divide-[var(--color-border)]">
@@ -408,7 +408,7 @@ export function CalendarPage() {
                           </div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => openTaskDrawer(t.id)}>
-                          Detail
+                          Details
                         </Button>
                       </li>
                     ))}
@@ -421,11 +421,11 @@ export function CalendarPage() {
           {/* Upcoming Deadlines Panel */}
           <aside className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-3">
             <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Upcoming Tasks</h2>
-            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">Tenggat 14 hari ke depan.</p>
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">Due in the next 14 days.</p>
 
             {upcoming.length === 0 ? (
               <p className="mt-4 text-xs text-[var(--color-text-muted)]">
-                Tidak ada tenggat tugas dalam 14 hari ke depan.
+                No task deadlines in the next 14 days.
               </p>
             ) : (
               <ul className="mt-4 space-y-2.5">
@@ -442,7 +442,7 @@ export function CalendarPage() {
                       {t.title}
                     </button>
                     <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--color-text-muted)]">
-                      <span>{formatDateId(t.due_date, 'd MMM')}</span>
+                      <span>{formatDateId(t.due_date, 'MMM d')}</span>
                       <PriorityBadge priority={t.priority} />
                     </div>
                   </li>

@@ -3,7 +3,7 @@ import { repo } from '../services/repositories/index.js';
 import { useUiStore } from './useUiStore.js';
 
 export const useAuthStore = create((set) => ({
-  user: repo.mode === 'local' ? { id: 'local-user', full_name: 'Pengguna', mode: 'local' } : null,
+  user: repo.mode === 'local' ? { id: 'local-user', full_name: 'User', mode: 'local' } : null,
   isBootstrapping: repo.mode !== 'local',
 
   async bootstrap() {
@@ -15,7 +15,7 @@ export const useAuthStore = create((set) => ({
         }
         set({ user, isBootstrapping: false });
       } catch {
-        set({ user: { id: 'local-user', full_name: 'Pengguna', mode: 'local' }, isBootstrapping: false });
+        set({ user: { id: 'local-user', full_name: 'User', mode: 'local' }, isBootstrapping: false });
       }
       return;
     }

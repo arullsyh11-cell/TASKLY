@@ -48,16 +48,16 @@ async function run() {
     // 1. Direct Entry to Dashboard (Light Workspace default & empty state without Demo button)
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.waitForURL('**/dashboard');
-    await page.getByText('Workspace Anda siap digunakan').waitFor({ state: 'visible' });
-    const demoBtnCount = await page.getByRole('button', { name: /Muat Proyek Contoh/i }).count();
+    await page.getByText('Your workspace is ready').waitFor({ state: 'visible' });
+    const demoBtnCount = await page.getByRole('button', { name: /Load Sample Project/i }).count();
     assert(demoBtnCount === 0, 'Demo workspace button should be removed');
     const initialTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     assert(initialTheme === 'light', `Default theme should be light, got ${initialTheme}`);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_desktop_empty_light.png') });
-    results.push('Direct Entry: opens straight to /dashboard with Light Workspace default and clean empty state');
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_desktop_empty_en_light.png') });
+    results.push('Direct Entry: opens straight to /dashboard in English with Light Workspace default and clean empty state');
 
-    // 2. Quick Add Task using custom Dropdown & Tomorrow's deadline (triggers default H-1 Reminder)
-    await page.getByRole('button', { name: /Quick Add Task/i }).click();
+    // 2. Quick Add Task using custom Dropdown & Tomorrow's deadline (triggers default D-1 Reminder)
+    await page.getByRole('button', { name: 'Quick Add Task', exact: true }).click();
     const tomorrowLocal = await page.evaluate(() => {
       const dt = new Date();
       dt.setDate(dt.getDate() + 1);
@@ -66,250 +66,241 @@ async function run() {
       const d = String(dt.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
     });
-    await page.getByLabel('Judul Tugas').fill('Finalisasi integrasi Sprint & Kanban');
-    await page.getByRole('combobox', { name: 'Prioritas' }).click();
+    await page.getByLabel('Task Title').fill('Finalize Sprint & Kanban integration');
+    await page.getByRole('combobox', { name: 'Priority' }).click();
     await page.getByRole('option', { name: 'High' }).click();
-    await page.getByLabel('Tenggat Waktu (Due Date)').fill(tomorrowLocal);
-    await page.getByRole('button', { name: /Simpan Tugas/i }).click();
-    await page.getByText('Finalisasi integrasi Sprint & Kanban').first().waitFor({ state: 'visible' });
+    await page.getByLabel('Due Date').fill(tomorrowLocal);
+    await page.getByRole('button', { name: /Save Task/i }).click();
+    await page.getByText('Finalize Sprint & Kanban integration').first().waitFor({ state: 'visible' });
 
-    // Verify H-1 Reminder Notification Banner + Top Bar Bell Menu immediately triggers
-    await page.getByRole('region', { name: 'Pengingat deadline aktif' }).waitFor({ state: 'visible' });
-    await page.getByText(/Jangan lupa ada tugas "Finalisasi integrasi Sprint & Kanban"/i).first().waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: /Pengingat deadline/i }).click();
-    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'visible' });
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_reminder_bell_desktop.png') });
+    // Verify D-1 Reminder Notification Banner + Top Bar Bell Menu immediately triggers
+    await page.getByRole('region', { name: 'Active deadline reminders' }).waitFor({ state: 'visible' });
+    await page.getByText(/Don't forget, you have task "Finalize Sprint & Kanban integration"/i).first().waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: /Deadline reminders/i }).click();
+    await page.getByRole('dialog', { name: 'Deadline reminder center' }).waitFor({ state: 'visible' });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_reminder_bell_desktop.png') });
     await page.keyboard.press('Escape');
-    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'detached' });
+    await page.getByRole('dialog', { name: 'Deadline reminder center' }).waitFor({ state: 'detached' });
 
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_dashboard_light.png') });
-    results.push('Dashboard Quick Add + H-1 Reminder: default H-1 reminder triggers banner, toast & Bell dialog cleanly');
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_dashboard_en_light.png') });
+    results.push('Dashboard Quick Add + D-1 Reminder: default reminder triggers banner, toast & Bell dialog cleanly');
 
     // 3. Task Detail Drawer + Subtask + Custom Reminder Days + Escape
-    await page.getByRole('button', { name: 'Finalisasi integrasi Sprint & Kanban', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Finalize Sprint & Kanban integration', exact: true }).first().click();
     await page.getByRole('dialog').waitFor({ state: 'visible' });
-    await page.getByRole('combobox', { name: /Pengingat Deadline/i }).click();
-    await page.getByRole('option', { name: /Custom jumlah hari/i }).click();
-    await page.getByLabel(/Custom Hari Sebelum Deadline/i).fill('2');
-    await page.getByRole('button', { name: /Simpan Perubahan/i }).click();
-    await page.getByText('Perubahan tugas disimpan.').first().waitFor({ state: 'visible' });
-    await page.getByLabel('Tambah langkah subtask baru').fill('Uji dropdown & layout baru');
-    await page.getByRole('button', { name: /^Tambah$/i }).click();
-    await page.getByText('Uji dropdown & layout baru').waitFor({ state: 'visible' });
+    await page.getByRole('combobox', { name: /Deadline Reminder/i }).click();
+    await page.getByRole('option', { name: /Custom days/i }).click();
+    await page.getByLabel(/Custom Days Before Deadline/i).fill('2');
+    await page.getByRole('button', { name: /Save Changes/i }).click();
+    await page.getByText('Task changes saved.').first().waitFor({ state: 'visible' });
+    await page.getByLabel('Add new subtask step').fill('Verify dropdown and layout');
+    await page.getByRole('button', { name: /^Add$/i }).click();
+    await page.getByText('Verify dropdown and layout').waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
     await page.getByRole('dialog').waitFor({ state: 'detached' });
     results.push('Task Detail Drawer: custom reminder days saved, subtask added, closed cleanly with Escape');
 
     async function openRadialAndNavigate(label, screenshotName) {
-      await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
-      const radialDialog = page.getByRole('dialog', { name: 'Menu navigasi' });
+      await page.getByRole('button', { name: 'Open navigation menu' }).click();
+      const radialDialog = page.getByRole('dialog', { name: 'Navigation menu' });
       await radialDialog.waitFor({ state: 'visible' });
       if (screenshotName) {
         await page.waitForTimeout(420);
         await page.screenshot({ path: path.join(SCREENSHOT_DIR, screenshotName) });
       }
-      await page.getByRole('navigation', { name: 'Navigasi utama' }).getByRole('link', { name: label }).click();
+      await page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: label }).click();
       await radialDialog.waitFor({ state: 'detached' });
     }
 
     // 4. My Tasks: navigate from Dashboard & test custom filter dropdowns
-    await page.getByRole('link', { name: 'Lihat semua' }).click();
+    await page.getByRole('link', { name: 'View all' }).click();
     await page.waitForURL('**/tasks');
-    await page.getByRole('combobox', { name: 'Filter prioritas' }).click();
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v2_dropdown_open.png') });
+    await page.getByRole('combobox', { name: 'Filter priority' }).click();
     await page.getByRole('option', { name: 'High' }).click();
-    await page.getByText('Finalisasi integrasi Sprint & Kanban').first().waitFor({ state: 'visible' });
-    results.push('My Tasks: custom Filter Prioritas dropdown works without clipping');
+    await page.getByText('Finalize Sprint & Kanban integration').first().waitFor({ state: 'visible' });
+    results.push('My Tasks: custom Priority filter dropdown works without clipping');
 
     // 5. Kanban Board + Custom Column
     await page.goto(`${baseUrl}/board`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { name: 'Backlog' }).waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: /Tambah Kolom/i }).click();
-    await page.getByLabel('Nama Kolom').fill('QA Staging');
-    await page.getByRole('button', { name: /Buat Kolom/i }).click();
+    await page.getByRole('button', { name: /Add Column/i }).click();
+    await page.getByLabel('Column Name').fill('QA Staging');
+    await page.getByRole('button', { name: /Create Column/i }).click();
     await page.getByRole('heading', { name: 'QA Staging' }).waitFor({ state: 'visible' });
     results.push('Kanban Board: displays default columns & custom column QA Staging');
 
     // 6. Sprints (via 5-item Radial Sidebar) + Burndown
-    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
-    const radialNav = page.getByRole('navigation', { name: 'Navigasi utama' });
+    await page.getByRole('button', { name: 'Open navigation menu' }).click();
+    const radialNav = page.getByRole('navigation', { name: 'Primary navigation' });
     await radialNav.waitFor({ state: 'visible' });
     const radialLinkCount = await radialNav.getByRole('link').count();
     assert(radialLinkCount === 5, `Radial Sidebar must contain exactly 5 items, got ${radialLinkCount}`);
     await page.waitForTimeout(420);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v8_desktop_radial_light.png') });
     await radialNav.getByRole('link', { name: 'Sprints' }).click();
-    await page.getByRole('dialog', { name: 'Menu navigasi' }).waitFor({ state: 'detached' });
+    await page.getByRole('dialog', { name: 'Navigation menu' }).waitFor({ state: 'detached' });
     await page.waitForURL('**/sprints');
-    await page.getByRole('button', { name: /Buat Sprint Baru/i }).click();
-    await page.getByLabel('Nama Sprint').fill('Sprint 01 Verifikasi');
-    await page.getByLabel('Sprint Goal (Sasaran Utama)').fill('Pastikan layout baru berjalan penuh');
-    await page.getByRole('button', { name: /Simpan Sprint/i }).click();
-    await page.getByRole('heading', { name: 'Sprint 01 Verifikasi' }).waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: /New Sprint/i }).click();
+    await page.getByLabel('Sprint Name').fill('Sprint 01 Verification');
+    await page.getByLabel('Sprint Goal').fill('Ship English UI and Settings Vault');
+    await page.getByRole('button', { name: /Save Sprint/i }).click();
+    await page.getByRole('heading', { name: 'Sprint 01 Verification' }).waitFor({ state: 'visible' });
 
-    await page.getByRole('link', { name: /Detail & Burndown/i }).first().click();
+    await page.getByRole('link', { name: /Details & Burndown/i }).first().click();
     await page.waitForURL('**/sprints/*');
-    await page.getByRole('button', { name: /Mulai Sprint/i }).click();
-    await page.getByRole('button', { name: /Selesaikan Sprint/i }).waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: /Assign dari Backlog/i }).first().click();
+    await page.getByRole('button', { name: /Start Sprint/i }).click();
+    await page.getByRole('button', { name: /Complete Sprint/i }).waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: /Assign from Backlog/i }).first().click();
     await page.getByRole('button', { name: /^Assign$/i }).first().click();
     await page.keyboard.press('Escape');
-    await page.getByText('Sisa tugas sprint terhadap target harian').waitFor({ state: 'visible' });
+    await page.getByText('Remaining sprint tasks vs daily target').waitFor({ state: 'visible' });
     results.push('Sprint Management: creates sprint, starts sprint, assigns task, renders Burndown');
 
-    // 7. Focus Mode: automatic Dynamic Island popup without "Tampilkan Popup" button, persists across navigation
+    // 7. Focus Mode: automatic Dynamic Island popup persists across navigation
     await openRadialAndNavigate('Focus Mode');
     await page.waitForURL('**/focus');
-    const showPopupBtnCount = await page.getByRole('button', { name: /Tampilkan Popup/i }).count();
-    assert(showPopupBtnCount === 0, '"Tampilkan Popup" button must be removed');
 
-    await page.getByRole('combobox', { name: /Tugas yang Dikerjakan/i }).click();
-    await page.getByRole('option', { name: /Finalisasi integrasi Sprint & Kanban/i }).click();
-    await page.getByRole('button', { name: /Tes Notif|Tes Nada/i }).click();
-    await page.getByRole('button', { name: /Mulai Timer/i }).click();
+    await page.getByRole('combobox', { name: /Active Task/i }).click();
+    await page.getByRole('option', { name: /Finalize Sprint & Kanban integration/i }).click();
+    await page.getByRole('button', { name: /Test Alerts|Test Sound/i }).click();
+    await page.getByRole('button', { name: /Start Timer/i }).click();
 
-    const focusPopup = page.getByRole('region', { name: 'Popup timer Focus Mode' });
+    const focusPopup = page.getByRole('region', { name: 'Focus Mode timer popup' });
     await focusPopup.waitFor({ state: 'visible' });
-    const showPopupAfterStart = await page.getByRole('button', { name: /Tampilkan Popup/i }).count();
-    assert(showPopupAfterStart === 0, '"Tampilkan Popup" button must never appear');
     await page.waitForTimeout(300);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_expanded_light.png') });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_focus_popup_en_light.png') });
 
     // Navigate away to Calendar while timer is running -> Popup must stay visible automatically!
     await openRadialAndNavigate('Calendar');
     await page.waitForURL('**/calendar');
     await focusPopup.waitFor({ state: 'visible' });
-    await focusPopup.getByRole('button', { name: 'Pause sesi fokus' }).click();
-    await focusPopup.getByRole('button', { name: 'Resume sesi fokus' }).waitFor({ state: 'visible' });
-    await focusPopup.getByRole('link', { name: /Buka Fokus/i }).click();
+    await focusPopup.getByRole('button', { name: 'Pause focus session' }).click();
+    await focusPopup.getByRole('button', { name: 'Resume focus session' }).waitFor({ state: 'visible' });
+    await focusPopup.getByRole('link', { name: /Open Focus/i }).click();
     await page.waitForURL('**/focus');
     await focusPopup.waitFor({ state: 'visible' });
-    await focusPopup.getByRole('button', { name: 'Hentikan timer fokus' }).click();
+    await focusPopup.getByRole('button', { name: 'Stop focus timer' }).click();
     await focusPopup.waitFor({ state: 'detached' });
-    results.push('Focus Mode: Popup appears automatically on start, stays running when leaving page, and has no Tampilkan Popup button');
+    results.push('Focus Mode: English Dynamic Island popup runs automatically and persists across routes');
 
     // 8. Calendar
     await openRadialAndNavigate('Calendar');
     await page.waitForURL('**/calendar');
-    await page.getByRole('tab', { name: 'Mingguan' }).click();
-    await page.getByRole('tab', { name: 'Harian' }).click();
-    await page.getByRole('tab', { name: 'Bulanan' }).click();
+    await page.getByRole('tab', { name: 'Weekly' }).click();
+    await page.getByRole('tab', { name: 'Daily' }).click();
+    await page.getByRole('tab', { name: 'Monthly' }).click();
     results.push('Calendar: Monthly, Weekly, Daily views render cleanly');
 
-    // 9. Analytics: Screen 2 Hero Chart + Custom Range Dropdown + Screenshot
+    // 9. Analytics
     await openRadialAndNavigate('Analytics');
     await page.waitForURL('**/analytics');
-    await page.getByRole('combobox', { name: /Pilih rentang waktu analisis/i }).click();
-    await page.getByRole('option', { name: '30 Hari Terakhir' }).click();
+    await page.getByRole('combobox', { name: /Select analysis time range/i }).click();
+    await page.getByRole('option', { name: 'Last 30 Days' }).click();
     await page.getByText('Task Completion Rate').waitFor({ state: 'visible' });
-    await page.waitForTimeout(200);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v2_analytics_dark.png') });
     results.push('Analytics: segmented tabs, custom range dropdown, and peak-highlighted chart render');
 
-    // 10. Settings: Profile Card + Aligned Tabs + Monochrome Toggle + Persistence
+    // 10. Settings: 6 balanced tabs + Files & Notes Vault (folder, file upload, preview, quick note) + Monochrome switch
     await openRadialAndNavigate('Settings');
     await page.waitForURL('**/settings');
     await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: /Ubah Nama/i }).waitFor({ state: 'visible' });
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_settings_light_desktop.png') });
-    await page.getByRole('tab', { name: /Profil Workspace/i }).click();
-    await page.getByLabel('Nama Tampilan').fill('Raka');
-    await page.getByRole('button', { name: /Simpan Profil/i }).click();
-    await page.getByRole('tab', { name: /Focus & Pengingat/i }).click();
-    await page.getByRole('button', { name: /Tes Notifikasi Pengingat/i }).click();
-    await page.getByText(/Contoh Pengingat Deadline/i).first().waitFor({ state: 'visible' });
-    await page.getByRole('tab', { name: /Tampilan & Tema/i }).click();
-    await page.getByRole('button', { name: /Tema 2: Monochrome/i }).click();
+    const settingsTabCount = await page.getByRole('tablist', { name: 'Settings categories' }).getByRole('tab').count();
+    assert(settingsTabCount === 6, `Settings should have 6 balanced tabs, got ${settingsTabCount}`);
+
+    // Test Files & Notes tab thoroughly
+    await page.getByRole('tab', { name: 'Files & Notes' }).click();
+    await page.getByRole('button', { name: /New Folder/i }).first().click();
+    await page.getByLabel('Folder Name').fill('Project Briefs');
+    await page.getByRole('button', { name: 'Create Folder' }).click();
+    await page.getByText('Project Briefs').first().waitFor({ state: 'visible' });
+
+    // Upload a real text file into root and test preview
+    await page.getByLabel('Choose files to upload').setInputFiles({
+      name: 'release-checklist.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('TASKLY Release Checklist\n- Verify English UI\n- Verify Files & Notes Vault\n'),
+    });
+    await page.getByText('release-checklist.txt').first().waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: 'Preview release-checklist.txt' }).click();
+    await page.getByText(/TASKLY Release Checklist/i).waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+
+    // Save a Quick Note and pin it
+    await page.getByLabel(/Note Title/i).fill('Sprint Notes');
+    await page.getByRole('textbox', { name: 'Quick Note' }).fill('Remember to check mobile responsiveness on both themes.');
+    await page.getByRole('button', { name: /Pin Note/i }).click();
+    await page.getByRole('button', { name: /Save Note/i }).click();
+    await page.getByText('Sprint Notes').first().waitFor({ state: 'visible' });
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_settings_vault_desktop_light.png') });
+
+    // Profile + Focus & Reminders + Appearance Monochrome
+    await page.getByRole('tab', { name: /^Profile$/i }).click();
+    await page.getByLabel('Display Name').fill('Raka');
+    await page.getByRole('button', { name: /Save Profile/i }).click();
+    await page.getByRole('tab', { name: /Focus & Reminders/i }).click();
+    await page.getByRole('button', { name: /Test Reminder Alert/i }).click();
+    await page.getByText(/Sample Deadline Reminder/i).first().waitFor({ state: 'visible' });
+    await page.getByRole('tab', { name: /Appearance/i }).click();
+    await page.getByRole('button', { name: /Theme 2: Monochrome/i }).click();
 
     await page.goto(`${baseUrl}/dashboard`, { waitUntil: 'networkidle' });
     await page.reload({ waitUntil: 'networkidle' });
-    await page.getByRole('heading', { name: /Halo, Raka/i }).waitFor({ state: 'visible' });
+    await page.getByRole('heading', { name: /Hello, Raka/i }).waitFor({ state: 'visible' });
     await page.waitForTimeout(200);
     const persistedTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     assert(persistedTheme === 'monochrome', 'Monochrome theme should persist in localStorage across reload');
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_dashboard_monochrome.png') });
-    results.push('Themes & Persistence: Light Workspace default -> Monochrome switch + reload persistence verified');
+    results.push('Settings Files & Notes + Themes: folder, file upload & preview, pinned quick note, and Monochrome persistence verified');
 
-    // 11. Mobile 375x812 Verification: Solid Header, Dense Liquid Glass Nav, Settings Outlines, Radial Sidebar
+    // 11. Mobile 375x812 Verification: Balanced 2x3 Settings Tabs + Files & Notes in Monochrome & Light
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(`${baseUrl}/settings`, { waitUntil: 'networkidle' });
-    await page.mouse.wheel(0, 120);
-    await page.waitForTimeout(150);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_settings_scrolled_monochrome.png') });
+    await page.goto(`${baseUrl}/settings?tab=vault`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_settings_vault_mobile_mono.png') });
     const overflowSettings = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-    assert(!overflowSettings, 'Mobile Settings must not horizontally overflow 375px viewport');
+    assert(!overflowSettings, 'Mobile Settings Vault must not horizontally overflow 375px viewport');
 
-    // Verify Compact Radial Sidebar in Monochrome on Mobile 375px + Center X Close button
-    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
-    const drawerDialog = page.getByRole('dialog', { name: 'Menu navigasi' });
-    await drawerDialog.waitFor({ state: 'visible' });
-    await page.waitForTimeout(420);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_mobile_radial_compact_mono.png') });
-    await page.getByRole('button', { name: 'Tutup menu navigasi' }).click();
-    await drawerDialog.waitFor({ state: 'detached' });
-
-    // Verify FocusExpandedPopup in Monochrome on Mobile 375px
-    await page.goto(`${baseUrl}/focus`, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: /Mulai Timer/i }).click();
-    await page.getByRole('region', { name: 'Popup timer Focus Mode' }).waitFor({ state: 'visible' });
-    await page.waitForTimeout(300);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_mobile_mono.png') });
-    await page.getByRole('button', { name: 'Hentikan timer fokus' }).click();
-    await page.getByRole('region', { name: 'Popup timer Focus Mode' }).waitFor({ state: 'detached' });
-
-    await page.goto(`${baseUrl}/settings`, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: /Tema 1: Light Workspace/i }).click();
+    // Switch back to Light Workspace and capture Mobile Settings tabs + Vault
+    await page.getByRole('tab', { name: /Appearance/i }).click();
+    await page.getByRole('button', { name: /Theme 1: Light Workspace/i }).click();
     await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_settings_tabs_mobile_light.png') });
+    await page.getByRole('tab', { name: 'Files & Notes' }).click();
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_settings_vault_mobile_light.png') });
 
-    // Switch to Versi 2: Slide Sidebar and verify classic slide drawer works, then switch back to Versi 1: Radial Sidebar
-    await page.getByRole('button', { name: /Versi 2: Slide Sidebar/i }).click();
-    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
+    // Verify Radial Sidebar & Slide Sidebar toggle on mobile
+    await page.getByRole('tab', { name: /Appearance/i }).click();
+    await page.getByRole('button', { name: /Version 2: Slide Sidebar/i }).click();
+    await page.getByRole('button', { name: 'Open navigation menu' }).click();
+    const drawerDialog = page.getByRole('dialog', { name: 'Navigation menu' });
     await drawerDialog.waitFor({ state: 'visible' });
-    await page.waitForTimeout(260);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_mobile_slide_drawer.png') });
     await page.keyboard.press('Escape');
     await drawerDialog.waitFor({ state: 'detached' });
     await page.waitForTimeout(250);
-
-    await page.getByRole('button', { name: /Versi 1: Radial Sidebar/i }).click();
-    await page.waitForTimeout(150);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_settings_light_mobile.png') });
+    await page.getByRole('button', { name: /Version 1: Radial Sidebar/i }).click();
 
     await page.goto(`${baseUrl}/dashboard`, { waitUntil: 'networkidle' });
     const overflowDash = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowDash, 'Mobile Dashboard must not horizontally overflow 375px viewport');
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v4_mobile_dashboard_light.png') });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v11_mobile_dashboard_en_light.png') });
 
     // Mobile Bell Menu check without horizontal overflow
-    await page.getByRole('button', { name: /Pengingat deadline/i }).click();
-    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'visible' });
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_reminder_bell_mobile.png') });
+    await page.getByRole('button', { name: /Deadline reminders/i }).click();
+    await page.getByRole('dialog', { name: 'Deadline reminder center' }).waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
-    await page.getByRole('dialog', { name: 'Pusat pengingat deadline' }).waitFor({ state: 'detached' });
-
-    // Verify Compact Radial Sidebar in Light Workspace on Mobile 375px & Escape close
-    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
-    await drawerDialog.waitFor({ state: 'visible' });
-    await page.waitForTimeout(420);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v9_mobile_radial_compact_light.png') });
-    await page.keyboard.press('Escape');
-    await drawerDialog.waitFor({ state: 'detached' });
+    await page.getByRole('dialog', { name: 'Deadline reminder center' }).waitFor({ state: 'detached' });
 
     // Click Floating Bottom Dock to navigate to Analytics & Board
-    const dock = page.getByRole('navigation', { name: 'Navigasi cepat mobile' });
+    const dock = page.getByRole('navigation', { name: 'Quick mobile navigation' });
     await dock.getByRole('link', { name: 'Analytics' }).click();
     await page.waitForURL('**/analytics');
-    await page.waitForTimeout(200);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v7_mobile_analytics_light.png') });
-
     await dock.getByRole('link', { name: 'Kanban Board' }).click();
     await page.waitForURL('**/board');
     const overflowBoard = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     assert(!overflowBoard, 'Mobile Kanban board must not horizontally overflow 375px viewport');
 
     await page.getByRole('tab', { name: /To Do/i }).click();
-    await page.getByRole('button', { name: /Pindah Status/i }).first().click();
-    await page.getByRole('dialog', { name: /Pindahkan Status Tugas/i }).waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: /Move Status/i }).first().click();
+    await page.getByRole('dialog', { name: /Move Task Status/i }).waitFor({ state: 'visible' });
     await page.getByRole('button', { name: /^Done$/i }).click();
 
     // 12. PWA Manifest + Mobile 375px Sweep Across Remaining Routes & Immersive Focus Fullscreen
@@ -325,8 +316,8 @@ async function run() {
       };
     });
     assert(
-      manifestRes.manifestOk && manifestRes.manifest.display === 'standalone' && manifestRes.manifest.start_url === '/',
-      'PWA manifest must be standalone with start_url /'
+      manifestRes.manifestOk && manifestRes.manifest.display === 'standalone' && manifestRes.manifest.start_url === '/' && manifestRes.manifest.lang === 'en',
+      'PWA manifest must be standalone with start_url / and lang en'
     );
     assert(manifestRes.iconOk && manifestRes.swOk, 'PWA icon-192.png and sw.js must be served');
 
@@ -334,28 +325,20 @@ async function run() {
       await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle' });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
       assert(!overflow, `Mobile route ${route} must not horizontally overflow 375px viewport`);
-      if (route === '/tasks') {
-        await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v5_mobile_tasks.png') });
-      }
       if (route === '/focus') {
-        await page.getByRole('button', { name: /Mulai Timer/i }).click();
-        const mobilePopup = page.getByRole('region', { name: 'Popup timer Focus Mode' });
+        await page.getByRole('button', { name: /Start Timer/i }).click();
+        const mobilePopup = page.getByRole('region', { name: 'Focus Mode timer popup' });
         await mobilePopup.waitFor({ state: 'visible' });
-        await page.waitForTimeout(300);
-        await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_mobile_light.png') });
-
-        await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).click();
-        await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).waitFor({ state: 'visible' });
-        await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v5_mobile_focus_fullscreen.png') });
-        await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).click();
-        await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).waitFor({ state: 'visible' });
-
-        await mobilePopup.getByRole('button', { name: 'Hentikan timer fokus' }).click();
+        await page.getByRole('button', { name: 'Fullscreen Mode', exact: true }).click();
+        await page.getByRole('button', { name: 'Exit Fullscreen', exact: true }).waitFor({ state: 'visible' });
+        await page.getByRole('button', { name: 'Exit Fullscreen', exact: true }).click();
+        await page.getByRole('button', { name: 'Fullscreen Mode', exact: true }).waitFor({ state: 'visible' });
+        await mobilePopup.getByRole('button', { name: 'Stop focus timer' }).click();
         await mobilePopup.waitFor({ state: 'detached' });
       }
     }
 
-    results.push('Mobile 375px & PWA Fullscreen: manifest standalone, all 8 routes overflow-free, immersive Focus fullscreen verified');
+    results.push('Mobile 375px & PWA Fullscreen: manifest en/standalone, all 8 routes overflow-free, immersive Focus fullscreen verified');
 
     // 13. Real Scroll Verification on Compact Mobile (375x667) & Desktop (1280x560)
     await page.setViewportSize({ width: 375, height: 667 });

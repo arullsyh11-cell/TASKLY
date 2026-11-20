@@ -22,11 +22,11 @@ export function createTaxonomyRouter(db) {
     const name = String(req.body?.name || '').trim();
     const colorToken = ALLOWED_TOKENS.has(req.body?.color_token) ? req.body.color_token : 'accent';
     if (!name || name.length > 32) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama kategori wajib diisi (maks. 32 karakter).', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Category name is required (max 32 characters).', 'name');
     }
     const existing = db.prepare('SELECT id FROM task_categories WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(req.user.id, name);
     if (existing) {
-      return sendError(res, 409, 'DUPLICATE_NAME', 'Kategori dengan nama tersebut sudah ada.', 'name');
+      return sendError(res, 409, 'DUPLICATE_NAME', 'A category with that name already exists.', 'name');
     }
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -43,11 +43,11 @@ export function createTaxonomyRouter(db) {
 
   router.patch('/categories/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM task_categories WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Kategori tidak ditemukan.');
+    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Category not found.');
     const name = req.body?.name !== undefined ? String(req.body.name).trim() : existing.name;
     const colorToken = ALLOWED_TOKENS.has(req.body?.color_token) ? req.body.color_token : existing.color_token;
     if (!name || name.length > 32) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama kategori wajib diisi (maks. 32 karakter).', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Category name is required (max 32 characters).', 'name');
     }
     db.prepare('UPDATE task_categories SET name = ?, color_token = ? WHERE id = ? AND user_id = ?').run(
       name,
@@ -61,7 +61,7 @@ export function createTaxonomyRouter(db) {
 
   router.delete('/categories/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM task_categories WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Kategori tidak ditemukan.');
+    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Category not found.');
     db.prepare('DELETE FROM task_categories WHERE id = ? AND user_id = ?').run(existing.id, req.user.id);
     res.json({ deletedId: existing.id });
   });
@@ -76,11 +76,11 @@ export function createTaxonomyRouter(db) {
     const name = String(req.body?.name || '').trim();
     const colorToken = ALLOWED_TOKENS.has(req.body?.color_token) ? req.body.color_token : 'secondary';
     if (!name || name.length > 24) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama label wajib diisi (maks. 24 karakter).', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Label name is required (max 24 characters).', 'name');
     }
     const existing = db.prepare('SELECT id FROM task_labels WHERE user_id = ? AND LOWER(name) = LOWER(?)').get(req.user.id, name);
     if (existing) {
-      return sendError(res, 409, 'DUPLICATE_NAME', 'Label dengan nama tersebut sudah ada.', 'name');
+      return sendError(res, 409, 'DUPLICATE_NAME', 'A label with that name already exists.', 'name');
     }
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -97,7 +97,7 @@ export function createTaxonomyRouter(db) {
 
   router.delete('/labels/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM task_labels WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Label tidak ditemukan.');
+    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Label not found.');
     db.prepare('DELETE FROM task_labels WHERE id = ? AND user_id = ?').run(existing.id, req.user.id);
     res.json({ deletedId: existing.id });
   });

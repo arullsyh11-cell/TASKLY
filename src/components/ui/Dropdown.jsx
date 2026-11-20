@@ -7,11 +7,11 @@ export function Dropdown({
   value,
   onChange,
   options = [],
-  placeholder = 'Pilih opsi...',
+  placeholder = 'Select an option...',
   error,
   disabled = false,
   searchable = false,
-  searchPlaceholder = 'Cari...',
+  searchPlaceholder = 'Search...',
   compact = false,
   className = '',
   id,
@@ -259,12 +259,12 @@ export function Dropdown({
             <ul
               id={listboxId}
               role="listbox"
-              aria-label={label || ariaLabel || 'Daftar pilihan'}
+              aria-label={label || ariaLabel || 'Options list'}
               className="max-h-[min(240px,42dvh)] overflow-y-auto space-y-0.5"
             >
               {filteredOptions.length === 0 ? (
                 <li className="px-3 py-2.5 text-center text-xs text-[var(--color-text-muted)]">
-                  Tidak ada opsi yang cocok.
+                  No matching options.
                 </li>
               ) : (
                 filteredOptions.map((opt, idx) => {

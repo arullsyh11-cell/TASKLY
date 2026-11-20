@@ -60,7 +60,7 @@ export function OverdueTag() {
   return (
     <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--color-danger)]/30 bg-[var(--color-danger-bg)] px-2 py-0.5 text-xs font-medium text-[var(--color-danger)]">
       <AlertCircle className="h-3 w-3 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-      <span>Terlambat</span>
+      <span>Overdue</span>
     </span>
   );
 }

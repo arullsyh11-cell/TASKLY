@@ -1,7 +1,7 @@
 import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Button } from './Button.jsx';
 
-export function LoadingState({ label = 'Memuat data...', rows = 3 }) {
+export function LoadingState({ label = 'Loading data...', rows = 3 }) {
   return (
     <div role="status" aria-live="polite" className="space-y-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
       <p className="text-xs font-medium text-[var(--color-text-secondary)]">{label}</p>
@@ -37,7 +37,7 @@ export function EmptyState({ icon: Icon, title, description, action, secondaryAc
   );
 }
 
-export function ErrorState({ title = 'Gagal memuat data', message, onRetry }) {
+export function ErrorState({ title = 'Failed to load data', message, onRetry }) {
   return (
     <div
       role="alert"
@@ -48,14 +48,14 @@ export function ErrorState({ title = 'Gagal memuat data', message, onRetry }) {
         <div>
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>
           <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-            {message || 'Terjadi kendala saat mengambil data dari server.'}
+            {message || 'Something went wrong while fetching data from the server.'}
           </p>
         </div>
       </div>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry} className="shrink-0 bg-[var(--color-surface)]">
           <RotateCw className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-          <span>Coba Lagi</span>
+          <span>Try Again</span>
         </Button>
       )}
     </div>

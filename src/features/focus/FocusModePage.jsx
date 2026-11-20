@@ -93,7 +93,7 @@ export function FocusModePage() {
   const markTaskDoneMutation = useMutation({
     mutationFn: (taskId) => {
       const doneCol = columns.find((c) => c.semantic_type === 'done');
-      if (!doneCol) throw new Error('Kolom Done tidak ditemukan.');
+      if (!doneCol) throw new Error('Done column not found.');
       return repo.tasks.update(taskId, { column_id: doneCol.id });
     },
     onSuccess: () => {
@@ -101,7 +101,7 @@ export function FocusModePage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      toast.success('Tugas ditandai selesai.');
+      toast.success('Task marked as done.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -109,7 +109,7 @@ export function FocusModePage() {
   async function handleCompleteEarly() {
     if (elapsedSec < 60) {
       reset();
-      toast.info('Durasi di bawah 1 menit direset tanpa dicatat.');
+      toast.info('Sessions under 1 minute are reset without logging.');
       return;
     }
     const payload = {
@@ -127,10 +127,10 @@ export function FocusModePage() {
       queryClient.invalidateQueries({ queryKey: ['focus'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      toast.success(`Sesi fokus ${Math.round(elapsedSec / 60)} menit dicatat.`);
+      toast.success(`Logged ${Math.round(elapsedSec / 60)}-minute focus session.`);
     } catch {
       addPendingSync(payload);
-      toast.error('Koneksi bermasalah; sesi disimpan ke antrean lokal.');
+      toast.error('Connection issue; session saved to local queue.');
     }
   }
 
@@ -175,7 +175,7 @@ export function FocusModePage() {
 
   function handleModeSwitch(nextMode) {
     if (status === 'running') {
-      toast.info('Jeda atau reset timer terlebih dahulu sebelum mengganti mode.');
+      toast.info('Pause or reset the timer before switching modes.');
       return;
     }
     setMode(nextMode);
@@ -187,7 +187,7 @@ export function FocusModePage() {
     const mins = Math.max(1, Math.min(180, Number(customMinDraft) || 25));
     setCustomMinDraft(String(mins));
     setModeDuration(mode, mins);
-    toast.success(`Durasi ${MODE_OPTIONS.find((m) => m.id === mode)?.label} diatur ke ${mins} menit.`);
+    toast.success(`${MODE_OPTIONS.find((m) => m.id === mode)?.label} duration set to ${mins} minutes.`);
   }
 
   // Ring geometry
@@ -210,12 +210,12 @@ export function FocusModePage() {
     const perm = await requestFocusNotificationPermission();
     setNotifPermission(perm);
     if (perm === 'granted') {
-      sendFocusNotification('Notifikasi Focus TASKLY Aktif', 'Anda akan menerima notifikasi dan nada dering saat timer selesai.');
-      toast.success('Nada dering & notifikasi browser aktif.');
+      sendFocusNotification('TASKLY Focus Notifications Active', 'You will receive alerts and a ringtone when the timer finishes.');
+      toast.success('Ringtone and browser notifications are active.');
     } else if (perm === 'denied') {
-      toast.info('Nada dering diputar. Izin notifikasi browser saat ini diblokir di pengaturan situs.');
+      toast.info('Ringtone played. Browser notification permission is currently blocked in site settings.');
     } else {
-      toast.success('Pratinjau nada dering diputar.');
+      toast.success('Ringtone preview played.');
     }
   }
 
@@ -243,24 +243,24 @@ export function FocusModePage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Focus Mode</h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-            Ruang kerja minim distraksi untuk menjalankan Pomodoro dan melacak jam fokus per tugas.
+            Distraction-free workspace to run Pomodoro cycles and track focus time per task.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleTestAlert}>
             <Bell className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-            <span>{notifPermission === 'granted' ? 'Tes Nada & Notif' : 'Aktifkan & Tes Notif'}</span>
+            <span>{notifPermission === 'granted' ? 'Test Sound & Alerts' : 'Enable & Test Alerts'}</span>
           </Button>
           <Button variant="outline" size="sm" onClick={handleToggleFullscreen}>
             {isFullscreen ? (
               <>
                 <Minimize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Keluar Layar Penuh</span>
+                <span>Exit Fullscreen</span>
               </>
             ) : (
               <>
                 <Maximize2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Mode Layar Penuh</span>
+                <span>Fullscreen Mode</span>
               </>
             )}
           </Button>
@@ -269,11 +269,11 @@ export function FocusModePage() {
 
       {/* Main Minimalist Timer Stage */}
       <section
-        aria-label="Timer Focus Mode"
+        aria-label="Focus Mode timer"
         className="mx-auto flex max-w-2xl flex-col items-center rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-8 sm:px-10"
       >
         {/* Mode Switcher */}
-        <div role="tablist" aria-label="Pilih mode timer" className="flex flex-wrap justify-center gap-2">
+        <div role="tablist" aria-label="Select timer mode" className="flex flex-wrap justify-center gap-2">
           {MODE_OPTIONS.map((opt) => {
             const active = mode === opt.id;
             return (
@@ -323,12 +323,12 @@ export function FocusModePage() {
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-xs font-medium uppercase tracking-widest text-[var(--color-text-muted)]">
               {status === 'running'
-                ? 'Sedang Berjalan'
+                ? 'In Progress'
                 : status === 'paused'
-                ? 'Dijeda'
+                ? 'Paused'
                 : status === 'completed'
-                ? 'Selesai'
-                : 'Siap Mulai'}
+                ? 'Completed'
+                : 'Ready'}
             </span>
             <p
               aria-live="off"
@@ -344,16 +344,16 @@ export function FocusModePage() {
           <div className="flex items-end gap-2">
             <Dropdown
               id="focus-task-picker"
-              label="Tugas yang Dikerjakan"
+              label="Active Task"
               searchable
-              searchPlaceholder="Cari judul tugas aktif..."
+              searchPlaceholder="Search active task title..."
               value={selectedTaskId || ''}
               onChange={(tid) => {
                 const found = activeTasks.find((t) => t.id === tid);
-                selectTask(tid || null, found?.title || 'Fokus Umum');
+                selectTask(tid || null, found?.title || 'General Focus');
               }}
               options={[
-                { value: '', label: 'Fokus Umum (Tanpa Tugas Spesifik)' },
+                { value: '', label: 'General Focus (No Specific Task)' },
                 ...activeTasks.map((t) => ({
                   value: t.id,
                   label: t.title,
@@ -364,7 +364,7 @@ export function FocusModePage() {
             />
             {selectedTaskId && (
               <Button variant="outline" onClick={() => openTaskDrawer(selectedTaskId)} className="min-h-[42px] shrink-0">
-                Detail
+                Details
               </Button>
             )}
           </div>
@@ -375,25 +375,25 @@ export function FocusModePage() {
           {status === 'idle' && (
             <Button size="lg" onClick={handleStartTimer} className="min-h-[48px] min-w-[148px]">
               <Play className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Mulai Timer</span>
+              <span>Start Timer</span>
             </Button>
           )}
           {status === 'running' && (
             <Button size="lg" variant="secondary" onClick={pause} className="min-h-[48px] min-w-[148px]">
               <Pause className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Jeda</span>
+              <span>Pause</span>
             </Button>
           )}
           {status === 'paused' && (
             <Button size="lg" onClick={resume} className="min-h-[48px] min-w-[148px]">
               <Play className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Lanjutkan</span>
+              <span>Resume</span>
             </Button>
           )}
           {status === 'completed' && (
             <Button size="lg" onClick={reset} className="min-h-[48px] min-w-[148px]">
               <RotateCcw className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Sesi Baru</span>
+              <span>New Session</span>
             </Button>
           )}
 
@@ -401,7 +401,7 @@ export function FocusModePage() {
             <>
               <Button size="lg" variant="outline" onClick={handleCompleteEarly} className="min-h-[48px]">
                 <StopCircle className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Akhiri &amp; Catat</span>
+                <span>End &amp; Log</span>
               </Button>
               <Button
                 size="lg"
@@ -426,12 +426,12 @@ export function FocusModePage() {
             <div className="flex items-center gap-2.5">
               <BellRing className="h-4 w-4 shrink-0 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
               <span className="text-xs font-semibold text-[var(--color-text-primary)]">
-                Waktu timer habis! Nada dering berbunyi.
+                Time is up! Ringtone is playing.
               </span>
             </div>
             <Button size="sm" onClick={handleStopRingtone}>
               <Volume2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-              <span>Matikan Nada</span>
+              <span>Mute Sound</span>
             </Button>
           </div>
         )}
@@ -440,7 +440,7 @@ export function FocusModePage() {
         {status === 'completed' && (
           <div className="mt-6 w-full max-w-md rounded-[var(--radius-md)] border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] p-4 text-center">
             <p className="text-sm font-semibold text-[var(--color-accent-text)]">
-              Sesi selesai: {selectedTaskTitle}
+              Session complete: {selectedTaskTitle}
             </p>
             <div className="mt-3 flex flex-wrap justify-center gap-2">
               {selectedTaskId && (
@@ -450,7 +450,7 @@ export function FocusModePage() {
                   onClick={() => markTaskDoneMutation.mutate(selectedTaskId)}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                  <span>Tandai Tugas Selesai</span>
+                  <span>Mark Task Done</span>
                 </Button>
               )}
               <Button
@@ -462,7 +462,7 @@ export function FocusModePage() {
                   setMode('short_break');
                 }}
               >
-                Lanjut Short Break ({durationsMin.short_break}m)
+                Start Short Break ({durationsMin.short_break}m)
               </Button>
             </div>
           </div>
@@ -471,7 +471,7 @@ export function FocusModePage() {
         {/* Quick Duration Adjustment (only editable when not running) */}
         <form onSubmit={handleApplyDuration} className="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-[var(--color-border)] pt-5 text-xs">
           <label htmlFor="duration-custom-input" className="text-[var(--color-text-secondary)]">
-            Ubah durasi {MODE_OPTIONS.find((m) => m.id === mode)?.label} (menit):
+            Adjust {MODE_OPTIONS.find((m) => m.id === mode)?.label} duration (min):
           </label>
           <input
             id="duration-custom-input"
@@ -484,7 +484,7 @@ export function FocusModePage() {
             className="h-10 w-20 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-center font-mono-num text-base sm:text-sm text-[var(--color-text-primary)] disabled:opacity-50"
           />
           <Button type="submit" size="sm" variant="outline" disabled={status === 'running'}>
-            Terapkan
+            Apply
           </Button>
         </form>
       </section>
@@ -493,27 +493,27 @@ export function FocusModePage() {
       {!isFullscreen && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-4">
-          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Statistik Fokus Harian</h2>
+          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Daily Focus Stats</h2>
           {statsLoading ? (
             <div className="mt-4">
-              <LoadingState label="Memuat statistik fokus..." rows={2} />
+              <LoadingState label="Loading focus stats..." rows={2} />
             </div>
           ) : (
             <dl className="mt-4 space-y-3">
               <div className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-3">
-                <dt className="text-xs text-[var(--color-text-secondary)]">Sesi Fokus Selesai Hari Ini</dt>
+                <dt className="text-xs text-[var(--color-text-secondary)]">Completed Sessions Today</dt>
                 <dd className="font-mono-num text-lg font-semibold text-[var(--color-accent-text)]">
                   {stats?.today_completed_sessions ?? 0}
                 </dd>
               </div>
               <div className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-3">
-                <dt className="text-xs text-[var(--color-text-secondary)]">Total Durasi Fokus Hari Ini</dt>
+                <dt className="text-xs text-[var(--color-text-secondary)]">Total Focus Time Today</dt>
                 <dd className="font-mono-num text-lg font-semibold text-[var(--color-text-primary)]">
                   {formatDurationHuman(stats?.today_focus_sec ?? 0)}
                 </dd>
               </div>
               <div className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-3">
-                <dt className="text-xs text-[var(--color-text-secondary)]">Akumulasi Fokus Total</dt>
+                <dt className="text-xs text-[var(--color-text-secondary)]">All-Time Focus Total</dt>
                 <dd className="font-mono-num text-lg font-semibold text-[var(--color-text-primary)]">
                   {formatDurationHuman(stats?.total_focus_sec ?? 0)}
                 </dd>
@@ -523,16 +523,16 @@ export function FocusModePage() {
         </section>
 
         <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-8">
-          <h2 className="mb-3 text-base font-semibold text-[var(--color-text-primary)]">Riwayat Sesi Fokus</h2>
+          <h2 className="mb-3 text-base font-semibold text-[var(--color-text-primary)]">Focus Session History</h2>
           {sessionsLoading ? (
-            <LoadingState label="Memuat riwayat sesi..." rows={3} />
+            <LoadingState label="Loading session history..." rows={3} />
           ) : sessionsError ? (
             <ErrorState message={sessionsErrObj?.message} onRetry={refetchSessions} />
           ) : sessions.length === 0 ? (
             <EmptyState
               icon={Clock}
-              title="Belum ada riwayat sesi fokus"
-              description="Pilih tugas atau jalankan sesi fokus pertama Anda selama 25 menit untuk mulai mencatat histori."
+              title="No focus sessions recorded yet"
+              description="Select a task or run your first 25-minute focus session to start building your history."
             />
           ) : (
             <ul className="divide-y divide-[var(--color-border)]">
@@ -549,7 +549,7 @@ export function FocusModePage() {
                       {formatDurationHuman(s.actual_duration_sec)}
                     </span>
                     <StatusBadge tone={s.status === 'completed' ? 'success' : 'warning'}>
-                      {s.status === 'completed' ? 'Selesai' : 'Dihentikan'}
+                      {s.status === 'completed' ? 'Completed' : 'Interrupted'}
                     </StatusBadge>
                   </div>
                 </li>
@@ -567,9 +567,9 @@ export function FocusModePage() {
           reset();
           setConfirmResetOpen(false);
         }}
-        title="Reset Sesi Fokus?"
-        description="Timer sudah berjalan lebih dari 1 menit. Mereset akan membuang hitungan berjalan tanpa mencatat sesi. Gunakan 'Akhiri & Catat' bila ingin menyimpan durasi saat ini."
-        confirmLabel="Ya, Reset Timer"
+        title="Reset Focus Session?"
+        description="The timer has been running for over 1 minute. Resetting will discard the elapsed time without logging it. Use 'End & Log' to save this duration."
+        confirmLabel="Yes, Reset Timer"
       />
     </div>
   );

@@ -31,8 +31,8 @@ export function AnalyticsPage() {
     queryFn: () => repo.analytics.getReport(range),
   });
 
-  if (isLoading) return <LoadingState label="Menghitung statistik produktivitas..." rows={4} />;
-  if (isError) return <ErrorState title="Gagal memuat analitik" message={error?.message} onRetry={refetch} />;
+  if (isLoading) return <LoadingState label="Calculating productivity stats..." rows={4} />;
+  if (isError) return <ErrorState title="Failed to load analytics" message={error?.message} onRetry={refetch} />;
 
   const summary = data?.summary || {};
   const hasAnyData =
@@ -58,20 +58,20 @@ export function AnalyticsPage() {
             Analytics &amp; Productivity Insights
           </h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-            Evaluasi berbasis data aktual dari tugas selesai, sprint, dan catatan sesi fokus Anda.
+            Data-driven insights from your completed tasks, sprints, and focus session logs.
           </p>
         </div>
 
-        {/* Segmented Pill Cadence Tabs matching Screen 2 */}
+        {/* Segmented Pill Cadence Tabs */}
         <div
           role="tablist"
-          aria-label="Pilih granulasi tren"
+          aria-label="Select trend cadence"
           className="grid w-full grid-cols-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1 sm:inline-flex sm:w-auto"
         >
           {[
-            { id: 'daily', label: 'Harian' },
-            { id: 'weekly', label: 'Mingguan' },
-            { id: 'monthly', label: 'Bulanan' },
+            { id: 'daily', label: 'Daily' },
+            { id: 'weekly', label: 'Weekly' },
+            { id: 'monthly', label: 'Monthly' },
           ].map((c) => (
             <button
               key={c.id}
@@ -94,18 +94,18 @@ export function AnalyticsPage() {
       {!hasAnyData ? (
         <EmptyState
           icon={BarChart3}
-          title="Belum ada data analitik untuk ditampilkan"
-          description="Analitik akan otomatis muncul setelah Anda membuat tugas, menyelesaikan kartu di papan Kanban, atau menjalankan sesi Focus Mode."
-          action={<Button onClick={() => navigate('/board')}>Buka Kanban Board</Button>}
+          title="No analytics data to display yet"
+          description="Insights will populate automatically once you create tasks, complete cards on the Kanban board, or finish a Focus Mode session."
+          action={<Button onClick={() => navigate('/board')}>Open Kanban Board</Button>}
           secondaryAction={
             <Button variant="secondary" onClick={() => navigate('/focus')}>
-              Mulai Focus Mode
+              Start Focus Mode
             </Button>
           }
         />
       ) : (
         <>
-          {/* Hero Chart Card matching Screen 2 with tactile texture */}
+          {/* Hero Chart Card */}
           <section className="surface-texture rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -118,24 +118,24 @@ export function AnalyticsPage() {
                     {summary.completion_rate}%
                   </span>
                   <span className="text-xs text-[var(--color-text-secondary)]">
-                    ({summary.completed_tasks} selesai dari {summary.total_tasks} tugas)
+                    ({summary.completed_tasks} completed out of {summary.total_tasks} tasks)
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                  Berapa banyak tugas selesai per periode? Bar tertinggi disorot sebagai puncak produktivitas.
+                  How many tasks were finished per period? The tallest bar highlights your peak productivity.
                 </p>
               </div>
 
               <div className="w-44 shrink-0">
                 <Dropdown
                   compact
-                  aria-label="Pilih rentang waktu analisis"
+                  aria-label="Select analysis time range"
                   value={range}
                   onChange={setRange}
                   options={[
-                    { value: '7d', label: '7 Hari Terakhir' },
-                    { value: '30d', label: '30 Hari Terakhir' },
-                    { value: '90d', label: '90 Hari Terakhir' },
+                    { value: '7d', label: 'Last 7 Days' },
+                    { value: '30d', label: 'Last 30 Days' },
+                    { value: '90d', label: 'Last 90 Days' },
                   ]}
                 />
               </div>
@@ -158,7 +158,7 @@ export function AnalyticsPage() {
                   />
                   <Bar
                     dataKey="tasks_completed"
-                    name="Tugas Selesai"
+                    name="Tasks Completed"
                     radius={[10, 10, 4, 4]}
                     isAnimationActive={false}
                   >
@@ -177,7 +177,7 @@ export function AnalyticsPage() {
             </div>
           </section>
 
-          {/* Asymmetric Bottom Grid matching Screen 2 ("Recent workout" visual balance) */}
+          {/* Asymmetric Bottom Grid */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             {/* Left Tall Card: Focus Time Area Trend */}
             <section className="flex flex-col justify-between rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-6">
@@ -187,11 +187,11 @@ export function AnalyticsPage() {
                     <Clock className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   </span>
                   <span className="font-mono-num text-xs text-[var(--color-text-muted)]">
-                    {summary.completed_focus_sessions} selesai / {summary.interrupted_focus_sessions} jeda
+                    {summary.completed_focus_sessions} done / {summary.interrupted_focus_sessions} paused
                   </span>
                 </div>
                 <p className="mt-4 text-xs text-[var(--color-text-secondary)]">
-                  Berapa total durasi fokus pada rentang terpilih?
+                  How much focus time was logged in the selected range?
                 </p>
                 <p className="mt-1 font-mono-num text-2xl font-bold text-[var(--color-text-primary)]">
                   {formatDurationHuman(summary.range_focus_sec)}
@@ -221,7 +221,7 @@ export function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="focus_minutes"
-                      name="Menit Fokus"
+                      name="Focus Minutes"
                       stroke="var(--color-primary)"
                       strokeWidth={2}
                       fill="url(#focusAreaGrad)"
@@ -240,7 +240,7 @@ export function AnalyticsPage() {
                     <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
                       Completed vs Pending ({summary.completed_tasks} / {summary.pending_tasks})
                     </h2>
-                    <p className="text-xs text-[var(--color-text-secondary)]">Distribusi di setiap tahap alur</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Distribution across each workflow stage</p>
                   </div>
                   <CheckCircle2 className="h-4 w-4 text-[var(--color-success)]" strokeWidth={1.75} aria-hidden="true" />
                 </div>
@@ -273,11 +273,11 @@ export function AnalyticsPage() {
               <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                 <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-primary)]">
                   <Zap className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
-                  <span>Sprint Completion Rate per Periode</span>
+                  <span>Sprint Completion Rate by Cycle</span>
                 </h2>
                 {(data?.sprint_rates || []).length === 0 ? (
                   <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
-                    Belum ada sprint aktif atau selesai untuk dibandingkan.
+                    No active or completed sprints to compare yet.
                   </p>
                 ) : (
                   <ul className="mt-3 divide-y divide-[var(--color-border)]">
@@ -291,7 +291,7 @@ export function AnalyticsPage() {
                             {sp.name}
                           </Link>
                           <p className="text-[11px] text-[var(--color-text-muted)]">
-                            {formatDateId(sp.start_date, 'd MMM')} - {formatDateId(sp.end_date, 'd MMM yyyy')}
+                            {formatDateId(sp.start_date, 'MMM d')} - {formatDateId(sp.end_date, 'MMM d, yyyy')}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">

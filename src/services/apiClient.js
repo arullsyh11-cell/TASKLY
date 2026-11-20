@@ -47,7 +47,7 @@ export async function apiRequest(path, { method = 'GET', body, token, raw = fals
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   } catch {
-    throw new ApiError('Tidak dapat terhubung ke server TASKLY. Periksa koneksi atau status server.', {
+    throw new ApiError('Unable to connect to the TASKLY server. Check your connection or server status.', {
       status: 0,
       code: 'NETWORK_ERROR',
       retryable: true,
@@ -56,7 +56,7 @@ export async function apiRequest(path, { method = 'GET', body, token, raw = fals
 
   if (raw) {
     if (!res.ok) {
-      throw new ApiError('Gagal mengunduh berkas dari server.', { status: res.status, retryable: true });
+      throw new ApiError('Failed to download file from server.', { status: res.status, retryable: true });
     }
     return res.text();
   }
@@ -64,7 +64,7 @@ export async function apiRequest(path, { method = 'GET', body, token, raw = fals
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     const errObj = data?.error || {};
-    throw new ApiError(errObj.message || `Permintaan gagal (${res.status}).`, {
+    throw new ApiError(errObj.message || `Request failed (${res.status}).`, {
       status: res.status,
       code: errObj.code || 'REQUEST_FAILED',
       field: errObj.field || null,

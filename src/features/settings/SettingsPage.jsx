@@ -25,6 +25,7 @@ import { Input } from '../../components/ui/Input.jsx';
 import { Dropdown } from '../../components/ui/Dropdown.jsx';
 import { ErrorState, LoadingState } from '../../components/ui/States.jsx';
 import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog.jsx';
+import { WorkspaceVaultPanel } from './WorkspaceVaultPanel.jsx';
 import { downloadTextFile } from '../../utils/downloadUtils.js';
 import { addDaysIso, formatDateId, formatDurationHuman, getTodayIso } from '../../utils/dateUtils.js';
 import {
@@ -51,7 +52,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     const qTab = searchParams.get('tab');
-    if (qTab && ['appearance', 'focus', 'workflow', 'account', 'data'].includes(qTab)) {
+    if (qTab && ['appearance', 'focus', 'vault', 'workflow', 'account', 'data'].includes(qTab)) {
       setTab(qTab);
     }
   }, [searchParams]);
@@ -136,7 +137,7 @@ export function SettingsPage() {
       queryClient.setQueryData(['settings'], updated);
       if (updated.theme) setTheme(updated.theme);
       syncDurations(updated);
-      toast.success('Pengaturan workspace disimpan.');
+      toast.success('Workspace settings saved.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -145,7 +146,7 @@ export function SettingsPage() {
     mutationFn: () => repo.auth.updateProfile(fullName.trim()),
     onSuccess: (res) => {
       setUser(res.user);
-      toast.success('Profil diperbarui.');
+      toast.success('Profile updated.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -165,7 +166,7 @@ export function SettingsPage() {
     onSuccess: async () => {
       queryClient.clear();
       await logout();
-      toast.success('Akun dan seluruh data dihapus.');
+      toast.success('Account and all workspace data deleted.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -175,7 +176,7 @@ export function SettingsPage() {
     onSuccess: () => {
       setNewColName('');
       queryClient.invalidateQueries({ queryKey: ['columns'] });
-      toast.success('Kolom ditambahkan.');
+      toast.success('Column added.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -192,7 +193,7 @@ export function SettingsPage() {
     onSuccess: () => {
       setNewCatName('');
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Kategori ditambahkan.');
+      toast.success('Category added.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -210,7 +211,7 @@ export function SettingsPage() {
     onSuccess: () => {
       setNewLabelName('');
       queryClient.invalidateQueries({ queryKey: ['labels'] });
-      toast.success('Label ditambahkan.');
+      toast.success('Label added.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -240,9 +241,9 @@ export function SettingsPage() {
         JSON.stringify(payload, null, 2),
         'application/json'
       );
-      toast.success('Ekspor JSON berhasil diunduh.');
+      toast.success('JSON export downloaded.');
     } catch (err) {
-      toast.error(err.message || 'Gagal mengekspor data.');
+      toast.error(err.message || 'Failed to export data.');
     }
   }
 
@@ -250,31 +251,32 @@ export function SettingsPage() {
     try {
       const csv = await repo.settings.exportCsv();
       downloadTextFile(`taskly-tasks-${getTodayIso()}.csv`, csv, 'text/csv;charset=utf-8');
-      toast.success('Ekspor CSV berhasil diunduh.');
+      toast.success('CSV export downloaded.');
     } catch (err) {
-      toast.error(err.message || 'Gagal mengekspor CSV.');
+      toast.error(err.message || 'Failed to export CSV.');
     }
   }
 
-  if (isLoading) return <LoadingState label="Memuat pengaturan workspace..." rows={4} />;
-  if (isError) return <ErrorState title="Gagal memuat Settings" message={error?.message} onRetry={refetch} />;
+  if (isLoading) return <LoadingState label="Loading workspace settings..." rows={4} />;
+  if (isError) return <ErrorState title="Failed to load Settings" message={error?.message} onRetry={refetch} />;
 
   const TABS = [
-    { id: 'appearance', label: 'Tampilan & Tema' },
-    { id: 'focus', label: 'Focus & Pengingat' },
-    { id: 'workflow', label: 'Kolom & Taksonomi' },
-    { id: 'account', label: isLocalMode ? 'Profil Workspace' : 'Akun & Keamanan' },
-    { id: 'data', label: 'Data & Ekspor' },
+    { id: 'appearance', label: 'Appearance' },
+    { id: 'focus', label: 'Focus & Reminders' },
+    { id: 'vault', label: 'Files & Notes' },
+    { id: 'workflow', label: 'Board & Tags' },
+    { id: 'account', label: isLocalMode ? 'Profile' : 'Account & Security' },
+    { id: 'data', label: 'Data & Export' },
   ];
 
-  const initials = (user?.full_name || 'P').trim().charAt(0).toUpperCase();
+  const initials = (user?.full_name || 'U').trim().charAt(0).toUpperCase();
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Settings</h1>
         <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-          Sesuaikan tema visual, durasi Focus Mode, kolom Kanban, taksonomi, dan cadangan data Anda.
+          Customize themes, Focus Mode &amp; reminders, personal files and notes, Kanban workflow, and backups.
         </p>
       </header>
 
@@ -287,35 +289,35 @@ export function SettingsPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                {user?.full_name || 'Pengguna'}
+                {user?.full_name || 'User'}
               </h2>
               <p className="text-xs text-[var(--color-text-secondary)]">
-                {isLocalMode ? 'Penyimpanan Lokal (Browser localStorage)' : user?.email}
+                {isLocalMode ? 'Local Storage (Browser localStorage)' : user?.email}
               </p>
             </div>
           </div>
 
           <Button variant="outline" size="sm" onClick={() => setTab('account')} className="rounded-full self-start sm:self-auto">
             <User className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-            <span>Ubah Nama</span>
+            <span>Edit Name</span>
           </Button>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2.5">
           <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-center">
-            <p className="text-[11px] text-[var(--color-text-muted)]">Total Tugas</p>
+            <p className="text-[11px] text-[var(--color-text-muted)]">Total Tasks</p>
             <p className="mt-0.5 font-mono-num text-base font-bold text-[var(--color-text-primary)]">
               {dashSummary?.counts?.total ?? 0}
             </p>
           </div>
           <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-center">
-            <p className="text-[11px] text-[var(--color-text-muted)]">Kolom Board</p>
+            <p className="text-[11px] text-[var(--color-text-muted)]">Board Columns</p>
             <p className="mt-0.5 font-mono-num text-base font-bold text-[var(--color-text-primary)]">
               {columns.length}
             </p>
           </div>
           <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-center">
-            <p className="text-[11px] text-[var(--color-text-muted)]">Total Fokus</p>
+            <p className="text-[11px] text-[var(--color-text-muted)]">Total Focus</p>
             <p className="mt-0.5 font-mono-num text-base font-bold text-[var(--color-accent-text)]">
               {formatDurationHuman(focusStats?.total_focus_sec ?? 0)}
             </p>
@@ -323,22 +325,20 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Segmented Navigation Tabs - Outlined grid on mobile, outlined inline pill strip on desktop */}
+      {/* Balanced 6-Tab Pill Switcher (2x3 on mobile, 3x2 on tablet, single pill strip on desktop) */}
       <div
         role="tablist"
-        aria-label="Kategori pengaturan"
-        className="grid w-full grid-cols-2 gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 sm:inline-flex sm:w-auto sm:flex-nowrap sm:items-center sm:gap-1.5 sm:rounded-full sm:p-1.5"
+        aria-label="Settings categories"
+        className="grid w-full grid-cols-2 gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 sm:grid-cols-3 lg:inline-flex lg:w-auto lg:flex-nowrap lg:items-center lg:gap-1.5 lg:rounded-full lg:p-1.5"
       >
-        {TABS.map((t, index) => (
+        {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`min-h-[40px] whitespace-nowrap rounded-[var(--radius-md)] border px-3.5 text-center text-xs font-semibold transition-colors sm:rounded-full ${
-              index === TABS.length - 1 ? 'col-span-2 sm:col-span-1' : ''
-            } ${
+            className={`min-h-[44px] lg:min-h-[40px] whitespace-nowrap rounded-full border px-3.5 text-center text-xs font-semibold transition-colors ${
               tab === t.id
                 ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-xs'
                 : 'border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]'
@@ -352,9 +352,9 @@ export function SettingsPage() {
       {tab === 'appearance' && (
         <section className="max-w-2xl space-y-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
           <div>
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Pilihan Tema Workspace</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Workspace Theme</h2>
             <p className="text-xs text-[var(--color-text-secondary)]">
-              Tema 1 (Light Workspace) sebagai tema default dan Tema 2 (Monochrome) sebagai alternatif kontras netral.
+              Theme 1 (Light Workspace) is the default theme and Theme 2 (Monochrome) offers neutral dark contrast.
             </p>
           </div>
 
@@ -376,7 +376,7 @@ export function SettingsPage() {
                 <div className="flex items-center gap-2.5">
                   <Sun className="h-5 w-5 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Tema 1: Light Workspace</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Theme 1: Light Workspace</p>
                     <p className="text-[11px] text-[var(--color-text-secondary)]">Default Workspace</p>
                   </div>
                 </div>
@@ -409,8 +409,8 @@ export function SettingsPage() {
                 <div className="flex items-center gap-2.5">
                   <Contrast className="h-5 w-5 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Tema 2: Monochrome</p>
-                    <p className="text-[11px] text-[var(--color-text-secondary)]">Kontras Netral</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Theme 2: Monochrome</p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">Neutral Contrast</p>
                   </div>
                 </div>
               </div>
@@ -429,10 +429,10 @@ export function SettingsPage() {
           <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
             <div>
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-                Gaya Navigasi Sidebar (Web &amp; Mobile)
+                Sidebar Navigation Style (Web &amp; Mobile)
               </h3>
               <p className="text-xs text-[var(--color-text-secondary)]">
-                Pilih antara menu melingkar (Radial Sidebar) atau sidebar geser klasik untuk desktop dan mobile.
+                Switch between the circular Radial Sidebar and the classic sliding sidebar on desktop and mobile.
               </p>
             </div>
 
@@ -453,9 +453,9 @@ export function SettingsPage() {
                 <div className="flex items-center gap-2.5">
                   <Compass className="h-5 w-5 shrink-0 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Versi 1: Radial Sidebar</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Version 1: Radial Sidebar</p>
                     <p className="text-[11px] text-[var(--color-text-secondary)]">
-                      Setengah lingkaran di mobile &amp; melingkar di tepi kiri web
+                      Compact half-circle on mobile &amp; left-docked wheel on web
                     </p>
                   </div>
                 </div>
@@ -477,9 +477,9 @@ export function SettingsPage() {
                 <div className="flex items-center gap-2.5">
                   <PanelLeft className="h-5 w-5 shrink-0 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Versi 2: Slide Sidebar</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Version 2: Slide Sidebar</p>
                     <p className="text-[11px] text-[var(--color-text-secondary)]">
-                      Sidebar bergeser/lipat di web &amp; slide drawer di mobile
+                      Collapsible rail on web &amp; slide drawer on mobile
                     </p>
                   </div>
                 </div>
@@ -489,28 +489,30 @@ export function SettingsPage() {
 
           <div className="max-w-xs pt-2">
             <Dropdown
-              label="Tampilan Default Kalender"
+              label="Default Calendar View"
               value={calView}
               onChange={(val) => {
                 setCalView(val);
                 updateSettingsMutation.mutate({ default_calendar_view: val });
               }}
               options={[
-                { value: 'month', label: 'Bulanan (Monthly)' },
-                { value: 'week', label: 'Mingguan (Weekly)' },
-                { value: 'day', label: 'Harian (Daily)' },
+                { value: 'month', label: 'Monthly' },
+                { value: 'week', label: 'Weekly' },
+                { value: 'day', label: 'Daily' },
               ]}
             />
           </div>
         </section>
       )}
 
+      {tab === 'vault' && <WorkspaceVaultPanel />}
+
       {tab === 'focus' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Preset Durasi Pomodoro</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Pomodoro Duration Presets</h2>
             <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-              Nilai default standar adalah 25 menit fokus, 5 menit istirahat pendek, dan 15 menit istirahat panjang.
+              Standard defaults are 25 minutes focus, 5 minutes short break, and 15 minutes long break.
             </p>
 
             <form
@@ -527,7 +529,7 @@ export function SettingsPage() {
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Input
-                  label="Focus (Menit)"
+                  label="Focus (Min)"
                   type="number"
                   min={1}
                   max={180}
@@ -535,7 +537,7 @@ export function SettingsPage() {
                   onChange={(e) => setFocusMin(e.target.value)}
                 />
                 <Input
-                  label="Short Break (Menit)"
+                  label="Short Break (Min)"
                   type="number"
                   min={1}
                   max={60}
@@ -543,7 +545,7 @@ export function SettingsPage() {
                   onChange={(e) => setShortBreakMin(e.target.value)}
                 />
                 <Input
-                  label="Long Break (Menit)"
+                  label="Long Break (Min)"
                   type="number"
                   min={1}
                   max={90}
@@ -552,22 +554,21 @@ export function SettingsPage() {
                 />
               </div>
 
-              {/* Settings row matching Screen 3 "Sound" toggle */}
               <div className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]">
                     <Volume2 className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Notifikasi Suara &amp; Nada Dering</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">Bunyikan nada dering &amp; kirim notifikasi saat timer habis atau pengingat muncul.</p>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Sound Alerts &amp; Ringtone</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Play a chime and send notifications when the timer ends or a reminder triggers.</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={soundEnabled}
-                  aria-label="Aktifkan suara notifikasi timer"
+                  aria-label="Enable timer notification sound"
                   onClick={() => setSoundEnabled((v) => !v)}
                   className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors ${
                     soundEnabled
@@ -585,7 +586,7 @@ export function SettingsPage() {
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="submit" isLoading={updateSettingsMutation.isPending} className="rounded-full px-6">
-                  Simpan Pengaturan Focus
+                  Save Focus Settings
                 </Button>
                 <Button
                   type="button"
@@ -593,20 +594,20 @@ export function SettingsPage() {
                   onClick={async () => {
                     playFocusChime();
                     await requestFocusNotificationPermission();
-                    toast.success('Pratinjau nada dering diputar.');
+                    toast.success('Ringtone preview played.');
                   }}
                 >
                   <Volume2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                  <span>Tes Nada Dering</span>
+                  <span>Test Ringtone</span>
                 </Button>
               </div>
             </form>
           </section>
 
           <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Pengingat Deadline (Reminder)</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Deadline Reminders</h2>
             <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-              Atur pengingat otomatis sebelum tanggal deadline tugas (default 1 hari sebelum deadline, atau custom jumlah hari).
+              Set automatic alerts before a task due date (default 1 day before deadline, or custom days).
             </p>
 
             <form
@@ -625,9 +626,9 @@ export function SettingsPage() {
                     <Bell className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Aktifkan Pengingat Otomatis</p>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">Enable Automatic Reminders</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">
-                      Kirim notifikasi pengingat untuk tugas yang memasuki jadwal pengingat.
+                      Send reminder notifications for tasks entering their reminder window.
                     </p>
                   </div>
                 </div>
@@ -635,7 +636,7 @@ export function SettingsPage() {
                   type="button"
                   role="switch"
                   aria-checked={reminderEnabled}
-                  aria-label="Aktifkan pengingat deadline otomatis"
+                  aria-label="Enable automatic deadline reminders"
                   onClick={() => setReminderEnabled((v) => !v)}
                   className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors ${
                     reminderEnabled
@@ -653,7 +654,7 @@ export function SettingsPage() {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
                 <Dropdown
-                  label="Default Hari Pengingat"
+                  label="Default Reminder Lead Time"
                   value={customDefaultMode ? 'custom' : String(defaultReminderDays)}
                   onChange={(val) => {
                     if (val === 'custom') {
@@ -664,18 +665,18 @@ export function SettingsPage() {
                     }
                   }}
                   options={[
-                    { value: '1', label: '1 hari sebelum (Default)' },
-                    { value: '0', label: 'Hari H (tepat tanggal deadline)' },
-                    { value: '2', label: '2 hari sebelum deadline' },
-                    { value: '3', label: '3 hari sebelum deadline' },
-                    { value: '7', label: '7 hari sebelum deadline' },
-                    { value: 'custom', label: 'Custom jumlah hari...' },
+                    { value: '1', label: '1 day before (Default)' },
+                    { value: '0', label: 'On due date (Day of)' },
+                    { value: '2', label: '2 days before deadline' },
+                    { value: '3', label: '3 days before deadline' },
+                    { value: '7', label: '7 days before deadline' },
+                    { value: 'custom', label: 'Custom days...' },
                   ]}
                 />
 
                 {customDefaultMode && (
                   <Input
-                    label="Custom Hari Sebelum Deadline"
+                    label="Custom Days Before Deadline"
                     type="number"
                     min={0}
                     max={60}
@@ -686,17 +687,17 @@ export function SettingsPage() {
               </div>
 
               <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-xs text-[var(--color-text-secondary)]">
-                <p className="font-semibold text-[var(--color-text-primary)]">Contoh Pesan Notifikasi:</p>
+                <p className="font-semibold text-[var(--color-text-primary)]">Sample Notification Message:</p>
                 <p className="mt-0.5">
-                  &ldquo;Jangan lupa ada tugas yang deadlinenya tanggal{' '}
-                  {formatDateId(addDaysIso(getTodayIso(), Math.max(0, Number(defaultReminderDays || 1))), 'd MMMM yyyy')}
+                  &ldquo;Don&apos;t forget, you have a task due on{' '}
+                  {formatDateId(addDaysIso(getTodayIso(), Math.max(0, Number(defaultReminderDays || 1))), 'MMMM d, yyyy')}
                   .&rdquo;
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button type="submit" isLoading={updateSettingsMutation.isPending} className="rounded-full px-6">
-                  Simpan Pengingat
+                  Save Reminder Settings
                 </Button>
                 <Button
                   type="button"
@@ -704,20 +705,20 @@ export function SettingsPage() {
                   onClick={async () => {
                     const targetDate = formatDateId(
                       addDaysIso(getTodayIso(), Math.max(0, Number(defaultReminderDays || 1))),
-                      'd MMMM yyyy'
+                      'MMMM d, yyyy'
                     );
-                    const sampleBody = `Jangan lupa ada tugas yang deadlinenya tanggal ${targetDate}.`;
+                    const sampleBody = `Don't forget, you have a task due on ${targetDate}.`;
                     if (soundEnabled) playReminderChime();
                     await requestFocusNotificationPermission();
-                    sendReminderNotification('Contoh Pengingat Deadline', sampleBody, 'taskly-rem-test');
-                    toast.warning('Contoh Pengingat Deadline', {
+                    sendReminderNotification('Sample Deadline Reminder', sampleBody, 'taskly-rem-test');
+                    toast.warning('Sample Deadline Reminder', {
                       description: sampleBody,
                       duration: 6000,
                     });
                   }}
                 >
                   <Bell className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                  <span>Tes Notifikasi Pengingat</span>
+                  <span>Test Reminder Alert</span>
                 </Button>
               </div>
             </form>
@@ -729,9 +730,9 @@ export function SettingsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
             <div>
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Urutan Kolom Kanban</h2>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Kanban Column Order</h2>
               <p className="text-xs text-[var(--color-text-secondary)]">
-                Atur urutan atau tambah kolom kustom untuk alur kerja Anda.
+                Reorder or add custom columns for your workflow.
               </p>
             </div>
 
@@ -743,14 +744,14 @@ export function SettingsPage() {
                 >
                   <div>
                     <p className="text-sm font-medium text-[var(--color-text-primary)]">{col.name}</p>
-                    <p className="text-[11px] text-[var(--color-text-muted)]">Semantik: {col.semantic_type}</p>
+                    <p className="text-[11px] text-[var(--color-text-muted)]">Semantic: {col.semantic_type}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       disabled={idx === 0}
                       onClick={() => moveColumn(idx, -1)}
-                      aria-label={`Geser naik ${col.name}`}
+                      aria-label={`Move ${col.name} up`}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] disabled:opacity-30"
                     >
                       <ArrowUp className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -759,7 +760,7 @@ export function SettingsPage() {
                       type="button"
                       disabled={idx === columns.length - 1}
                       onClick={() => moveColumn(idx, 1)}
-                      aria-label={`Geser turun ${col.name}`}
+                      aria-label={`Move ${col.name} down`}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] disabled:opacity-30"
                     >
                       <ArrowDown className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -778,8 +779,8 @@ export function SettingsPage() {
             >
               <input
                 type="text"
-                aria-label="Nama kolom baru"
-                placeholder="Kolom baru..."
+                aria-label="New column name"
+                placeholder="New column..."
                 value={newColName}
                 onChange={(e) => setNewColName(e.target.value)}
                 className="min-h-[38px] flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm text-[var(--color-text-primary)]"
@@ -787,7 +788,7 @@ export function SettingsPage() {
               <div className="w-36">
                 <Dropdown
                   compact
-                  aria-label="Semantik kolom baru"
+                  aria-label="New column semantic type"
                   value={newColSem}
                   onChange={setNewColSem}
                   options={[
@@ -801,17 +802,17 @@ export function SettingsPage() {
               </div>
               <Button type="submit" size="sm" isLoading={createColMutation.isPending}>
                 <Plus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                <span>Tambah</span>
+                <span>Add</span>
               </Button>
             </form>
           </section>
 
           <div className="space-y-6">
             <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Kategori Tugas</h2>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Task Categories</h2>
               <div className="flex flex-wrap gap-2">
                 {categories.length === 0 ? (
-                  <p className="text-xs text-[var(--color-text-muted)]">Belum ada kategori.</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">No categories yet.</p>
                 ) : (
                   categories.map((cat) => (
                     <span
@@ -822,7 +823,7 @@ export function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => deleteCatMutation.mutate(cat.id)}
-                        aria-label={`Hapus kategori ${cat.name}`}
+                        aria-label={`Delete category ${cat.name}`}
                         className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]"
                       >
                         <Trash2 className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
@@ -840,23 +841,23 @@ export function SettingsPage() {
               >
                 <input
                   type="text"
-                  aria-label="Nama kategori baru"
-                  placeholder="Tambah kategori (mis. Engineering)..."
+                  aria-label="New category name"
+                  placeholder="Add category (e.g. Engineering)..."
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   className="min-h-[38px] flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm text-[var(--color-text-primary)]"
                 />
                 <Button type="submit" size="sm" isLoading={createCatMutation.isPending}>
-                  Tambah
+                  Add
                 </Button>
               </form>
             </section>
 
             <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Label Tugas</h2>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Task Labels</h2>
               <div className="flex flex-wrap gap-2">
                 {labels.length === 0 ? (
-                  <p className="text-xs text-[var(--color-text-muted)]">Belum ada label.</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">No labels yet.</p>
                 ) : (
                   labels.map((lb) => (
                     <span
@@ -867,7 +868,7 @@ export function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => deleteLabelMutation.mutate(lb.id)}
-                        aria-label={`Hapus label ${lb.name}`}
+                        aria-label={`Delete label ${lb.name}`}
                         className="text-[var(--color-text-muted)] hover:text-[var(--color-danger)]"
                       >
                         <Trash2 className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
@@ -885,14 +886,14 @@ export function SettingsPage() {
               >
                 <input
                   type="text"
-                  aria-label="Nama label baru"
-                  placeholder="Tambah label (mis. Bug, UX)..."
+                  aria-label="New label name"
+                  placeholder="Add label (e.g. Bug, UX)..."
                   value={newLabelName}
                   onChange={(e) => setNewLabelName(e.target.value)}
                   className="min-h-[38px] flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm text-[var(--color-text-primary)]"
                 />
                 <Button type="submit" size="sm" isLoading={createLabelMutation.isPending}>
-                  Tambah
+                  Add
                 </Button>
               </form>
             </section>
@@ -904,7 +905,7 @@ export function SettingsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
             <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-              {isLocalMode ? 'Profil Workspace Lokal' : 'Profil Pengguna'}
+              {isLocalMode ? 'Local Workspace Profile' : 'User Profile'}
             </h2>
             <form
               onSubmit={(e) => {
@@ -913,23 +914,23 @@ export function SettingsPage() {
               }}
               className="space-y-4"
             >
-              {!isLocalMode && <Input label="Email Terdaftar" value={user?.email || ''} disabled />}
+              {!isLocalMode && <Input label="Registered Email" value={user?.email || ''} disabled />}
               <Input
-                label="Nama Tampilan"
+                label="Display Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                hint={isLocalMode ? 'Ditampilkan pada sapaan Dashboard. Data tersimpan di localStorage browser.' : undefined}
+                hint={isLocalMode ? 'Shown in the Dashboard greeting. Saved in browser localStorage.' : undefined}
                 required
               />
               <Button type="submit" isLoading={updateProfileMutation.isPending} className="rounded-full px-6">
-                Simpan Profil
+                Save Profile
               </Button>
             </form>
           </section>
 
           {!isLocalMode && (
             <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
-              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Keamanan Kata Sandi</h2>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Password Security</h2>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -938,27 +939,27 @@ export function SettingsPage() {
                 className="space-y-4"
               >
                 <Input
-                  label="Kata Sandi Saat Ini"
+                  label="Current Password"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
                 />
                 <Input
-                  label="Kata Sandi Baru"
+                  label="New Password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                 />
                 <Button type="submit" variant="secondary" isLoading={changePwMutation.isPending}>
-                  Ganti Kata Sandi
+                  Change Password
                 </Button>
               </form>
 
               <div className="border-t border-[var(--color-border)] pt-4">
                 <Button variant="danger" size="sm" onClick={() => setDeleteAccountOpen(true)}>
-                  Hapus Akun Permanen
+                  Delete Account Permanently
                 </Button>
               </div>
             </section>
@@ -969,30 +970,30 @@ export function SettingsPage() {
       {tab === 'data' && (
         <section className="max-w-xl rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-5">
           <div>
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Portabilitas &amp; Ekspor Data</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Data Portability &amp; Export</h2>
             <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-              Unduh salinan penuh tugas, sprint, dan riwayat sesi fokus milik Anda kapan saja.
+              Download a full backup of your tasks, sprints, focus sessions, files, and quick notes anytime.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button onClick={handleExportJson} className="rounded-full px-5">
               <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Ekspor Workspace (JSON)</span>
+              <span>Export Workspace (JSON)</span>
             </Button>
             <Button variant="secondary" onClick={handleExportCsv} className="rounded-full px-5">
               <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Ekspor Daftar Tugas (CSV)</span>
+              <span>Export Task List (CSV)</span>
             </Button>
           </div>
 
           {isLocalMode && (
             <div className="border-t border-[var(--color-border)] pt-4 space-y-2">
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Reset Workspace Lokal</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Reset Local Workspace</h3>
               <p className="text-xs text-[var(--color-text-secondary)]">
-                Menghapus seluruh data tugas, sprint, kolom kustom, dan sesi fokus di localStorage browser Anda.
+                Clears all tasks, sprints, custom columns, focus sessions, files, and quick notes from browser localStorage.
               </p>
               <Button variant="danger" size="sm" onClick={() => setResetWorkspaceOpen(true)}>
-                Reset Data LocalStorage
+                Reset LocalStorage Data
               </Button>
             </div>
           )}
@@ -1007,21 +1008,21 @@ export function SettingsPage() {
         }}
         onConfirm={async () => {
           if (resetConfirmText !== 'RESET') {
-            toast.error('Ketik RESET dengan huruf kapital untuk konfirmasi.');
+            toast.error('Type RESET in uppercase to confirm.');
             return;
           }
           await repo.settings.resetWorkspace();
           queryClient.invalidateQueries();
           setResetWorkspaceOpen(false);
           setResetConfirmText('');
-          toast.success('Data localStorage workspace berhasil direset.');
+          toast.success('Local workspace data has been reset.');
         }}
-        title="Reset Seluruh Data LocalStorage?"
-        description="Seluruh tugas, sprint, kategori, dan riwayat fokus akan dihapus dari browser dan dikembalikan ke kondisi awal."
-        confirmLabel="Reset Sekarang"
+        title="Reset All LocalStorage Data?"
+        description="All tasks, sprints, categories, focus history, files, and notes will be removed from this browser and restored to default."
+        confirmLabel="Reset Now"
       >
         <Input
-          label='Ketik "RESET" untuk melanjutkan'
+          label='Type "RESET" to continue'
           value={resetConfirmText}
           onChange={(e) => setResetConfirmText(e.target.value)}
           placeholder="RESET"
@@ -1035,22 +1036,22 @@ export function SettingsPage() {
           setDeleteConfirmText('');
         }}
         onConfirm={() => {
-          if (deleteConfirmText !== 'HAPUS') {
-            toast.error('Ketik HAPUS dengan huruf kapital untuk konfirmasi.');
+          if (deleteConfirmText !== 'DELETE') {
+            toast.error('Type DELETE in uppercase to confirm.');
             return;
           }
           deleteAccountMutation.mutate();
         }}
         isLoading={deleteAccountMutation.isPending}
-        title="Hapus Akun Secara Permanen?"
-        description="Seluruh tugas, sprint, kolom, dan catatan sesi fokus Anda akan dihapus dan tidak dapat dipulihkan."
-        confirmLabel="Hapus Akun Sekarang"
+        title="Delete Account Permanently?"
+        description="All your tasks, sprints, columns, and focus session history will be permanently deleted and cannot be recovered."
+        confirmLabel="Delete Account Now"
       >
         <Input
-          label='Ketik "HAPUS" untuk melanjutkan'
+          label='Type "DELETE" to continue'
           value={deleteConfirmText}
           onChange={(e) => setDeleteConfirmText(e.target.value)}
-          placeholder="HAPUS"
+          placeholder="DELETE"
         />
       </ConfirmationDialog>
     </div>

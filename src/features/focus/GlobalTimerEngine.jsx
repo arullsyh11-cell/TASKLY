@@ -66,10 +66,10 @@ export function GlobalTimerEngine() {
   useEffect(() => {
     if (status === 'running') {
       const modeName =
-        mode === 'short_break' ? 'Istirahat' : mode === 'long_break' ? 'Istirahat Panjang' : 'Fokus';
+        mode === 'short_break' ? 'Short Break' : mode === 'long_break' ? 'Long Break' : 'Focus';
       document.title = `(${formatSecondsClock(remainingSec)}) ${modeName} | TASKLY`;
     } else if (isRinging) {
-      document.title = 'Waktu Habis! | TASKLY';
+      document.title = 'Time Up! | TASKLY';
     } else {
       document.title = 'TASKLY | Productivity & Workflow Workspace';
     }
@@ -86,11 +86,11 @@ export function GlobalTimerEngine() {
       if (res.finished && !handlingFinishRef.current) {
         handlingFinishRef.current = true;
         const isBreak = res.sessionPayload.mode === 'short_break' || res.sessionPayload.mode === 'long_break';
-        const title = isBreak ? 'Waktu Istirahat Selesai!' : 'Sesi Fokus Selesai!';
-        const taskLabel = useTimerStore.getState().selectedTaskTitle || 'Fokus Umum';
+        const title = isBreak ? 'Break Finished!' : 'Focus Session Complete!';
+        const taskLabel = useTimerStore.getState().selectedTaskTitle || 'General Focus';
         const body = isBreak
-          ? 'Saatnya kembali melanjutkan tugas prioritas Anda.'
-          : `Target "${taskLabel}" selesai dan tercatat ke statistik.`;
+          ? 'Time to return to your priority tasks.'
+          : `Target "${taskLabel}" completed and logged to your stats.`;
 
         const soundOn = settings?.sound_enabled !== false;
         if (soundOn) {
@@ -104,12 +104,12 @@ export function GlobalTimerEngine() {
 
         sendFocusNotification(title, body);
 
-        toast.success(isBreak ? 'Waktu istirahat selesai.' : 'Sesi fokus selesai dan tercatat.', {
+        toast.success(isBreak ? 'Break finished.' : 'Focus session completed and logged.', {
           duration: 12000,
           description: body,
           action: soundOn
             ? {
-                label: 'Matikan Nada',
+                label: 'Mute Sound',
                 onClick: () => {
                   stopFocusRingtone();
                   setRinging(false);
@@ -125,7 +125,7 @@ export function GlobalTimerEngine() {
           queryClient.invalidateQueries({ queryKey: ['analytics'] });
         } catch {
           addPendingSync(res.sessionPayload);
-          toast.error('Sesi disimpan lokal sementara karena koneksi bermasalah.');
+          toast.error('Session saved locally due to a connection issue.');
         }
       }
     }, 250);

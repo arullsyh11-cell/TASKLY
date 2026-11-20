@@ -1,13 +1,13 @@
 import { addDaysIso, daysRemaining, formatDateId, getTodayIso } from './dateUtils.js';
 
 export const REMINDER_PRESETS = [
-  { value: '1', label: '1 hari sebelum deadline (Default)' },
-  { value: '0', label: 'Hari H (tepat tanggal deadline)' },
-  { value: '2', label: '2 hari sebelum deadline' },
-  { value: '3', label: '3 hari sebelum deadline' },
-  { value: '7', label: '7 hari sebelum deadline' },
-  { value: 'custom', label: 'Custom jumlah hari...' },
-  { value: 'off', label: 'Nonaktifkan pengingat' },
+  { value: '1', label: '1 day before deadline (Default)' },
+  { value: '0', label: 'On due date (Day of)' },
+  { value: '2', label: '2 days before deadline' },
+  { value: '3', label: '3 days before deadline' },
+  { value: '7', label: '7 days before deadline' },
+  { value: 'custom', label: 'Custom days...' },
+  { value: 'off', label: 'Disable reminder' },
 ];
 
 export const REMINDER_PRESET_NUMBERS = new Set([0, 1, 2, 3, 7]);
@@ -36,8 +36,8 @@ export function getTaskReminderDateIso(dueDateIso, daysBefore) {
 
 export function formatReminderBadgeLabel(daysBefore) {
   if (daysBefore === null || daysBefore === undefined) return null;
-  if (daysBefore === 0) return 'Hari H';
-  return `H-${daysBefore}`;
+  if (daysBefore === 0) return 'Due Day';
+  return `D-${daysBefore}`;
 }
 
 export function buildReminderSignature(taskId, todayIso, dueDate, daysBefore) {
@@ -46,13 +46,15 @@ export function buildReminderSignature(taskId, todayIso, dueDate, daysBefore) {
 
 export function formatReminderMessage(task, todayIso = getTodayIso()) {
   const daysLeft = daysRemaining(task.due_date, todayIso);
-  const dateText = formatDateId(task.due_date, 'd MMMM yyyy');
+  const dateText = formatDateId(task.due_date, 'MMMM d, yyyy');
 
   if (daysLeft < 0) {
     const overdueDays = Math.abs(daysLeft);
     return {
-      title: 'Pengingat Deadline Terlewat',
-      message: `Jangan lupa, tugas "${task.title}" deadlinenya tanggal ${dateText} (terlewat ${overdueDays} hari).`,
+      title: 'Overdue Deadline Reminder',
+      message: `Don't forget, task "${task.title}" was due on ${dateText} (${overdueDays} ${
+        overdueDays === 1 ? 'day' : 'days'
+      } overdue).`,
       urgency: 'overdue',
       daysLeft,
       dateText,
@@ -61,8 +63,8 @@ export function formatReminderMessage(task, todayIso = getTodayIso()) {
 
   if (daysLeft === 0) {
     return {
-      title: 'Pengingat Deadline Hari Ini',
-      message: `Jangan lupa ada tugas "${task.title}" yang deadlinenya hari ini (${dateText}).`,
+      title: 'Deadline Due Today',
+      message: `Don't forget, you have task "${task.title}" due today (${dateText}).`,
       urgency: 'today',
       daysLeft,
       dateText,
@@ -71,8 +73,8 @@ export function formatReminderMessage(task, todayIso = getTodayIso()) {
 
   if (daysLeft === 1) {
     return {
-      title: 'Pengingat Deadline Besok',
-      message: `Jangan lupa ada tugas "${task.title}" yang deadlinenya tanggal ${dateText} (besok).`,
+      title: 'Deadline Due Tomorrow',
+      message: `Don't forget, you have task "${task.title}" due on ${dateText} (tomorrow).`,
       urgency: 'soon',
       daysLeft,
       dateText,
@@ -80,8 +82,8 @@ export function formatReminderMessage(task, todayIso = getTodayIso()) {
   }
 
   return {
-    title: `Pengingat Deadline (${daysLeft} Hari Lagi)`,
-    message: `Jangan lupa ada tugas "${task.title}" yang deadlinenya tanggal ${dateText} (${daysLeft} hari lagi).`,
+    title: `Deadline Reminder (${daysLeft} Days Left)`,
+    message: `Don't forget, you have task "${task.title}" due on ${dateText} (${daysLeft} days left).`,
     urgency: 'upcoming',
     daysLeft,
     dateText,

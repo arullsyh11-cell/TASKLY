@@ -19,7 +19,7 @@ export function createSettingsRouter(db) {
 
   router.get('/settings', (req, res) => {
     const row = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(req.user.id);
-    if (!row) return sendError(res, 404, 'NOT_FOUND', 'Pengaturan tidak ditemukan.');
+    if (!row) return sendError(res, 404, 'NOT_FOUND', 'Settings not found.');
     res.json({
       settings: {
         ...row,
@@ -32,7 +32,7 @@ export function createSettingsRouter(db) {
 
   router.patch('/settings', (req, res) => {
     const current = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(req.user.id);
-    if (!current) return sendError(res, 404, 'NOT_FOUND', 'Pengaturan tidak ditemukan.');
+    if (!current) return sendError(res, 404, 'NOT_FOUND', 'Settings not found.');
 
     const theme = req.body?.theme !== undefined ? String(req.body.theme) : current.theme;
     const navStyle = req.body?.nav_style !== undefined ? String(req.body.nav_style) : current.nav_style || 'radial';
@@ -66,29 +66,29 @@ export function createSettingsRouter(db) {
         : current.default_calendar_view;
 
     if (!VALID_THEMES.has(theme)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tema tidak valid.', 'theme');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid theme.', 'theme');
     }
     if (!VALID_NAV_STYLES.has(navStyle)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Gaya navigasi tidak valid.', 'nav_style');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid navigation style.', 'nav_style');
     }
     if (!Number.isInteger(defaultReminderDays) || defaultReminderDays < 0 || defaultReminderDays > 60) {
       return sendError(
         res,
         400,
         'VALIDATION_ERROR',
-        'Hari default pengingat harus antara 0 sampai 60 hari.',
+        'Default reminder lead time must be between 0 and 60 days.',
         'default_reminder_days'
       );
     }
     if (!Number.isInteger(focusMin) || focusMin < 1 || focusMin > 180) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Durasi fokus harus antara 1 sampai 180 menit.', 'pomodoro_focus_min');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Focus duration must be between 1 and 180 minutes.', 'pomodoro_focus_min');
     }
     if (!Number.isInteger(shortBreakMin) || shortBreakMin < 1 || shortBreakMin > 60) {
       return sendError(
         res,
         400,
         'VALIDATION_ERROR',
-        'Durasi istirahat pendek harus antara 1 sampai 60 menit.',
+        'Short break duration must be between 1 and 60 minutes.',
         'pomodoro_short_break_min'
       );
     }
@@ -97,12 +97,12 @@ export function createSettingsRouter(db) {
         res,
         400,
         'VALIDATION_ERROR',
-        'Durasi istirahat panjang harus antara 1 sampai 90 menit.',
+        'Long break duration must be between 1 and 90 minutes.',
         'pomodoro_long_break_min'
       );
     }
     if (!VALID_CAL_VIEWS.has(defaultCalView)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tampilan kalender default tidak valid.', 'default_calendar_view');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid default calendar view.', 'default_calendar_view');
     }
 
     const now = new Date().toISOString();
@@ -157,17 +157,17 @@ export function createSettingsRouter(db) {
     const tasks = queryEnrichedTasks(db, req.user.id);
     const headers = [
       'ID',
-      'Judul',
-      'Status Kolom',
-      'Prioritas',
-      'Kategori',
+      'Title',
+      'Column Status',
+      'Priority',
+      'Category',
       'Sprint',
-      'Tanggal Mulai',
-      'Tenggat',
-      'Subtask Selesai',
-      'Total Subtask',
-      'Selesai Pada',
-      'Dibuat Pada',
+      'Start Date',
+      'Due Date',
+      'Completed Subtasks',
+      'Total Subtasks',
+      'Completed At',
+      'Created At',
     ];
     const lines = [headers.map(csvCell).join(',')];
     for (const t of tasks) {
@@ -203,7 +203,7 @@ export function createSettingsRouter(db) {
         res,
         409,
         'WORKSPACE_NOT_EMPTY',
-        'Proyek contoh hanya dapat dimuat ke workspace yang masih kosong.'
+        'Sample project can only be loaded into an empty workspace.'
       );
     }
 
@@ -243,9 +243,9 @@ export function createSettingsRouter(db) {
       `).run(
         sprintActiveId,
         req.user.id,
-        'Sprint 01 (Sample): Rilis Alur Inti',
-        'Data contoh opsional untuk eksplorasi fitur TASKLY.',
-        'Menuntaskan alur papan Kanban, validasi form, dan sesi fokus perdana.',
+        'Sprint 01 (Sample): Core Flow Release',
+        'Optional sample data to explore TASKLY features.',
+        'Finish the Kanban workflow, form validation, and initial focus sessions.',
         addDaysIso(today, -3),
         addDaysIso(today, 4),
         now,
@@ -258,9 +258,9 @@ export function createSettingsRouter(db) {
       `).run(
         sprintPlannedId,
         req.user.id,
-        'Sprint 02 (Sample): Penguatan Analitik',
-        'Siklus lanjutan untuk tinjauan kalender dan ekspor data.',
-        'Memastikan konsistensi kalender mingguan dan laporan produktivitas.',
+        'Sprint 02 (Sample): Analytics Polish',
+        'Follow-up cycle for calendar review and data export.',
+        'Verify weekly calendar consistency and productivity reports.',
         addDaysIso(today, 5),
         addDaysIso(today, 12),
         now,
@@ -269,8 +269,8 @@ export function createSettingsRouter(db) {
 
       const sampleTasks = [
         {
-          title: 'Finalisasi arsitektur token warna Warm Espresso',
-          description: 'Verifikasi rasio kontras minimal 4.5:1 di Dark Mode dan Light Mode.',
+          title: 'Finalize Warm Espresso color token architecture',
+          description: 'Verify minimum 4.5:1 contrast ratio across Light and Monochrome themes.',
           columnId: colBySem.done,
           categoryId: catDesign,
           sprintId: sprintActiveId,
@@ -279,14 +279,14 @@ export function createSettingsRouter(db) {
           dueDate: addDaysIso(today, -1),
           completedAt: addDaysIso(today, -1) + 'T10:00:00.000Z',
           subtasks: [
-            { title: 'Cek kontras teks di #1A1A1A', done: true },
-            { title: 'Cek kontras tombol #6B4A2E di putih', done: true },
+            { title: 'Verify text contrast on #1A1A1A', done: true },
+            { title: 'Verify #6B4A2E button contrast on light background', done: true },
           ],
           labels: [lblUx],
         },
         {
-          title: 'Implementasi Kanban drag-and-drop & status sheet mobile',
-          description: 'Pastikan interaksi papan mulus di desktop maupun sentuhan 44px di mobile.',
+          title: 'Implement Kanban drag-and-drop & mobile status sheet',
+          description: 'Ensure smooth board interactions on desktop and 44px touch targets on mobile.',
           columnId: colBySem.in_progress,
           categoryId: catEng,
           sprintId: sprintActiveId,
@@ -295,14 +295,14 @@ export function createSettingsRouter(db) {
           dueDate: today,
           completedAt: null,
           subtasks: [
-            { title: 'Konfigurasi sensor pointer & keyboard', done: true },
-            { title: 'Uji tab switcher kolom di 375px', done: false },
+            { title: 'Configure pointer and keyboard sensors', done: true },
+            { title: 'Test column switcher tabs at 375px', done: false },
           ],
           labels: [lblCore, lblUx],
         },
         {
-          title: 'Tinjau alur penutupan sprint dan carry-over task',
-          description: 'Sediakan pilihan pemindahan tugas tersisa ke Backlog atau Sprint berikutnya.',
+          title: 'Review sprint closure flow and task carry-over',
+          description: 'Offer options to move remaining tasks to Backlog or the next Sprint.',
           columnId: colBySem.review,
           categoryId: catProduct,
           sprintId: sprintActiveId,
@@ -314,8 +314,8 @@ export function createSettingsRouter(db) {
           labels: [lblCore],
         },
         {
-          title: 'Uji sesi Pomodoro 25 menit pada Focus Mode',
-          description: 'Verifikasi timer tidak meleset saat berpindah tab browser.',
+          title: 'Verify 25-minute Pomodoro session in Focus Mode',
+          description: 'Confirm timer accuracy when switching browser tabs.',
           columnId: colBySem.todo,
           categoryId: catEng,
           sprintId: sprintActiveId,
@@ -327,8 +327,8 @@ export function createSettingsRouter(db) {
           labels: [lblCore],
         },
         {
-          title: 'Rancang struktur ekspor CSV laporan mingguan',
-          description: 'Siapkan kolom status, tenggat, dan jumlah subtask.',
+          title: 'Design CSV export structure for weekly reports',
+          description: 'Include status columns, deadlines, and subtask counts.',
           columnId: colBySem.backlog,
           categoryId: catProduct,
           sprintId: sprintPlannedId,
@@ -400,10 +400,10 @@ export function createSettingsRouter(db) {
         }
       });
 
-      logActivity(db, req.user.id, 'sprint', sprintActiveId, 'sprint_started', { name: 'Sprint 01 (Sample): Rilis Alur Inti' });
+      logActivity(db, req.user.id, 'sprint', sprintActiveId, 'sprint_started', { name: 'Sprint 01 (Sample): Core Flow Release' });
     });
 
-    res.status(201).json({ message: 'Proyek contoh berhasil dimuat.' });
+    res.status(201).json({ message: 'Sample project loaded successfully.' });
   });
 
   return router;

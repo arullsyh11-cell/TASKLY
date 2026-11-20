@@ -67,10 +67,10 @@ export function ReminderBellMenu() {
         aria-haspopup="dialog"
         aria-label={
           unreadCount > 0
-            ? `Pengingat deadline (${unreadCount} belum dibaca)`
-            : 'Pengingat deadline'
+            ? `Deadline reminders (${unreadCount} unread)`
+            : 'Deadline reminders'
         }
-        title="Pengingat Deadline"
+        title="Deadline Reminders"
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors active:scale-95 hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] after:absolute after:-inset-0.5 after:content-['']"
       >
         <Bell className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -87,17 +87,17 @@ export function ReminderBellMenu() {
       {open && (
         <div
           role="dialog"
-          aria-label="Pusat pengingat deadline"
+          aria-label="Deadline reminder center"
           className="fixed left-3 right-3 top-[calc(4.4rem+env(safe-area-inset-top))] z-50 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[400px] rounded-[var(--radius-lg)] border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] p-4"
           style={{ boxShadow: 'var(--shadow-overlay)' }}
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] pb-3">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Pengingat Deadline</h2>
+              <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Deadline Reminders</h2>
               <p className="text-[11px] text-[var(--color-text-muted)]">
                 {reminderEnabled
-                  ? `${dueNow.length} pengingat aktif hari ini, ${scheduled.length} terjadwal`
-                  : 'Pengingat otomatis sedang dinonaktifkan'}
+                  ? `${dueNow.length} active today, ${scheduled.length} scheduled`
+                  : 'Automatic reminders are disabled'}
               </p>
             </div>
             <div className="flex items-center gap-1">
@@ -105,12 +105,12 @@ export function ReminderBellMenu() {
                 <button
                   type="button"
                   onClick={() => markAllAcknowledged(dueNow.map((d) => d.signature))}
-                  title="Tandai semua sudah dibaca"
-                  aria-label="Tandai semua pengingat sudah dibaca"
+                  title="Mark all as read"
+                  aria-label="Mark all reminders as read"
                   className="inline-flex h-8 items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 >
                   <CheckCheck className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                  <span className="hidden sm:inline">Baca Semua</span>
+                  <span className="hidden sm:inline">Mark All</span>
                 </button>
               )}
               <button
@@ -119,8 +119,8 @@ export function ReminderBellMenu() {
                   setOpen(false);
                   navigate('/settings?tab=focus');
                 }}
-                aria-label="Atur default hari pengingat"
-                title="Pengaturan Pengingat"
+                aria-label="Configure default reminder days"
+                title="Reminder Settings"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
               >
                 <Settings className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -128,7 +128,7 @@ export function ReminderBellMenu() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Tutup panel pengingat"
+                aria-label="Close reminder panel"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
               >
                 <X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -142,10 +142,10 @@ export function ReminderBellMenu() {
                 <CalendarClock className="h-7 w-7 text-[var(--color-text-muted)]" strokeWidth={1.5} aria-hidden="true" />
                 <div>
                   <p className="text-xs font-semibold text-[var(--color-text-primary)]">
-                    Belum ada pengingat deadline aktif
+                    No active deadline reminders yet
                   </p>
                   <p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">
-                    Tambahkan tenggat waktu pada tugas untuk menerima pengingat otomatis H-1 atau sesuai hari pilihan Anda.
+                    Add a due date to any task to receive automatic reminders 1 day ahead or on your custom schedule.
                   </p>
                 </div>
                 <Button
@@ -157,7 +157,7 @@ export function ReminderBellMenu() {
                   }}
                 >
                   <Plus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                  <span>Tambah Tugas</span>
+                  <span>Add Task</span>
                 </Button>
               </div>
             ) : (
@@ -165,7 +165,7 @@ export function ReminderBellMenu() {
                 {dueNow.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-accent-text)]">
-                      Perlu Perhatian Sekarang ({dueNow.length})
+                      Needs Attention Now ({dueNow.length})
                     </p>
                     <ul className="space-y-2">
                       {dueNow.map((entry) => {
@@ -190,8 +190,8 @@ export function ReminderBellMenu() {
                                 <button
                                   type="button"
                                   onClick={() => markAcknowledged(entry.signature)}
-                                  aria-label={`Tandai dibaca: ${entry.task.title}`}
-                                  title="Tandai sudah dibaca"
+                                  aria-label={`Mark as read: ${entry.task.title}`}
+                                  title="Mark as read"
                                   className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)]"
                                 >
                                   <Check className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -209,7 +209,7 @@ export function ReminderBellMenu() {
                                 onClick={() => handleOpenTask(entry)}
                                 className="inline-flex min-h-[32px] items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-primary)]"
                               >
-                                Buka Tugas
+                                Open Task
                               </button>
                               <button
                                 type="button"
@@ -217,7 +217,7 @@ export function ReminderBellMenu() {
                                 className="inline-flex min-h-[32px] items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                               >
                                 <Timer className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
-                                <span>Fokus</span>
+                                <span>Focus</span>
                               </button>
                             </div>
                           </li>
@@ -230,7 +230,7 @@ export function ReminderBellMenu() {
                 {scheduled.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                      Terjadwal Berikutnya ({scheduled.length})
+                      Scheduled Next ({scheduled.length})
                     </p>
                     <ul className="space-y-1.5">
                       {scheduled.slice(0, 6).map((entry) => (
@@ -247,7 +247,7 @@ export function ReminderBellMenu() {
                               {entry.task.title}
                             </p>
                             <p className="text-[11px] text-[var(--color-text-muted)]">
-                              Diingatkan {formatDateId(entry.reminderDateIso, 'd MMM yyyy')} (deadline {formatDateId(entry.task.due_date, 'd MMM')})
+                              Reminds on {formatDateId(entry.reminderDateIso, 'MMM d, yyyy')} (due {formatDateId(entry.task.due_date, 'MMM d')})
                             </p>
                           </button>
                           <ReminderTag label={entry.badgeLabel} />

@@ -1,4 +1,5 @@
 import { addDaysIso, dateRangeDays, getTodayIso } from '../../utils/dateUtils.js';
+import { vaultService } from '../vaultService.js';
 
 const STORAGE_KEY = 'taskly_workspace_v1';
 
@@ -14,7 +15,7 @@ function createInitialStore() {
   return {
     profile: {
       id: 'local-user',
-      full_name: 'Pengguna',
+      full_name: 'User',
       mode: 'local',
       created_at: now,
       updated_at: now,
@@ -63,6 +64,9 @@ function readStore() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
       return initial;
     }
+    if (parsed.profile?.full_name === 'Pengguna') {
+      parsed.profile.full_name = 'User';
+    }
     if (parsed.settings) {
       if (parsed.settings.reminder_enabled === undefined) parsed.settings.reminder_enabled = true;
       if (parsed.settings.default_reminder_days === undefined) parsed.settings.default_reminder_days = 1;
@@ -77,7 +81,7 @@ function writeStore(store) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
-    throw new Error('Gagal menyimpan data ke localStorage browser.');
+    throw new Error('Failed to save data to browser localStorage.');
   }
 }
 
@@ -196,7 +200,7 @@ export const localStorageAdapter = {
     },
     async updateProfile(fullName) {
       const clean = String(fullName || '').trim();
-      if (clean.length < 2) throw new Error('Nama tampilan minimal 2 karakter.');
+      if (clean.length < 2) throw new Error('Display name must be at least 2 characters.');
       const store = readStore();
       store.profile.full_name = clean;
       store.profile.updated_at = new Date().toISOString();
@@ -268,7 +272,7 @@ export const localStorageAdapter = {
     },
     async create({ name, semantic_type }) {
       const clean = String(name || '').trim();
-      if (!clean || clean.length > 40) throw new Error('Nama kolom wajib diisi (maks. 40 karakter).');
+      if (!clean || clean.length > 40) throw new Error('Column name is required (max 40 characters).');
       const store = readStore();
       const maxPos = store.columns.reduce((m, c) => Math.max(m, c.position), -1);
       const col = {
@@ -287,10 +291,10 @@ export const localStorageAdapter = {
     async update(id, payload) {
       const store = readStore();
       const col = store.columns.find((c) => c.id === id);
-      if (!col) throw new Error('Kolom tidak ditemukan.');
+      if (!col) throw new Error('Column not found.');
       if (payload.name !== undefined) {
         const clean = String(payload.name).trim();
-        if (!clean) throw new Error('Nama kolom wajib diisi.');
+        if (!clean) throw new Error('Column name is required.');
         col.name = clean;
       }
       if (payload.semantic_type !== undefined) col.semantic_type = payload.semantic_type;
@@ -309,18 +313,18 @@ export const localStorageAdapter = {
     async remove(id, targetColumnId) {
       const store = readStore();
       const col = store.columns.find((c) => c.id === id);
-      if (!col) throw new Error('Kolom tidak ditemukan.');
-      if (store.columns.length <= 2) throw new Error('Workspace minimal harus memiliki 2 kolom alur kerja.');
+      if (!col) throw new Error('Column not found.');
+      if (store.columns.length <= 2) throw new Error('Workspace must have at least 2 workflow columns.');
       if (col.semantic_type === 'done' && store.columns.filter((c) => c.semantic_type === 'done').length <= 1) {
-        throw new Error('Minimal harus ada 1 kolom bertipe selesai (Done).');
+        throw new Error('At least 1 Done column is required.');
       }
       if (col.semantic_type !== 'done' && store.columns.filter((c) => c.semantic_type !== 'done').length <= 1) {
-        throw new Error('Minimal harus ada 1 kolom aktif selain Done.');
+        throw new Error('At least 1 active column besides Done is required.');
       }
       const inside = store.tasks.filter((t) => t.column_id === id);
       if (inside.length > 0) {
         const targetCol = store.columns.find((c) => c.id === targetColumnId && c.id !== id);
-        if (!targetCol) throw new Error('Pilih kolom tujuan untuk memindahkan tugas terlebih dahulu.');
+        if (!targetCol) throw new Error('Select a destination column to move existing tasks first.');
         const now = new Date().toISOString();
         inside.forEach((t) => {
           t.column_id = targetCol.id;
@@ -341,10 +345,10 @@ export const localStorageAdapter = {
     },
     async createCategory({ name, color_token = 'accent' }) {
       const clean = String(name || '').trim();
-      if (!clean) throw new Error('Nama kategori wajib diisi.');
+      if (!clean) throw new Error('Category name is required.');
       const store = readStore();
       if (store.categories.some((c) => c.name.toLowerCase() === clean.toLowerCase())) {
-        throw new Error('Kategori dengan nama tersebut sudah ada.');
+        throw new Error('A category with that name already exists.');
       }
       const cat = { id: createId(), name: clean, color_token, created_at: new Date().toISOString() };
       store.categories.push(cat);
@@ -354,7 +358,7 @@ export const localStorageAdapter = {
     async updateCategory(id, payload) {
       const store = readStore();
       const cat = store.categories.find((c) => c.id === id);
-      if (!cat) throw new Error('Kategori tidak ditemukan.');
+      if (!cat) throw new Error('Category not found.');
       if (payload.name !== undefined) cat.name = String(payload.name).trim();
       writeStore(store);
       return cat;
@@ -374,10 +378,10 @@ export const localStorageAdapter = {
     },
     async createLabel({ name, color_token = 'secondary' }) {
       const clean = String(name || '').trim();
-      if (!clean) throw new Error('Nama label wajib diisi.');
+      if (!clean) throw new Error('Label name is required.');
       const store = readStore();
       if (store.labels.some((l) => l.name.toLowerCase() === clean.toLowerCase())) {
-        throw new Error('Label dengan nama tersebut sudah ada.');
+        throw new Error('A label with that name already exists.');
       }
       const lbl = { id: createId(), name: clean, color_token, created_at: new Date().toISOString() };
       store.labels.push(lbl);
@@ -448,17 +452,17 @@ export const localStorageAdapter = {
     async get(id) {
       const store = readStore();
       const found = store.tasks.find((t) => t.id === id);
-      if (!found) throw new Error('Tugas tidak ditemukan.');
+      if (!found) throw new Error('Task not found.');
       return enrichTasks(store, [found])[0];
     },
 
     async create(payload) {
       const title = String(payload.title || '').trim();
-      if (!title || title.length > 160) throw new Error('Judul tugas wajib diisi (maks. 160 karakter).');
+      if (!title || title.length > 160) throw new Error('Task title is required (max 160 characters).');
       const startDate = payload.start_date || null;
       const dueDate = payload.due_date || null;
       if (startDate && dueDate && dueDate < startDate) {
-        throw new Error('Tanggal mulai tidak boleh melewati tenggat waktu.');
+        throw new Error('Start date cannot be after the due date.');
       }
 
       const store = readStore();
@@ -470,13 +474,13 @@ export const localStorageAdapter = {
           ? null
           : Math.max(0, Math.min(60, Math.round(Number(payload.reminder_days_before))));
       if (reminderDaysBefore !== null && !Number.isFinite(reminderDaysBefore)) {
-        throw new Error('Hari pengingat tidak valid.');
+        throw new Error('Invalid reminder days value.');
       }
       const col =
         (payload.column_id ? store.columns.find((c) => c.id === payload.column_id) : null) ||
         store.columns.find((c) => c.semantic_type === 'todo') ||
         store.columns[0];
-      if (!col) throw new Error('Kolom Kanban tidak ditemukan.');
+      if (!col) throw new Error('Kanban column not found.');
 
       const maxPos = store.tasks
         .filter((t) => t.column_id === col.id)
@@ -537,23 +541,23 @@ export const localStorageAdapter = {
     async update(id, payload) {
       const store = readStore();
       const task = store.tasks.find((t) => t.id === id);
-      if (!task) throw new Error('Tugas tidak ditemukan.');
+      if (!task) throw new Error('Task not found.');
 
       const startDate = payload.start_date !== undefined ? payload.start_date : task.start_date;
       const dueDate = payload.due_date !== undefined ? payload.due_date : task.due_date;
       if (startDate && dueDate && dueDate < startDate) {
-        throw new Error('Tanggal mulai tidak boleh melewati tenggat waktu.');
+        throw new Error('Start date cannot be after the due date.');
       }
 
       const prevCol = store.columns.find((c) => c.id === task.column_id);
       const nextColumnId = payload.column_id ?? task.column_id;
       const nextCol = store.columns.find((c) => c.id === nextColumnId);
-      if (!nextCol) throw new Error('Kolom tujuan tidak ditemukan.');
+      if (!nextCol) throw new Error('Destination column not found.');
 
       const now = new Date().toISOString();
       if (payload.title !== undefined) {
         const clean = String(payload.title).trim();
-        if (!clean) throw new Error('Judul tugas wajib diisi.');
+        if (!clean) throw new Error('Task title is required.');
         task.title = clean;
       }
       if (payload.description !== undefined) task.description = String(payload.description);
@@ -569,7 +573,7 @@ export const localStorageAdapter = {
         } else {
           const parsedRem = Math.round(Number(payload.reminder_days_before));
           if (!Number.isFinite(parsedRem) || parsedRem < 0 || parsedRem > 60) {
-            throw new Error('Hari pengingat harus antara 0 sampai 60 hari.');
+            throw new Error('Reminder days must be between 0 and 60.');
           }
           task.reminder_days_before = parsedRem;
         }
@@ -624,7 +628,7 @@ export const localStorageAdapter = {
         store.sprint_tasks = store.sprint_tasks.filter((st) => !idSet.has(st.task_id));
       } else if (action === 'move_column') {
         const col = store.columns.find((c) => c.id === columnId);
-        if (!col) throw new Error('Kolom tujuan tidak valid.');
+        if (!col) throw new Error('Invalid destination column.');
         store.tasks.forEach((t) => {
           if (idSet.has(t.id)) {
             t.column_id = col.id;
@@ -667,7 +671,7 @@ export const localStorageAdapter = {
     async remove(id) {
       const store = readStore();
       const target = store.tasks.find((t) => t.id === id);
-      if (!target) throw new Error('Tugas tidak ditemukan.');
+      if (!target) throw new Error('Task not found.');
       store.tasks = store.tasks.filter((t) => t.id !== id);
       store.subtasks = store.subtasks.filter((s) => s.task_id !== id);
       store.sprint_tasks = store.sprint_tasks.filter((st) => st.task_id !== id);
@@ -681,10 +685,10 @@ export const localStorageAdapter = {
 
     async addSubtask(taskId, title) {
       const clean = String(title || '').trim();
-      if (!clean) throw new Error('Judul subtask wajib diisi.');
+      if (!clean) throw new Error('Subtask title is required.');
       const store = readStore();
       const task = store.tasks.find((t) => t.id === taskId);
-      if (!task) throw new Error('Tugas tidak ditemukan.');
+      if (!task) throw new Error('Task not found.');
       const maxPos = store.subtasks
         .filter((s) => s.task_id === taskId)
         .reduce((m, s) => Math.max(m, s.position), -1);
@@ -706,7 +710,7 @@ export const localStorageAdapter = {
     async updateSubtask(taskId, subtaskId, payload) {
       const store = readStore();
       const st = store.subtasks.find((s) => s.id === subtaskId && s.task_id === taskId);
-      if (!st) throw new Error('Subtask tidak ditemukan.');
+      if (!st) throw new Error('Subtask not found.');
       if (payload.title !== undefined) st.title = String(payload.title).trim();
       if (payload.is_completed !== undefined) st.is_completed = Boolean(payload.is_completed);
       const task = store.tasks.find((t) => t.id === taskId);
@@ -737,7 +741,7 @@ export const localStorageAdapter = {
     async detail(id) {
       const store = readStore();
       const sp = store.sprints.find((s) => s.id === id);
-      if (!sp) throw new Error('Sprint tidak ditemukan.');
+      if (!sp) throw new Error('Sprint not found.');
       const tasks = enrichTasks(
         store,
         store.tasks.filter((t) => t.sprint_id === id)
@@ -751,9 +755,9 @@ export const localStorageAdapter = {
 
     async create(payload) {
       const name = String(payload.name || '').trim();
-      if (!name) throw new Error('Nama sprint wajib diisi.');
+      if (!name) throw new Error('Sprint name is required.');
       if (payload.end_date < payload.start_date) {
-        throw new Error('Tanggal selesai harus sama atau setelah tanggal mulai.');
+        throw new Error('End date must be on or after the start date.');
       }
       const store = readStore();
       const now = new Date().toISOString();
@@ -778,10 +782,10 @@ export const localStorageAdapter = {
     async update(id, payload) {
       const store = readStore();
       const sp = store.sprints.find((s) => s.id === id);
-      if (!sp) throw new Error('Sprint tidak ditemukan.');
+      if (!sp) throw new Error('Sprint not found.');
       const nextStart = payload.start_date ?? sp.start_date;
       const nextEnd = payload.end_date ?? sp.end_date;
-      if (nextEnd < nextStart) throw new Error('Tanggal selesai harus sama atau setelah tanggal mulai.');
+      if (nextEnd < nextStart) throw new Error('End date must be on or after the start date.');
       if (payload.name !== undefined) sp.name = String(payload.name).trim();
       if (payload.description !== undefined) sp.description = String(payload.description);
       if (payload.goal !== undefined) sp.goal = String(payload.goal);
@@ -796,10 +800,10 @@ export const localStorageAdapter = {
     async start(id, forceCompleteActive = false) {
       const store = readStore();
       const sp = store.sprints.find((s) => s.id === id);
-      if (!sp) throw new Error('Sprint tidak ditemukan.');
+      if (!sp) throw new Error('Sprint not found.');
       const active = store.sprints.find((s) => s.status === 'active' && s.id !== id);
       if (active && !forceCompleteActive) {
-        const err = new Error(`Sprint "${active.name}" masih berjalan.`);
+        const err = new Error(`Sprint "${active.name}" is still active.`);
         err.code = 'ACTIVE_SPRINT_EXISTS';
         err.data = { activeSprint: active };
         throw err;
@@ -827,7 +831,7 @@ export const localStorageAdapter = {
     async complete(id, { carryoverAction = 'backlog', targetSprintId = null } = {}) {
       const store = readStore();
       const sp = store.sprints.find((s) => s.id === id);
-      if (!sp) throw new Error('Sprint tidak ditemukan.');
+      if (!sp) throw new Error('Sprint not found.');
       const colMap = new Map(store.columns.map((c) => [c.id, c]));
       const now = new Date().toISOString();
 
@@ -857,7 +861,7 @@ export const localStorageAdapter = {
     async assignTask(sprintId, taskId, action = 'add') {
       const store = readStore();
       const task = store.tasks.find((t) => t.id === taskId);
-      if (!task) throw new Error('Tugas tidak ditemukan.');
+      if (!task) throw new Error('Task not found.');
       const now = new Date().toISOString();
       store.sprint_tasks.forEach((st) => {
         if (st.task_id === taskId && !st.removed_at) st.removed_at = now;
@@ -876,7 +880,7 @@ export const localStorageAdapter = {
     async remove(id) {
       const store = readStore();
       const sp = store.sprints.find((s) => s.id === id);
-      if (!sp) throw new Error('Sprint tidak ditemukan.');
+      if (!sp) throw new Error('Sprint not found.');
       const now = new Date().toISOString();
       store.tasks.forEach((t) => {
         if (t.sprint_id === id) {
@@ -901,7 +905,7 @@ export const localStorageAdapter = {
         .slice(0, limit)
         .map((s) => ({
           ...s,
-          task_label: s.task_id ? taskMap.get(s.task_id)?.title || 'Tugas telah dihapus' : 'Fokus Umum',
+          task_label: s.task_id ? taskMap.get(s.task_id)?.title || 'Deleted task' : 'General Focus',
         }));
     },
     async getStats() {
@@ -932,13 +936,13 @@ export const localStorageAdapter = {
       store.focus_sessions.unshift(session);
       if (session.mode === 'focus' || session.mode === 'custom') {
         pushActivity(store, 'focus_session', session.id, 'focus_logged', {
-          task_title: task?.title || 'Fokus Umum',
+          task_title: task?.title || 'General Focus',
           minutes: Math.max(1, Math.round(session.actual_duration_sec / 60)),
           status: session.status,
         });
       }
       writeStore(store);
-      return { ...session, task_label: task?.title || 'Fokus Umum' };
+      return { ...session, task_label: task?.title || 'General Focus' };
     },
   },
 
@@ -1092,12 +1096,12 @@ export const localStorageAdapter = {
       const store = readStore();
       const next = { ...store.settings, ...payload, updated_at: new Date().toISOString() };
       if (next.pomodoro_focus_min < 1 || next.pomodoro_focus_min > 180) {
-        throw new Error('Durasi fokus harus antara 1 sampai 180 menit.');
+        throw new Error('Focus duration must be between 1 and 180 minutes.');
       }
       if (next.default_reminder_days !== undefined) {
         const rd = Math.round(Number(next.default_reminder_days));
         if (!Number.isFinite(rd) || rd < 0 || rd > 60) {
-          throw new Error('Hari default pengingat harus antara 0 sampai 60 hari.');
+          throw new Error('Default reminder days must be between 0 and 60.');
         }
         next.default_reminder_days = rd;
       }
@@ -1119,12 +1123,13 @@ export const localStorageAdapter = {
         sprints: store.sprints,
         tasks: enrichTasks(store, store.tasks),
         focus_sessions: store.focus_sessions,
+        vault: vaultService.getSnapshot(),
       };
     },
     async exportCsv() {
       const store = readStore();
       const tasks = enrichTasks(store, store.tasks);
-      const headers = ['ID', 'Judul', 'Status Kolom', 'Prioritas', 'Kategori', 'Sprint', 'Tanggal Mulai', 'Tenggat', 'Pengingat (Hari Sebelum)', 'Subtask Selesai', 'Total Subtask', 'Selesai Pada', 'Dibuat Pada'];
+      const headers = ['ID', 'Title', 'Status Column', 'Priority', 'Category', 'Sprint', 'Start Date', 'Due Date', 'Reminder (Days Before)', 'Completed Subtasks', 'Total Subtasks', 'Completed At', 'Created At'];
       const lines = [headers.map(csvCell).join(',')];
       tasks.forEach((t) => {
         lines.push(
@@ -1152,12 +1157,13 @@ export const localStorageAdapter = {
     async resetWorkspace() {
       const fresh = createInitialStore();
       writeStore(fresh);
+      vaultService.resetVault();
       return { ok: true };
     },
     async seedSampleWorkspace() {
       const store = readStore();
       if (store.tasks.length > 0) {
-        throw new Error('Proyek contoh hanya dapat dimuat ke workspace yang masih kosong.');
+        throw new Error('Sample project can only be loaded into an empty workspace.');
       }
       const today = getTodayIso();
       const now = new Date().toISOString();
@@ -1174,9 +1180,9 @@ export const localStorageAdapter = {
 
       const spActive = {
         id: createId(),
-        name: 'Sprint 01 (Sample): Rilis Alur Inti',
-        description: 'Data contoh opsional untuk eksplorasi fitur TASKLY.',
-        goal: 'Menuntaskan alur papan Kanban, validasi form, dan sesi fokus perdana.',
+        name: 'Sprint 01 (Sample): Core Workflow Release',
+        description: 'Optional sample data for exploring TASKLY features.',
+        goal: 'Finish Kanban board flow, form validation, and first focus session.',
         start_date: addDaysIso(today, -3),
         end_date: addDaysIso(today, 4),
         status: 'active',
@@ -1186,9 +1192,9 @@ export const localStorageAdapter = {
       };
       const spPlanned = {
         id: createId(),
-        name: 'Sprint 02 (Sample): Penguatan Analitik',
-        description: 'Siklus lanjutan untuk tinjauan kalender dan ekspor data.',
-        goal: 'Memastikan konsistensi kalender mingguan dan laporan produktivitas.',
+        name: 'Sprint 02 (Sample): Analytics Enhancement',
+        description: 'Follow-up cycle for calendar review and data export.',
+        goal: 'Ensure weekly calendar consistency and productivity reports.',
         start_date: addDaysIso(today, 5),
         end_date: addDaysIso(today, 12),
         status: 'planned',
@@ -1200,8 +1206,8 @@ export const localStorageAdapter = {
 
       const samples = [
         {
-          title: 'Finalisasi arsitektur token warna Light Workspace',
-          description: 'Verifikasi rasio kontras minimal 4.5:1 di Light Workspace dan Monochrome.',
+          title: 'Finalize Light Workspace color token architecture',
+          description: 'Verify minimum 4.5:1 contrast ratio across Light Workspace and Monochrome.',
           column_id: colBySem.done,
           category_id: catDesign.id,
           sprint_id: spActive.id,
@@ -1211,13 +1217,13 @@ export const localStorageAdapter = {
           completed_at: addDaysIso(today, -1) + 'T10:00:00.000Z',
           label_ids: [lblUx.id],
           subtasks: [
-            { title: 'Cek kontras teks di #1A1A1A', is_completed: true },
-            { title: 'Cek kontras tombol #6B4A2E di putih', is_completed: true },
+            { title: 'Check text contrast at #1A1A1A', is_completed: true },
+            { title: 'Check button contrast #6B4A2E on white', is_completed: true },
           ],
         },
         {
-          title: 'Implementasi Kanban drag-and-drop & status sheet mobile',
-          description: 'Pastikan interaksi papan mulus di desktop maupun sentuhan 44px di mobile.',
+          title: 'Implement Kanban drag-and-drop and mobile status sheet',
+          description: 'Ensure smooth board interaction on desktop and 44px touch targets on mobile.',
           column_id: colBySem.in_progress,
           category_id: catEng.id,
           sprint_id: spActive.id,
@@ -1227,13 +1233,13 @@ export const localStorageAdapter = {
           completed_at: null,
           label_ids: [lblCore.id, lblUx.id],
           subtasks: [
-            { title: 'Konfigurasi sensor pointer & keyboard', is_completed: true },
-            { title: 'Uji tab switcher kolom di 375px', is_completed: false },
+            { title: 'Configure pointer and keyboard sensors', is_completed: true },
+            { title: 'Test column tab switcher at 375px', is_completed: false },
           ],
         },
         {
-          title: 'Tinjau alur penutupan sprint dan carry-over task',
-          description: 'Sediakan pilihan pemindahan tugas tersisa ke Backlog atau Sprint berikutnya.',
+          title: 'Review sprint completion flow and task carry-over',
+          description: 'Provide options to move remaining tasks to Backlog or the next Sprint.',
           column_id: colBySem.review,
           category_id: catProduct.id,
           sprint_id: spActive.id,
@@ -1245,8 +1251,8 @@ export const localStorageAdapter = {
           subtasks: [],
         },
         {
-          title: 'Uji sesi Pomodoro 25 menit pada Focus Mode',
-          description: 'Verifikasi timer tidak meleset saat berpindah tab browser.',
+          title: 'Test 25-minute Pomodoro session in Focus Mode',
+          description: 'Verify timer accuracy when switching browser tabs.',
           column_id: colBySem.todo,
           category_id: catEng.id,
           sprint_id: spActive.id,
@@ -1258,8 +1264,8 @@ export const localStorageAdapter = {
           subtasks: [],
         },
         {
-          title: 'Rancang struktur ekspor CSV laporan mingguan',
-          description: 'Siapkan kolom status, tenggat, dan jumlah subtask.',
+          title: 'Design weekly report CSV export structure',
+          description: 'Prepare status, due date, and subtask count columns.',
           column_id: colBySem.backlog,
           category_id: catProduct.id,
           sprint_id: spPlanned.id,
@@ -1326,7 +1332,7 @@ export const localStorageAdapter = {
 
       pushActivity(store, 'sprint', spActive.id, 'sprint_started', { name: spActive.name });
       writeStore(store);
-      return { message: 'Proyek contoh berhasil dimuat ke localStorage.' };
+      return { message: 'Sample project loaded into localStorage.' };
     },
   },
 };

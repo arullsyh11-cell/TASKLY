@@ -46,20 +46,20 @@ function GlobalSearchBar() {
       />
       <input
         type="search"
-        aria-label="Pencarian cepat tugas di workspace"
+        aria-label="Quick search workspace tasks"
         value={query}
         onFocus={() => setOpen(true)}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
         }}
-        placeholder="Cari tugas atau label..."
+        placeholder="Search tasks or labels..."
         className="h-10 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] pl-10 pr-8 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)]"
       />
       {query && (
         <button
           type="button"
-          aria-label="Hapus pencarian"
+          aria-label="Clear search"
           onClick={() => setQuery('')}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
         >
@@ -74,7 +74,7 @@ function GlobalSearchBar() {
         >
           {results.length === 0 ? (
             <p className="px-3 py-2 text-xs text-[var(--color-text-muted)]">
-              Tidak ditemukan tugas untuk "{query}".
+              No tasks found for "{query}".
             </p>
           ) : (
             <ul className="max-h-64 space-y-1 overflow-y-auto">
@@ -117,7 +117,7 @@ export function AppShell() {
 
   const menuBtnRef = useRef(null);
   const location = useLocation();
-  const initials = (user?.full_name || 'P').trim().charAt(0).toUpperCase();
+  const initials = (user?.full_name || 'U').trim().charAt(0).toUpperCase();
   const [isNativeFullscreen, setIsNativeFullscreen] = useState(() => Boolean(getFullscreenElement()));
   const standaloneMode = isStandalonePwa();
 
@@ -138,7 +138,7 @@ export function AppShell() {
     if (res.supported) {
       setIsNativeFullscreen(res.active);
     } else {
-      toast.info('Untuk layar penuh di browser ini, ketuk Bagikan > Tambah ke Layar Utama (Add to Home Screen).');
+      toast.info('For fullscreen on this browser, tap Share > Add to Home Screen.');
     }
   }
 
@@ -183,7 +183,7 @@ export function AppShell() {
                 type="button"
                 onClick={() => setMobileNavOpen((v) => !v)}
                 aria-expanded={mobileNavOpen}
-                aria-label="Buka menu navigasi"
+                aria-label="Open navigation menu"
                 className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition-transform duration-150 active:scale-95 hover:border-[var(--color-border-strong)] after:absolute after:-inset-0.5 after:content-[''] md:hidden"
               >
                 <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
@@ -206,7 +206,7 @@ export function AppShell() {
             <Link
               to="/focus"
               aria-label="Focus Mode"
-              title="Buka Focus Mode"
+              title="Open Focus Mode"
               className={`hidden sm:inline-flex h-10 items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors ${
                 timerStatus === 'running'
                   ? 'border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-[var(--color-accent-text)]'
@@ -214,7 +214,7 @@ export function AppShell() {
               }`}
             >
               <Timer className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Fokus</span>
+              <span>Focus</span>
             </Link>
 
             <ReminderBellMenu />
@@ -222,8 +222,8 @@ export function AppShell() {
             <button
               type="button"
               onClick={handleTopThemeToggle}
-              aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
-              title={theme === 'light' ? 'Tema: Light Workspace (Klik untuk Monochrome)' : 'Tema: Monochrome (Klik untuk Light Workspace)'}
+              aria-label={theme === 'light' ? 'Switch to Monochrome theme' : 'Switch to Light Workspace theme'}
+              title={theme === 'light' ? 'Theme: Light Workspace (Click for Monochrome)' : 'Theme: Monochrome (Click for Light Workspace)'}
               className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/80 text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
             >
               {theme === 'light' ? (
@@ -237,8 +237,8 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={handleAppFullscreenToggle}
-                aria-label={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Tampilan layar penuh aplikasi'}
-                title={isNativeFullscreen ? 'Keluar layar penuh aplikasi' : 'Layar Penuh Aplikasi'}
+                aria-label={isNativeFullscreen ? 'Exit app fullscreen' : 'Enter app fullscreen'}
+                title={isNativeFullscreen ? 'Exit App Fullscreen' : 'App Fullscreen'}
                 className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors active:scale-95 hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] after:absolute after:-inset-0.5 after:content-['']"
               >
                 {isNativeFullscreen ? (
@@ -252,8 +252,8 @@ export function AppShell() {
             <button
               type="button"
               onClick={() => openQuickAdd()}
-              aria-label="Tambah tugas cepat"
-              title="Tambah tugas cepat"
+              aria-label="Quick add task"
+              title="Quick add task"
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] transition-colors active:scale-95 hover:bg-[var(--color-primary-hover)] after:absolute after:-inset-0.5 after:content-['']"
             >
               <Plus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -261,8 +261,8 @@ export function AppShell() {
 
             <Link
               to="/settings"
-              aria-label="Profil Workspace"
-              title={user?.full_name || 'Profil Workspace'}
+              aria-label="Workspace Profile"
+              title={user?.full_name || 'Workspace Profile'}
               className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] text-sm font-bold text-[var(--color-accent-text)] after:absolute after:-inset-0.5 after:content-['']"
             >
               {initials}
@@ -288,8 +288,8 @@ export function AppShell() {
           type="button"
           onClick={() => setMobileNavOpen((v) => !v)}
           aria-expanded={mobileNavOpen}
-          aria-label="Buka menu navigasi"
-          title="Buka Radial Sidebar"
+          aria-label="Open navigation menu"
+          title="Open Radial Sidebar"
           className={`fixed left-2 sm:left-4 top-1/2 z-40 -translate-y-1/2 inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)] shadow-lg transition-all duration-200 active:scale-95 hover:border-[var(--color-primary)] hover:scale-105 ${
             mobileNavOpen ? 'scale-75 opacity-0 pointer-events-none' : 'scale-100 opacity-100'
           }`}

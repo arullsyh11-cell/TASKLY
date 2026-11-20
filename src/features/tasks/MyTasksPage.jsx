@@ -71,7 +71,7 @@ export function MyTasksPage() {
     onSuccess: () => {
       invalidateTasks();
     },
-    onError: (err) => toast.error(err.message || 'Gagal memperbarui tugas.'),
+    onError: (err) => toast.error(err.message || 'Failed to update task.'),
   });
 
   const bulkMutation = useMutation({
@@ -82,11 +82,11 @@ export function MyTasksPage() {
       setConfirmBulkDelete(false);
       toast.success(
         vars.action === 'delete'
-          ? `${res.updatedCount} tugas dihapus.`
-          : `${res.updatedCount} tugas berhasil diperbarui.`
+          ? `${res.updatedCount} ${res.updatedCount === 1 ? 'task' : 'tasks'} deleted.`
+          : `${res.updatedCount} ${res.updatedCount === 1 ? 'task' : 'tasks'} updated.`
       );
     },
-    onError: (err) => toast.error(err.message || 'Aksi massal gagal dijalankan.'),
+    onError: (err) => toast.error(err.message || 'Bulk action failed.'),
   });
 
   const hasActiveFilters = Boolean(search || semanticType || priority || categoryId || sprintId || deadline);
@@ -119,17 +119,17 @@ export function MyTasksPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">My Tasks</h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-            Kelola seluruh daftar tugas, penyaringan prioritas, dan triase massal ke dalam sprint.
+            Manage your full task list, priority filters, and bulk triage into sprints.
           </p>
         </div>
         <Button onClick={() => openQuickAdd()}>
           <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-          <span>Tambah Tugas</span>
+          <span>Add Task</span>
         </Button>
       </header>
 
       {/* Filter & Search Bar */}
-      <section aria-label="Filter dan pencarian tugas" className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <section aria-label="Task filters and search" className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <div className="relative sm:col-span-2">
             <Search
@@ -139,20 +139,20 @@ export function MyTasksPage() {
             />
             <input
               type="search"
-              aria-label="Cari tugas berdasarkan judul atau deskripsi"
+              aria-label="Search tasks by title or description"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari judul, deskripsi, atau label..."
+              placeholder="Search title, description, or labels..."
               className="min-h-[42px] w-full rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-4 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
             />
           </div>
 
           <Dropdown
-            aria-label="Filter tahap alur"
+            aria-label="Filter workflow stage"
             value={semanticType}
             onChange={setSemanticType}
             options={[
-              { value: '', label: 'Semua Status' },
+              { value: '', label: 'All Statuses' },
               { value: 'backlog', label: 'Backlog' },
               { value: 'todo', label: 'To Do' },
               { value: 'in_progress', label: 'In Progress' },
@@ -162,11 +162,11 @@ export function MyTasksPage() {
           />
 
           <Dropdown
-            aria-label="Filter prioritas"
+            aria-label="Filter priority"
             value={priority}
             onChange={setPriority}
             options={[
-              { value: '', label: 'Semua Prioritas' },
+              { value: '', label: 'All Priorities' },
               { value: 'urgent', label: 'Urgent' },
               { value: 'high', label: 'High' },
               { value: 'medium', label: 'Medium' },
@@ -179,21 +179,21 @@ export function MyTasksPage() {
             value={sprintId}
             onChange={setSprintId}
             options={[
-              { value: '', label: 'Semua Sprint' },
-              { value: 'backlog', label: 'Tanpa Sprint (Backlog)' },
+              { value: '', label: 'All Sprints' },
+              { value: 'backlog', label: 'No Sprint (Backlog)' },
               ...sprints.map((sp) => ({ value: sp.id, label: sp.name })),
             ]}
           />
 
           <Dropdown
-            aria-label="Urutkan daftar"
+            aria-label="Sort task list"
             value={sort}
             onChange={setSort}
             options={[
-              { value: 'due_date', label: 'Urut: Tenggat Terdekat' },
-              { value: 'priority', label: 'Urut: Prioritas Tertinggi' },
-              { value: 'updated_at', label: 'Urut: Baru Diperbarui' },
-              { value: 'position', label: 'Urut: Posisi Board' },
+              { value: 'due_date', label: 'Sort: Nearest Due Date' },
+              { value: 'priority', label: 'Sort: Highest Priority' },
+              { value: 'updated_at', label: 'Sort: Recently Updated' },
+              { value: 'position', label: 'Sort: Board Position' },
             ]}
           />
         </div>
@@ -203,11 +203,11 @@ export function MyTasksPage() {
             <div className="w-full sm:w-44">
               <Dropdown
                 compact
-                aria-label="Filter kategori"
+                aria-label="Filter category"
                 value={categoryId}
                 onChange={setCategoryId}
                 options={[
-                  { value: '', label: 'Semua Kategori' },
+                  { value: '', label: 'All Categories' },
                   ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
                 ]}
               />
@@ -216,15 +216,15 @@ export function MyTasksPage() {
             <div className="w-full sm:w-44">
               <Dropdown
                 compact
-                aria-label="Filter tenggat waktu"
+                aria-label="Filter due date"
                 value={deadline}
                 onChange={setDeadline}
                 options={[
-                  { value: '', label: 'Semua Tenggat' },
-                  { value: 'overdue', label: 'Terlambat (Overdue)' },
-                  { value: 'today', label: 'Jatuh Tempo Hari Ini' },
-                  { value: 'week', label: '7 Hari ke Depan' },
-                  { value: 'none', label: 'Tanpa Tenggat' },
+                  { value: '', label: 'All Deadlines' },
+                  { value: 'overdue', label: 'Overdue' },
+                  { value: 'today', label: 'Due Today' },
+                  { value: 'week', label: 'Next 7 Days' },
+                  { value: 'none', label: 'No Due Date' },
                 ]}
               />
             </div>
@@ -232,13 +232,13 @@ export function MyTasksPage() {
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={resetFilters} className="col-span-2 sm:col-span-1 justify-self-start">
                 <X className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                <span>Reset Filter</span>
+                <span>Reset Filters</span>
               </Button>
             )}
           </div>
 
           <p className="font-mono-num text-xs text-[var(--color-text-muted)]">
-            {tasks.length} tugas ditampilkan
+            {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} shown
           </p>
         </div>
       </section>
@@ -247,18 +247,18 @@ export function MyTasksPage() {
       {selectedIds.length > 0 && (
         <div
           role="region"
-          aria-label="Aksi massal tugas terpilih"
+          aria-label="Bulk actions for selected tasks"
           className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] px-4 py-3"
         >
           <p className="text-xs font-semibold text-[var(--color-accent-text)]">
-            {selectedIds.length} tugas dipilih
+            {selectedIds.length} {selectedIds.length === 1 ? 'task' : 'tasks'} selected
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <div className="w-40">
               <Dropdown
                 compact
-                aria-label="Pindah kolom massal"
-                placeholder="Pindah Status..."
+                aria-label="Bulk move status"
+                placeholder="Move Status..."
                 value=""
                 onChange={(colId) => {
                   if (colId) bulkMutation.mutate({ taskIds: selectedIds, action: 'move_column', columnId: colId });
@@ -270,7 +270,7 @@ export function MyTasksPage() {
             <div className="w-44">
               <Dropdown
                 compact
-                aria-label="Assign sprint massal"
+                aria-label="Bulk assign sprint"
                 placeholder="Assign Sprint..."
                 value=""
                 onChange={(val) => {
@@ -281,7 +281,7 @@ export function MyTasksPage() {
                   }
                 }}
                 options={[
-                  { value: '__backlog__', label: 'Lepas ke Backlog' },
+                  { value: '__backlog__', label: 'Move to Backlog' },
                   ...sprints
                     .filter((sp) => sp.status === 'active' || sp.status === 'planned')
                     .map((sp) => ({ value: sp.id, label: sp.name })),
@@ -291,7 +291,7 @@ export function MyTasksPage() {
 
             <Button variant="danger" size="sm" onClick={() => setConfirmBulkDelete(true)}>
               <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-              <span>Hapus Terpilih</span>
+              <span>Delete Selected</span>
             </Button>
           </div>
         </div>
@@ -299,30 +299,30 @@ export function MyTasksPage() {
 
       {/* List / Table Content */}
       {isLoading ? (
-        <LoadingState label="Memuat daftar tugas..." rows={5} />
+        <LoadingState label="Loading task list..." rows={5} />
       ) : isError ? (
-        <ErrorState title="Gagal memuat daftar tugas" message={error?.message} onRetry={refetch} />
+        <ErrorState title="Failed to load tasks" message={error?.message} onRetry={refetch} />
       ) : tasks.length === 0 ? (
         hasActiveFilters ? (
           <EmptyState
             icon={Search}
-            title="Tidak ada tugas yang cocok dengan filter"
-            description="Ubah kata kunci pencarian atau reset filter untuk melihat seluruh tugas Anda."
+            title="No tasks match your filters"
+            description="Try a different search term or reset filters to view all of your tasks."
             action={
               <Button variant="secondary" onClick={resetFilters}>
-                Reset Filter
+                Reset Filters
               </Button>
             }
           />
         ) : (
           <EmptyState
             icon={CheckSquare}
-            title="Belum ada tugas di workspace Anda"
-            description="Tambahkan tugas pertama Anda untuk mulai mengelola status alur kerja, tenggat waktu, dan sprint."
+            title="No tasks in your workspace yet"
+            description="Add your first task to start organizing statuses, deadlines, and sprints."
             action={
               <Button onClick={() => openQuickAdd()}>
                 <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Buat Tugas Pertama</span>
+                <span>Create First Task</span>
               </Button>
             }
           />
@@ -337,18 +337,18 @@ export function MyTasksPage() {
                   <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
-                      aria-label="Pilih semua tugas"
+                      aria-label="Select all tasks"
                       checked={tasks.length > 0 && selectedIds.length === tasks.length}
                       onChange={toggleSelectAll}
                       className="h-4 w-4 accent-[var(--color-primary)]"
                     />
                   </th>
-                  <th className="px-3 py-3">Tugas</th>
+                  <th className="px-3 py-3">Task</th>
                   <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Prioritas</th>
-                  <th className="px-3 py-3">Sprint / Kategori</th>
-                  <th className="px-3 py-3">Tenggat</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <th className="px-3 py-3">Priority</th>
+                  <th className="px-3 py-3">Sprint / Category</th>
+                  <th className="px-3 py-3">Due Date</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
@@ -361,7 +361,7 @@ export function MyTasksPage() {
                       <td className="px-4 py-3 align-middle">
                         <input
                           type="checkbox"
-                          aria-label={`Pilih tugas ${task.title}`}
+                          aria-label={`Select task ${task.title}`}
                           checked={selectedIds.includes(task.id)}
                           onChange={() => toggleSelect(task.id)}
                           className="h-4 w-4 accent-[var(--color-primary)]"
@@ -389,7 +389,7 @@ export function MyTasksPage() {
                         <div className="w-36">
                           <Dropdown
                             compact
-                            aria-label={`Status tugas ${task.title}`}
+                            aria-label={`Status for ${task.title}`}
                             value={task.column_id}
                             onChange={(colId) =>
                               inlineUpdateMutation.mutate({ id: task.id, patch: { column_id: colId } })
@@ -402,7 +402,7 @@ export function MyTasksPage() {
                         <div className="w-28">
                           <Dropdown
                             compact
-                            aria-label={`Prioritas tugas ${task.title}`}
+                            aria-label={`Priority for ${task.title}`}
                             value={task.priority}
                             onChange={(prio) =>
                               inlineUpdateMutation.mutate({ id: task.id, patch: { priority: prio } })
@@ -428,7 +428,7 @@ export function MyTasksPage() {
                       <td className="px-3 py-3 text-xs">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="text-[var(--color-text-secondary)]">
-                            {task.due_date ? formatDateId(task.due_date) : 'Tanpa tenggat'}
+                            {task.due_date ? formatDateId(task.due_date) : 'No due date'}
                           </span>
                           {task.due_date && task.semantic_type !== 'done' && resolveTaskReminderDays(task) !== null && (
                             <ReminderTag label={formatReminderBadgeLabel(resolveTaskReminderDays(task))} />
@@ -446,7 +446,7 @@ export function MyTasksPage() {
                           }}
                         >
                           <Timer className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                          <span>Fokus</span>
+                          <span>Focus</span>
                         </Button>
                       </td>
                     </tr>
@@ -468,7 +468,7 @@ export function MyTasksPage() {
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
-                      aria-label={`Pilih tugas ${task.title}`}
+                      aria-label={`Select task ${task.title}`}
                       checked={selectedIds.includes(task.id)}
                       onChange={() => toggleSelect(task.id)}
                       className="mt-1 h-5 w-5 accent-[var(--color-primary)]"
@@ -494,7 +494,7 @@ export function MyTasksPage() {
 
                   <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2.5">
                     <span className="text-xs text-[var(--color-text-muted)]">
-                      {task.due_date ? `Tenggat: ${formatDateId(task.due_date)}` : 'Tanpa tenggat'}
+                      {task.due_date ? `Due: ${formatDateId(task.due_date)}` : 'No due date'}
                     </span>
                     <div className="flex items-center gap-2">
                       <Button
@@ -503,7 +503,7 @@ export function MyTasksPage() {
                         className="min-h-[44px]"
                         onClick={() => openTaskDrawer(task.id)}
                       >
-                        Detail
+                        Details
                       </Button>
                       <Button
                         variant="secondary"
@@ -514,7 +514,7 @@ export function MyTasksPage() {
                           navigate('/focus');
                         }}
                       >
-                        Fokus
+                        Focus
                       </Button>
                     </div>
                   </div>
@@ -530,9 +530,9 @@ export function MyTasksPage() {
         onClose={() => setConfirmBulkDelete(false)}
         onConfirm={() => bulkMutation.mutate({ taskIds: selectedIds, action: 'delete' })}
         isLoading={bulkMutation.isPending}
-        title={`Hapus ${selectedIds.length} Tugas Terpilih?`}
-        description="Seluruh tugas yang dicentang beserta subtask-nya akan dihapus permanen."
-        confirmLabel="Hapus Semua Terpilih"
+        title={`Delete ${selectedIds.length} Selected Tasks?`}
+        description="All checked tasks and their subtasks will be permanently deleted."
+        confirmLabel="Delete Selected"
       />
     </div>
   );

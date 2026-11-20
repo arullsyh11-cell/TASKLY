@@ -1,5 +1,5 @@
 import { format, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
-import { id as idLocale } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 
 export function getTodayIso() {
   const now = new Date();
@@ -27,11 +27,11 @@ export function dateRangeDays(startIso, endIso) {
   return days;
 }
 
-export function formatDateId(dateStr, pattern = 'd MMM yyyy') {
+export function formatDateId(dateStr, pattern = 'MMM d, yyyy') {
   if (!dateStr) return '-';
   try {
     const clean = dateStr.length === 10 ? `${dateStr}T00:00:00` : dateStr;
-    return format(parseISO(clean), pattern, { locale: idLocale });
+    return format(parseISO(clean), pattern, { locale: enUS });
   } catch {
     return dateStr;
   }
@@ -40,7 +40,7 @@ export function formatDateId(dateStr, pattern = 'd MMM yyyy') {
 export function formatRelativeDateTime(isoString) {
   if (!isoString) return '-';
   try {
-    return format(parseISO(isoString), 'd MMM yyyy, HH:mm', { locale: idLocale });
+    return format(parseISO(isoString), 'MMM d, yyyy, HH:mm', { locale: enUS });
   } catch {
     return isoString;
   }
@@ -71,8 +71,8 @@ export function formatSecondsClock(totalSeconds) {
 
 export function formatDurationHuman(totalSeconds) {
   const mins = Math.round((totalSeconds || 0) / 60);
-  if (mins < 60) return `${mins} mnt`;
+  if (mins < 60) return `${mins} min`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m > 0 ? `${h}j ${m}m` : `${h} jam`;
+  return m > 0 ? `${h}h ${m}m` : `${h} hr`;
 }

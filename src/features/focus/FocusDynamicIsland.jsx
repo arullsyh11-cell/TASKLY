@@ -17,15 +17,15 @@ import {
 
 function getModePromptLabel(mode, status, isRinging, taskTitle) {
   if (isRinging || status === 'completed') {
-    if (mode === 'short_break' || mode === 'long_break') return 'Waktu istirahat selesai';
-    return `Sesi selesai: ${taskTitle}`;
+    if (mode === 'short_break' || mode === 'long_break') return 'Break finished';
+    return `Session complete: ${taskTitle}`;
   }
   if (status === 'paused') {
-    return `Timer dijeda: ${taskTitle}`;
+    return `Timer paused: ${taskTitle}`;
   }
-  if (mode === 'short_break') return 'Istirahat singkat sedang berjalan...';
-  if (mode === 'long_break') return 'Istirahat panjang sedang berjalan...';
-  return `Sedang fokus: ${taskTitle}...`;
+  if (mode === 'short_break') return 'Short break in progress...';
+  if (mode === 'long_break') return 'Long break in progress...';
+  return `Focusing on: ${taskTitle}...`;
 }
 
 export function FocusExpandedPopup() {
@@ -136,10 +136,10 @@ export function FocusExpandedPopup() {
       reset();
       try {
         await logSessionMutation.mutateAsync(payload);
-        toast.success(`Sesi fokus ${Math.round(elapsedSec / 60)} menit dicatat.`);
+        toast.success(`Logged ${Math.round(elapsedSec / 60)}-minute focus session.`);
       } catch {
         addPendingSync(payload);
-        toast.info('Durasi fokus disimpan sementara ke antrean lokal.');
+        toast.info('Focus duration saved temporarily to local queue.');
       }
     } else {
       reset();
@@ -149,14 +149,14 @@ export function FocusExpandedPopup() {
   async function handleTogglePip() {
     const opened = await toggleFocusPipWindow();
     if (!opened && !pipActive) {
-      toast.info('Popup Dynamic Focus tetap berjalan otomatis di semua halaman dan notifikasi sistem.');
+      toast.info('Dynamic Focus popup stays active automatically across all pages and system notifications.');
     }
   }
 
   return (
     <aside
       role="region"
-      aria-label="Popup timer Focus Mode"
+      aria-label="Focus Mode timer popup"
       className="focus-island-frame fixed left-1/2 top-[calc(0.5rem+env(safe-area-inset-top))] z-[75] w-[calc(100%-1.5rem)] max-w-[392px] -translate-x-1/2 rounded-[28px] p-[1.5px]"
     >
       <div className="focus-island-surface rounded-[26.5px] px-5 pb-3.5 pt-3.5 text-white">
@@ -171,7 +171,7 @@ export function FocusExpandedPopup() {
         <div className="mt-2.5 flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-baseline gap-2.5">
             <span className="text-xs font-medium text-white/65">
-              {isDone ? 'Selesai' : status === 'paused' ? 'Dijeda' : 'Timer'}
+              {isDone ? 'Done' : status === 'paused' ? 'Paused' : 'Timer'}
             </span>
             <p
               aria-live="off"
@@ -226,21 +226,21 @@ export function FocusExpandedPopup() {
               onClick={handlePrimaryIslandAction}
               aria-label={
                 isRinging
-                  ? 'Matikan nada dering'
+                  ? 'Mute ringtone'
                   : status === 'running'
-                  ? 'Pause sesi fokus'
+                  ? 'Pause focus session'
                   : status === 'paused'
-                  ? 'Resume sesi fokus'
-                  : 'Ulangi sesi fokus'
+                  ? 'Resume focus session'
+                  : 'Restart focus session'
               }
               title={
                 isRinging
-                  ? 'Matikan Nada'
+                  ? 'Mute Sound'
                   : status === 'running'
-                  ? 'Jeda'
+                  ? 'Pause'
                   : status === 'paused'
-                  ? 'Lanjutkan'
-                  : 'Ulangi'
+                  ? 'Resume'
+                  : 'Restart'
               }
               style={{
                 backgroundColor: 'var(--island-pause-bg)',
@@ -262,8 +262,8 @@ export function FocusExpandedPopup() {
             <button
               type="button"
               onClick={handleStopOrDismiss}
-              aria-label={isDone ? 'Tutup popup timer fokus' : 'Hentikan timer fokus'}
-              title={isDone ? 'Tutup' : 'Hentikan Timer'}
+              aria-label={isDone ? 'Close focus timer popup' : 'Stop focus timer'}
+              title={isDone ? 'Close' : 'Stop Timer'}
               className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 text-white/90 transition-colors active:scale-95 hover:bg-white/24"
             >
               <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
@@ -274,8 +274,8 @@ export function FocusExpandedPopup() {
             <button
               type="button"
               onClick={handleTogglePip}
-              aria-label={pipActive ? 'Tutup jendela mengambang di luar aplikasi' : 'Tampilkan mengambang di luar aplikasi'}
-              title="Tampilkan popup mengambang saat keluar dari aplikasi (Picture-in-Picture)"
+              aria-label={pipActive ? 'Close floating out-of-app window' : 'Pop out floating timer window'}
+              title="Keep timer floating outside the app (Picture-in-Picture)"
               className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors ${
                 pipActive
                   ? 'bg-white/20 text-white'
@@ -283,7 +283,7 @@ export function FocusExpandedPopup() {
               }`}
             >
               <PictureInPicture2 className="h-4 w-4 shrink-0" strokeWidth={1.85} aria-hidden="true" />
-              <span>{onFocusRoute ? (pipActive ? 'Mengambang Aktif' : 'Layar Mengambang') : 'PiP'}</span>
+              <span>{onFocusRoute ? (pipActive ? 'Floating Active' : 'Float Window') : 'PiP'}</span>
             </button>
 
             {!onFocusRoute && (
@@ -291,7 +291,7 @@ export function FocusExpandedPopup() {
                 to="/focus"
                 className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-2.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <span>Buka Fokus</span>
+                <span>Open Focus</span>
                 <ChevronRight className="h-4 w-4 text-white/75" strokeWidth={2} aria-hidden="true" />
               </Link>
             )}

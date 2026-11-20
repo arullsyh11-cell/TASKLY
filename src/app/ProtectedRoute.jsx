@@ -11,7 +11,7 @@ export function ProtectedRoute({ children }) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] p-6">
         <div className="w-full max-w-md">
-          <LoadingState label="Memverifikasi sesi workspace..." rows={2} />
+          <LoadingState label="Verifying workspace session..." rows={2} />
         </div>
       </div>
     );

@@ -13,7 +13,7 @@ import { ConfirmationDialog } from '../../components/feedback/ConfirmationDialog
 import { addDaysIso, daysRemaining, formatDateId, getTodayIso } from '../../utils/dateUtils.js';
 
 const STATUS_TABS = [
-  { id: 'all', label: 'Semua' },
+  { id: 'all', label: 'All' },
   { id: 'active', label: 'Active' },
   { id: 'planned', label: 'Planned' },
   { id: 'completed', label: 'Completed' },
@@ -65,9 +65,9 @@ export function SprintsPage() {
       invalidateSprints();
       setFormOpen(false);
       setEditingSprint(null);
-      toast.success(editingSprint ? 'Sprint diperbarui.' : 'Sprint baru dibuat.');
+      toast.success(editingSprint ? 'Sprint updated.' : 'New sprint created.');
     },
-    onError: (err) => setFormErr(err.message || 'Gagal menyimpan sprint.'),
+    onError: (err) => setFormErr(err.message || 'Failed to save sprint.'),
   });
 
   const startMutation = useMutation({
@@ -76,13 +76,13 @@ export function SprintsPage() {
       invalidateSprints();
       setConflictStartSprint(null);
       setActiveConflictInfo(null);
-      toast.success('Sprint diaktifkan.');
+      toast.success('Sprint started.');
     },
     onError: (err) => {
       if (err.code === 'ACTIVE_SPRINT_EXISTS' && err.data?.activeSprint) {
         setActiveConflictInfo(err.data.activeSprint);
       } else {
-        toast.error(err.message || 'Gagal memulai sprint.');
+        toast.error(err.message || 'Failed to start sprint.');
       }
     },
   });
@@ -91,7 +91,7 @@ export function SprintsPage() {
     mutationFn: (id) => repo.sprints.update(id, { status: 'archived' }),
     onSuccess: () => {
       invalidateSprints();
-      toast.success('Sprint diarsipkan.');
+      toast.success('Sprint archived.');
     },
   });
 
@@ -100,7 +100,7 @@ export function SprintsPage() {
     onSuccess: () => {
       invalidateSprints();
       setDeleteTarget(null);
-      toast.success('Sprint dihapus. Seluruh tugas dikembalikan ke Backlog.');
+      toast.success('Sprint deleted. All tasks were returned to Backlog.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -135,11 +135,11 @@ export function SprintsPage() {
   function handleSubmit(e) {
     e.preventDefault();
     if (!name.trim()) {
-      setFormErr('Nama sprint wajib diisi.');
+      setFormErr('Sprint name is required.');
       return;
     }
     if (endDate < startDate) {
-      setFormErr('Tanggal selesai harus sama dengan atau setelah tanggal mulai.');
+      setFormErr('End date must be on or after the start date.');
       return;
     }
     setFormErr('');
@@ -162,17 +162,17 @@ export function SprintsPage() {
             Sprint Management
           </h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-            Atur siklus target berbatas waktu, pantau rasio penyelesaian, dan tinjau riwayat burndown.
+            Plan time-boxed delivery cycles, monitor completion ratios, and review burndown history.
           </p>
         </div>
         <Button onClick={openCreateModal}>
           <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-          <span>Buat Sprint Baru</span>
+          <span>New Sprint</span>
         </Button>
       </header>
 
       {/* Status Tabs */}
-      <div role="tablist" aria-label="Filter status sprint" className="flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Filter sprint status" className="flex flex-wrap gap-2">
         {STATUS_TABS.map((t) => {
           const active = tab === t.id;
           const count = t.id === 'all' ? sprints.length : sprints.filter((s) => s.status === t.id).length;
@@ -196,18 +196,18 @@ export function SprintsPage() {
       </div>
 
       {isLoading ? (
-        <LoadingState label="Memuat daftar sprint..." rows={3} />
+        <LoadingState label="Loading sprints..." rows={3} />
       ) : isError ? (
-        <ErrorState title="Gagal memuat sprint" message={error?.message} onRetry={refetch} />
+        <ErrorState title="Failed to load sprints" message={error?.message} onRetry={refetch} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Zap}
-          title={tab === 'all' ? 'Belum ada sprint yang dibuat' : `Tidak ada sprint berstatus ${tab}`}
-          description="Kelompokkan tugas ke dalam siklus sprint 1 hingga 2 minggu untuk melacak target dan grafik burndown."
+          title={tab === 'all' ? 'No sprints created yet' : `No ${tab} sprints found`}
+          description="Group tasks into 1 to 2 week sprint cycles to track goals and burndown charts."
           action={
             <Button onClick={openCreateModal}>
               <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Buat Sprint Pertama</span>
+              <span>Create First Sprint</span>
             </Button>
           }
         />
@@ -227,7 +227,7 @@ export function SprintsPage() {
                       <div className="flex items-center gap-2">
                         <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
                         {sp.status === 'active' && remDays < 0 && (
-                          <StatusBadge tone="danger">Melewati Tanggal Akhir</StatusBadge>
+                          <StatusBadge tone="danger">Past End Date</StatusBadge>
                         )}
                       </div>
                       <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{sp.name}</h2>
@@ -245,7 +245,7 @@ export function SprintsPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(sp)}
-                        aria-label={`Hapus sprint ${sp.name}`}
+                        aria-label={`Delete sprint ${sp.name}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger)]"
                       >
                         <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -258,7 +258,7 @@ export function SprintsPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-muted)]">
                     <span className="inline-flex items-center gap-1.5">
                       <CalendarRange className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                      {formatDateId(sp.start_date)} s.d. {formatDateId(sp.end_date)}
+                      {formatDateId(sp.start_date)} to {formatDateId(sp.end_date)}
                     </span>
                   </div>
 
@@ -266,7 +266,7 @@ export function SprintsPage() {
                   <div className="mt-4 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[var(--color-text-secondary)]">
-                        Selesai: {sp.completed_tasks} | Tersisa: {sp.remaining_tasks}
+                        Done: {sp.completed_tasks} | Remaining: {sp.remaining_tasks}
                       </span>
                       <span className="font-mono-num font-semibold text-[var(--color-text-primary)]">
                         {sp.progress_percent}%
@@ -292,13 +292,13 @@ export function SprintsPage() {
                         }}
                       >
                         <Play className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                        <span>Mulai Sprint</span>
+                        <span>Start Sprint</span>
                       </Button>
                     )}
                     {sp.status === 'completed' && (
                       <Button size="sm" variant="outline" onClick={() => archiveMutation.mutate(sp.id)}>
                         <Archive className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                        <span>Arsipkan</span>
+                        <span>Archive</span>
                       </Button>
                     )}
                   </div>
@@ -307,7 +307,7 @@ export function SprintsPage() {
                     to={`/sprints/${sp.id}`}
                     className="inline-flex min-h-[36px] items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-xs font-semibold text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)]"
                   >
-                    <span>Detail &amp; Burndown</span>
+                    <span>Details &amp; Burndown</span>
                     <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
                   </Link>
                 </div>
@@ -321,8 +321,8 @@ export function SprintsPage() {
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editingSprint ? 'Edit Sprint' : 'Buat Sprint Baru'}
-        subtitle="Tetapkan target periode dan sasaran utama sprint."
+        title={editingSprint ? 'Edit Sprint' : 'Create New Sprint'}
+        subtitle="Set the date range and main goal for this sprint."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {formErr && (
@@ -332,52 +332,52 @@ export function SprintsPage() {
           )}
 
           <Input
-            label="Nama Sprint"
-            placeholder="Mis. Sprint 03: Integrasi Kalender"
+            label="Sprint Name"
+            placeholder="e.g. Sprint 03: Calendar Integration"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
 
           <Input
-            label="Sprint Goal (Sasaran Utama)"
-            placeholder="Apa hasil terpenting dari periode ini?"
+            label="Sprint Goal"
+            placeholder="What is the primary outcome for this cycle?"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
           />
 
           <Textarea
-            label="Deskripsi (Opsional)"
+            label="Description (Optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
           />
 
           <div className="space-y-2">
-            <p className="text-xs font-medium text-[var(--color-text-secondary)]">Preset Durasi Cepat</p>
+            <p className="text-xs font-medium text-[var(--color-text-secondary)]">Quick Duration Presets</p>
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => applyDurationPreset(7)}>
-                1 Minggu (7 Hari)
+                1 Week (7 Days)
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={() => applyDurationPreset(14)}>
-                2 Minggu (14 Hari)
+                2 Weeks (14 Days)
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={() => applyDurationPreset(30)}>
-                1 Bulan (30 Hari)
+                1 Month (30 Days)
               </Button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input
-              label="Tanggal Mulai"
+              label="Start Date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               required
             />
             <Input
-              label="Tanggal Selesai"
+              label="End Date"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -387,10 +387,10 @@ export function SprintsPage() {
 
           <div className="flex justify-end gap-2 border-t border-[var(--color-border)] pt-4">
             <Button variant="outline" onClick={() => setFormOpen(false)}>
-              Batal
+              Cancel
             </Button>
             <Button type="submit" isLoading={saveMutation.isPending}>
-              {editingSprint ? 'Simpan Perubahan' : 'Simpan Sprint'}
+              {editingSprint ? 'Save Changes' : 'Save Sprint'}
             </Button>
           </div>
         </form>
@@ -406,9 +406,9 @@ export function SprintsPage() {
         onConfirm={() => startMutation.mutate({ id: conflictStartSprint.id, forceCompleteActive: true })}
         isLoading={startMutation.isPending}
         variant="primary"
-        title="Sudah Ada Sprint Aktif"
-        description={`Sprint "${activeConflictInfo?.name || ''}" masih aktif. Selesaikan sprint aktif tersebut dan kembalikan tugas yang belum tuntas ke Backlog untuk memulai "${conflictStartSprint?.name || ''}"?`}
-        confirmLabel="Selesaikan Sprint Lama & Mulai Baru"
+        title="Active Sprint Already Running"
+        description={`Sprint "${activeConflictInfo?.name || ''}" is still active. Complete it and move unfinished tasks back to Backlog so you can start "${conflictStartSprint?.name || ''}"?`}
+        confirmLabel="Complete Current & Start New"
       />
 
       {/* Safe Sprint Delete Confirmation */}
@@ -417,9 +417,9 @@ export function SprintsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
         isLoading={deleteMutation.isPending}
-        title={`Hapus Sprint "${deleteTarget?.name || ''}"?`}
-        description="Sprint akan dihapus permanen, tetapi seluruh tugas di dalamnya tidak ikut terhapus dan akan dikembalikan ke Backlog."
-        confirmLabel="Ya, Hapus Sprint"
+        title={`Delete Sprint "${deleteTarget?.name || ''}"?`}
+        description="This sprint will be permanently removed, while all tasks inside it stay safe and return to Backlog."
+        confirmLabel="Yes, Delete Sprint"
       />
     </div>
   );

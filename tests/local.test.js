@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { localStorageAdapter } from '../src/services/repositories/localStorageAdapter.js';
+import { vaultService } from '../src/services/vaultService.js';
 
-describe('TASKLY LocalStorage Adapter', () => {
+describe('TASKLY LocalStorage Adapter & Workspace Vault', () => {
   beforeEach(async () => {
     localStorage.clear();
     await localStorageAdapter.settings.resetWorkspace();
@@ -12,7 +13,7 @@ describe('TASKLY LocalStorage Adapter', () => {
     expect(cols.map((c) => c.name)).toEqual(['Backlog', 'To Do', 'In Progress', 'Review', 'Done']);
 
     const custom = await localStorageAdapter.columns.create({ name: 'QA Check', semantic_type: 'review' });
-    const t = await localStorageAdapter.tasks.create({ title: 'Uji integrasi lokal', column_id: custom.id });
+    const t = await localStorageAdapter.tasks.create({ title: 'Test local integration', column_id: custom.id });
 
     await expect(localStorageAdapter.columns.remove(custom.id)).rejects.toThrow();
 
@@ -24,12 +25,12 @@ describe('TASKLY LocalStorage Adapter', () => {
     expect(movedTask.column_id).toBe(todoCol.id);
   });
 
-  it('persists tasks, subtasks, sprints, burndown, focus sessions, and exports', async () => {
+  it('persists tasks, subtasks, sprints, burndown, focus sessions, vault files/notes, and exports', async () => {
     const cols = await localStorageAdapter.columns.list();
     const doneCol = cols.find((c) => c.semantic_type === 'done');
 
     const task = await localStorageAdapter.tasks.create({
-      title: 'Selesaikan modul lokal',
+      title: 'Finish local module',
       priority: 'high',
       due_date: '2026-11-25',
       reminder_days_before: 3,
@@ -38,16 +39,16 @@ describe('TASKLY LocalStorage Adapter', () => {
 
     await localStorageAdapter.settings.update({ default_reminder_days: 2, reminder_enabled: true });
     const defaultRemTask = await localStorageAdapter.tasks.create({
-      title: 'Tugas ikuti default',
+      title: 'Task inheriting default reminder',
       due_date: '2026-11-28',
     });
     expect(defaultRemTask.reminder_days_before).toBe(2);
 
-    await localStorageAdapter.tasks.addSubtask(task.id, 'Cek simpanan browser');
+    await localStorageAdapter.tasks.addSubtask(task.id, 'Verify browser storage');
 
     const sprint = await localStorageAdapter.sprints.create({
-      name: 'Sprint Lokal 01',
-      goal: 'Validasi persistence',
+      name: 'Local Sprint 01',
+      goal: 'Validate persistence',
       start_date: '2026-11-15',
       end_date: '2026-11-20',
       status: 'active',
@@ -69,6 +70,18 @@ describe('TASKLY LocalStorage Adapter', () => {
       ended_at: new Date().toISOString(),
     });
 
+    // Vault: folder + file + quick note
+    const folder = await vaultService.createFolder({ name: 'Reference Docs' });
+    const sampleFile = new File(['Hello TASKLY'], 'brief.txt', { type: 'text/plain' });
+    const uploadRes = await vaultService.uploadFiles([sampleFile], folder.id);
+    expect(uploadRes.addedFiles.length).toBe(1);
+    const note = await vaultService.createNote({
+      title: 'Standup Note',
+      content: 'Ship English localization and Settings Vault.',
+      pinned: true,
+    });
+    expect(note.pinned).toBe(true);
+
     const dash = await localStorageAdapter.dashboard.getSummary();
     expect(dash.counts.completed).toBe(1);
     expect(dash.daily_overview.focus_sessions_today).toBe(1);
@@ -76,9 +89,12 @@ describe('TASKLY LocalStorage Adapter', () => {
     const exportedJson = await localStorageAdapter.settings.exportJson();
     expect(exportedJson.storage_mode).toBe('localStorage');
     expect(exportedJson.tasks.length).toBe(2);
+    expect(exportedJson.vault.folders.length).toBe(1);
+    expect(exportedJson.vault.files.length).toBe(1);
+    expect(exportedJson.vault.notes.length).toBe(1);
 
     const exportedCsv = await localStorageAdapter.settings.exportCsv();
-    expect(exportedCsv).toContain('Selesaikan modul lokal');
-    expect(exportedCsv).toContain('Pengingat');
+    expect(exportedCsv).toContain('Finish local module');
+    expect(exportedCsv).toContain('Reminder');
   });
 });

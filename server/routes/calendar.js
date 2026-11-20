@@ -10,7 +10,7 @@ export function createCalendarRouter(db) {
     const end = req.query.end || addDaysIso(today, 30);
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Rentang tanggal kalender tidak valid.');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid calendar date range.');
     }
 
     const tasks = queryEnrichedTasks(

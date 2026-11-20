@@ -22,10 +22,10 @@ export function createColumnsRouter(db) {
     const name = String(req.body?.name || '').trim();
     const semanticType = String(req.body?.semantic_type || req.body?.semanticType || 'todo');
     if (!name || name.length > 40) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama kolom wajib diisi (maks. 40 karakter).', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Column name is required (max 40 characters).', 'name');
     }
     if (!VALID_SEMANTICS.has(semanticType)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tipe semantik kolom tidak valid.', 'semantic_type');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid column semantic type.', 'semantic_type');
     }
 
     const maxPos = db.prepare('SELECT COALESCE(MAX(position), -1) AS max_pos FROM kanban_columns WHERE user_id = ?').get(req.user.id);
@@ -46,12 +46,12 @@ export function createColumnsRouter(db) {
   router.patch('/reorder', (req, res) => {
     const columnIds = req.body?.columnIds;
     if (!Array.isArray(columnIds) || columnIds.length === 0) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Daftar columnIds tidak valid.');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid columnIds list.');
     }
     const existing = db.prepare('SELECT id FROM kanban_columns WHERE user_id = ?').all(req.user.id);
     const existingIds = new Set(existing.map((c) => c.id));
     if (!columnIds.every((id) => existingIds.has(id))) {
-      return sendError(res, 400, 'INVALID_COLUMN', 'Terdapat kolom yang tidak ditemukan.');
+      return sendError(res, 400, 'INVALID_COLUMN', 'One or more columns were not found.');
     }
 
     withTransaction(db, () => {
@@ -68,15 +68,15 @@ export function createColumnsRouter(db) {
   router.patch('/:id', (req, res) => {
     const col = db.prepare('SELECT * FROM kanban_columns WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
     if (!col) {
-      return sendError(res, 404, 'NOT_FOUND', 'Kolom tidak ditemukan.');
+      return sendError(res, 404, 'NOT_FOUND', 'Column not found.');
     }
     const name = req.body?.name !== undefined ? String(req.body.name).trim() : col.name;
     const semanticType = req.body?.semantic_type || req.body?.semanticType || col.semantic_type;
     if (!name || name.length > 40) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Nama kolom wajib diisi (maks. 40 karakter).', 'name');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Column name is required (max 40 characters).', 'name');
     }
     if (!VALID_SEMANTICS.has(semanticType)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Tipe semantik kolom tidak valid.', 'semantic_type');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid column semantic type.', 'semantic_type');
     }
 
     db.prepare('UPDATE kanban_columns SET name = ?, semantic_type = ? WHERE id = ? AND user_id = ?').run(
@@ -92,23 +92,23 @@ export function createColumnsRouter(db) {
   router.delete('/:id', (req, res) => {
     const col = db.prepare('SELECT * FROM kanban_columns WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
     if (!col) {
-      return sendError(res, 404, 'NOT_FOUND', 'Kolom tidak ditemukan.');
+      return sendError(res, 404, 'NOT_FOUND', 'Column not found.');
     }
 
     const allCols = db.prepare('SELECT * FROM kanban_columns WHERE user_id = ? ORDER BY position ASC').all(req.user.id);
     if (allCols.length <= 2) {
-      return sendError(res, 400, 'MIN_COLUMNS_REQUIRED', 'Workspace minimal harus memiliki 2 kolom alur kerja.');
+      return sendError(res, 400, 'MIN_COLUMNS_REQUIRED', 'Workspace must have at least 2 workflow columns.');
     }
 
     if (col.semantic_type === 'done') {
       const doneCols = allCols.filter((c) => c.semantic_type === 'done');
       if (doneCols.length <= 1) {
-        return sendError(res, 400, 'DONE_COLUMN_REQUIRED', 'Minimal harus ada 1 kolom bertipe selesai (Done) untuk pelacakan progres.');
+        return sendError(res, 400, 'DONE_COLUMN_REQUIRED', 'At least 1 Done column is required for progress tracking.');
       }
     } else {
       const activeCols = allCols.filter((c) => c.semantic_type !== 'done');
       if (activeCols.length <= 1) {
-        return sendError(res, 400, 'ACTIVE_COLUMN_REQUIRED', 'Minimal harus ada 1 kolom aktif selain Done.');
+        return sendError(res, 400, 'ACTIVE_COLUMN_REQUIRED', 'At least 1 active column besides Done is required.');
       }
     }
 
@@ -121,13 +121,13 @@ export function createColumnsRouter(db) {
           res,
           400,
           'TARGET_COLUMN_REQUIRED',
-          'Kolom masih memiliki tugas. Pilih kolom tujuan untuk memindahkan tugas terlebih dahulu.',
+          'This column still has tasks. Select a destination column to move them first.',
           'targetColumnId'
         );
       }
       const targetCol = db.prepare('SELECT * FROM kanban_columns WHERE id = ? AND user_id = ?').get(targetColumnId, req.user.id);
       if (!targetCol) {
-        return sendError(res, 400, 'INVALID_TARGET_COLUMN', 'Kolom tujuan migrasi tidak ditemukan.', 'targetColumnId');
+        return sendError(res, 400, 'INVALID_TARGET_COLUMN', 'Destination column not found.', 'targetColumnId');
       }
 
       withTransaction(db, () => {

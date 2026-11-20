@@ -103,7 +103,7 @@ function TaskCardContent({ task, onOpenDrawer, onOpenMoveSheet, isDragging = fal
           {task.due_date && (
             <span className="inline-flex items-center gap-1">
               <Calendar className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
-              {formatDateId(task.due_date, 'd MMM')}
+              {formatDateId(task.due_date, 'MMM d')}
             </span>
           )}
           {totalSub > 0 && (
@@ -130,7 +130,7 @@ function TaskCardContent({ task, onOpenDrawer, onOpenMoveSheet, isDragging = fal
             className="min-h-[44px] w-full justify-between"
             onClick={() => onOpenMoveSheet(task)}
           >
-            <span>Pindah Status</span>
+            <span>Move Status</span>
             <ArrowRightLeft className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
           </Button>
         </div>
@@ -157,7 +157,7 @@ function SortableTaskCard({ task, onOpenDrawer, onOpenMoveSheet }) {
         type="button"
         {...attributes}
         {...listeners}
-        aria-label={`Seret kartu ${task.title}`}
+        aria-label={`Drag card ${task.title}`}
         className="hidden md:inline-flex absolute right-2 top-2.5 h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] opacity-0 transition-opacity hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)] group-hover:opacity-100 focus:opacity-100"
       >
         <GripVertical className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -184,7 +184,7 @@ function DroppableColumn({ column, tasks, onAddTask, onManageColumn, onOpenDrawe
 
   return (
     <section
-      aria-label={`Kolom ${column.name}`}
+      aria-label={`Column ${column.name}`}
       className={`flex w-[292px] shrink-0 flex-col rounded-[var(--radius-lg)] border bg-[var(--color-surface)]/95 transition-colors ${
         isOver ? 'border-[var(--color-primary)]' : 'border-[var(--color-border)]'
       }`}
@@ -202,7 +202,7 @@ function DroppableColumn({ column, tasks, onAddTask, onManageColumn, onOpenDrawe
           <button
             type="button"
             onClick={() => onManageColumn(column)}
-            aria-label={`Kelola kolom ${column.name}`}
+            aria-label={`Manage column ${column.name}`}
             className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)]"
           >
             <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -210,7 +210,7 @@ function DroppableColumn({ column, tasks, onAddTask, onManageColumn, onOpenDrawe
           <button
             type="button"
             onClick={() => onAddTask(column.id)}
-            aria-label={`Tambah tugas di kolom ${column.name}`}
+            aria-label={`Add task in column ${column.name}`}
             className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text-primary)]"
           >
             <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -222,7 +222,7 @@ function DroppableColumn({ column, tasks, onAddTask, onManageColumn, onOpenDrawe
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.length === 0 ? (
             <div className="flex h-28 items-center justify-center rounded-[var(--radius-sm)] border border-dashed border-[var(--color-border)] px-3 text-center text-xs text-[var(--color-text-muted)]">
-              Belum ada tugas di kolom ini. Seret kartu atau klik +.
+              No tasks in this column yet. Drag a card here or click +.
             </div>
           ) : (
             tasks.map((task) => (
@@ -330,7 +330,7 @@ export function KanbanBoardPage() {
     },
     onError: (err, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(['tasks', filters], ctx.prev);
-      toast.error(err.message || 'Gagal memindahkan kartu.');
+      toast.error(err.message || 'Failed to move card.');
     },
     onSettled: () => invalidateAll(),
   });
@@ -341,7 +341,7 @@ export function KanbanBoardPage() {
       invalidateAll();
       setAddColOpen(false);
       setNewColName('');
-      toast.success('Kolom kustom berhasil ditambahkan.');
+      toast.success('Custom column added.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -351,7 +351,7 @@ export function KanbanBoardPage() {
     onSuccess: () => {
       invalidateAll();
       setManageCol(null);
-      toast.success('Kolom diperbarui.');
+      toast.success('Column updated.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -362,7 +362,7 @@ export function KanbanBoardPage() {
       invalidateAll();
       setConfirmColDelete(false);
       setManageCol(null);
-      toast.success('Kolom dihapus.');
+      toast.success('Column deleted.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -428,13 +428,13 @@ export function KanbanBoardPage() {
   const hasFilters = Boolean(search || priority || categoryId || sprintId || deadline);
 
   if (colsLoading || tasksLoading) {
-    return <LoadingState label="Memuat Kanban Board..." rows={4} />;
+    return <LoadingState label="Loading Kanban Board..." rows={4} />;
   }
 
   if (colsError || tasksError) {
     return (
       <ErrorState
-        title="Gagal memuat Kanban Board"
+        title="Failed to load Kanban Board"
         message={tasksErrObj?.message}
         onRetry={() => {
           refetchCols();
@@ -453,23 +453,23 @@ export function KanbanBoardPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">Kanban Board</h1>
           <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
-            Kelola alur kerja visual lintas kolom dengan drag-and-drop atau kontrol status cepat.
+            Organize visual workflows across columns with drag-and-drop or quick status actions.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => setAddColOpen(true)}>
             <Settings2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-            <span>Tambah Kolom</span>
+            <span>Add Column</span>
           </Button>
           <Button onClick={() => openQuickAdd()}>
             <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-            <span>Buat Tugas</span>
+            <span>Create Task</span>
           </Button>
         </div>
       </header>
 
       {/* Filter Bar */}
-      <section aria-label="Filter Kanban" className="grid grid-cols-1 gap-2.5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:grid-cols-2 lg:grid-cols-6">
+      <section aria-label="Kanban filters" className="grid grid-cols-1 gap-2.5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:grid-cols-2 lg:grid-cols-6">
         <div className="relative sm:col-span-2">
           <Search
             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]"
@@ -478,21 +478,21 @@ export function KanbanBoardPage() {
           />
           <input
             type="search"
-            aria-label="Cari kartu di board"
+            aria-label="Search cards on board"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari kartu di papan..."
+            placeholder="Search cards on board..."
             className="min-h-[40px] h-10 sm:min-h-[38px] sm:h-9 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-3.5 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
           />
         </div>
 
         <Dropdown
           compact
-          aria-label="Filter prioritas board"
+          aria-label="Filter board priority"
           value={priority}
           onChange={setPriority}
           options={[
-            { value: '', label: 'Semua Prioritas' },
+            { value: '', label: 'All Priorities' },
             { value: 'urgent', label: 'Urgent' },
             { value: 'high', label: 'High' },
             { value: 'medium', label: 'Medium' },
@@ -502,23 +502,23 @@ export function KanbanBoardPage() {
 
         <Dropdown
           compact
-          aria-label="Filter kategori board"
+          aria-label="Filter board category"
           value={categoryId}
           onChange={setCategoryId}
           options={[
-            { value: '', label: 'Semua Kategori' },
+            { value: '', label: 'All Categories' },
             ...categories.map((c) => ({ value: c.id, label: c.name })),
           ]}
         />
 
         <Dropdown
           compact
-          aria-label="Filter sprint board"
+          aria-label="Filter board sprint"
           value={sprintId}
           onChange={setSprintId}
           options={[
-            { value: '', label: 'Semua Sprint' },
-            { value: 'backlog', label: 'Tanpa Sprint' },
+            { value: '', label: 'All Sprints' },
+            { value: 'backlog', label: 'No Sprint' },
             ...sprints.map((sp) => ({ value: sp.id, label: sp.name })),
           ]}
         />
@@ -527,14 +527,14 @@ export function KanbanBoardPage() {
           <div className="flex-1 min-w-0">
             <Dropdown
               compact
-              aria-label="Filter deadline board"
+              aria-label="Filter board deadline"
               value={deadline}
               onChange={setDeadline}
               options={[
-                { value: '', label: 'Semua Tenggat' },
-                { value: 'overdue', label: 'Terlambat' },
-                { value: 'today', label: 'Hari Ini' },
-                { value: 'week', label: 'Minggu Ini' },
+                { value: '', label: 'All Deadlines' },
+                { value: 'overdue', label: 'Overdue' },
+                { value: 'today', label: 'Today' },
+                { value: 'week', label: 'This Week' },
               ]}
             />
           </div>
@@ -543,7 +543,7 @@ export function KanbanBoardPage() {
             <Button
               variant="ghost"
               size="sm"
-              aria-label="Reset filter board"
+              aria-label="Reset board filters"
               onClick={() => {
                 setSearch('');
                 setPriority('');
@@ -561,8 +561,8 @@ export function KanbanBoardPage() {
       {hasFilters && tasks.length === 0 && (
         <EmptyState
           icon={Columns3}
-          title="Filter menyembunyikan seluruh kartu"
-          description="Tidak ada kartu yang memenuhi kombinasi filter saat ini."
+          title="Filters hid all cards"
+          description="No cards match the current filter combination."
           action={
             <Button
               variant="secondary"
@@ -575,7 +575,7 @@ export function KanbanBoardPage() {
                 setDeadline('');
               }}
             >
-              Reset Filter Board
+              Reset Board Filters
             </Button>
           }
         />
@@ -621,7 +621,7 @@ export function KanbanBoardPage() {
 
       {/* Mobile Touch-Optimized Column Switcher + Status Bottom Sheet (<768px) */}
       <div className="space-y-4 md:hidden">
-        <div role="tablist" aria-label="Pilih kolom Kanban" className="flex gap-2 overflow-x-auto pb-1">
+        <div role="tablist" aria-label="Select Kanban column" className="flex gap-2 overflow-x-auto pb-1">
           {columns.map((col) => {
             const count = (tasksByColumn.get(col.id) || []).length;
             const active = activeMobileCol?.id === col.id;
@@ -652,18 +652,18 @@ export function KanbanBoardPage() {
               </h2>
               <Button size="sm" variant="secondary" onClick={() => openQuickAdd({ columnId: activeMobileCol.id })}>
                 <Plus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                <span>Tambah di Kolom Ini</span>
+                <span>Add Here</span>
               </Button>
             </div>
 
             {mobileColTasks.length === 0 ? (
               <EmptyState
                 icon={Columns3}
-                title={`Kolom ${activeMobileCol.name} masih kosong`}
-                description="Tambahkan tugas baru langsung ke kolom ini atau pindahkan tugas dari kolom lain."
+                title={`Column ${activeMobileCol.name} is empty`}
+                description="Add a new task directly to this column or move a task from another stage."
                 action={
                   <Button size="sm" onClick={() => openQuickAdd({ columnId: activeMobileCol.id })}>
-                    Tambah Tugas
+                    Add Task
                   </Button>
                 }
               />
@@ -687,7 +687,7 @@ export function KanbanBoardPage() {
       <Modal
         open={Boolean(moveSheetTask)}
         onClose={() => setMoveSheetTask(null)}
-        title="Pindahkan Status Tugas"
+        title="Move Task Status"
         subtitle={moveSheetTask?.title}
       >
         <div className="space-y-2">
@@ -707,7 +707,7 @@ export function KanbanBoardPage() {
                     position_in_column: last ? last.position_in_column + 1000 : 1000,
                   });
                   setMoveSheetTask(null);
-                  toast.success(`Dipindahkan ke ${col.name}`);
+                  toast.success(`Moved to ${col.name}`);
                 }}
                 className={`flex min-h-[48px] w-full items-center justify-between rounded-[var(--radius-sm)] border px-4 text-sm font-medium ${
                   isCurrent
@@ -716,7 +716,7 @@ export function KanbanBoardPage() {
                 }`}
               >
                 <span>{col.name}</span>
-                {isCurrent && <span className="text-xs">Posisi Saat Ini</span>}
+                {isCurrent && <span className="text-xs">Current Column</span>}
               </button>
             );
           })}
@@ -727,8 +727,8 @@ export function KanbanBoardPage() {
       <Modal
         open={addColOpen}
         onClose={() => setAddColOpen(false)}
-        title="Tambah Kolom Kanban Kustom"
-        subtitle="Kolom kustom tetap terhubung ke pemetaan progres sprint."
+        title="Add Custom Kanban Column"
+        subtitle="Custom columns stay connected to sprint progress calculations."
       >
         <form
           onSubmit={(e) => {
@@ -739,30 +739,30 @@ export function KanbanBoardPage() {
           className="space-y-4"
         >
           <Input
-            label="Nama Kolom"
-            placeholder="Mis. QA Testing atau Menunggu Review"
+            label="Column Name"
+            placeholder="e.g. QA Testing or Waiting Review"
             value={newColName}
             onChange={(e) => setNewColName(e.target.value)}
             required
           />
           <Dropdown
-            label="Kategori Semantik (Untuk Kalkulasi Progres)"
+            label="Semantic Type (For Progress Tracking)"
             value={newColSem}
             onChange={setNewColSem}
             options={[
-              { value: 'backlog', label: 'Backlog (Belum Dijadwalkan)' },
-              { value: 'todo', label: 'To Do (Siap Dikerjakan)' },
-              { value: 'in_progress', label: 'In Progress (Sedang Berjalan)' },
-              { value: 'review', label: 'Review (Peninjauan)' },
-              { value: 'done', label: 'Done (Terhitung Selesai)' },
+              { value: 'backlog', label: 'Backlog (Unscheduled)' },
+              { value: 'todo', label: 'To Do (Ready)' },
+              { value: 'in_progress', label: 'In Progress (Active)' },
+              { value: 'review', label: 'Review (In Review)' },
+              { value: 'done', label: 'Done (Counts as Completed)' },
             ]}
           />
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setAddColOpen(false)}>
-              Batal
+              Cancel
             </Button>
             <Button type="submit" isLoading={createColMutation.isPending}>
-              Buat Kolom
+              Create Column
             </Button>
           </div>
         </form>
@@ -772,12 +772,12 @@ export function KanbanBoardPage() {
       <Modal
         open={Boolean(manageCol) && !confirmColDelete}
         onClose={() => setManageCol(null)}
-        title={`Kelola Kolom: ${manageCol?.name || ''}`}
+        title={`Manage Column: ${manageCol?.name || ''}`}
       >
         <div className="space-y-4">
-          <Input label="Nama Kolom" value={editColName} onChange={(e) => setEditColName(e.target.value)} />
+          <Input label="Column Name" value={editColName} onChange={(e) => setEditColName(e.target.value)} />
           <Dropdown
-            label="Kategori Semantik"
+            label="Semantic Type"
             value={editColSem}
             onChange={setEditColSem}
             options={[
@@ -795,11 +795,11 @@ export function KanbanBoardPage() {
               onClick={() => setConfirmColDelete(true)}
             >
               <Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Hapus Kolom</span>
+              <span>Delete Column</span>
             </Button>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setManageCol(null)}>
-                Tutup
+                Close
               </Button>
               <Button
                 isLoading={updateColMutation.isPending}
@@ -810,7 +810,7 @@ export function KanbanBoardPage() {
                   })
                 }
               >
-                Simpan
+                Save
               </Button>
             </div>
           </div>
@@ -828,13 +828,13 @@ export function KanbanBoardPage() {
           })
         }
         isLoading={deleteColMutation.isPending}
-        title={`Hapus Kolom "${manageCol?.name || ''}"?`}
-        description="Jika kolom ini masih memiliki tugas, semua tugas di dalamnya akan dipindahkan ke kolom tujuan di bawah."
-        confirmLabel="Hapus Kolom"
+        title={`Delete Column "${manageCol?.name || ''}"?`}
+        description="If this column still has tasks, all of them will be moved to the destination column below."
+        confirmLabel="Delete Column"
       >
         {(tasksByColumn.get(manageCol?.id) || []).length > 0 && (
           <Dropdown
-            label="Pindahkan tugas yang ada ke kolom:"
+            label="Move existing tasks to column:"
             value={deleteTargetColId}
             onChange={setDeleteTargetColId}
             options={columns

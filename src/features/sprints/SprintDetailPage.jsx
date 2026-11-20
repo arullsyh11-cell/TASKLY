@@ -64,7 +64,7 @@ export function SprintDetailPage() {
     mutationFn: ({ taskId, action }) => repo.sprints.assignTask(id, taskId, action),
     onSuccess: (_res, vars) => {
       invalidate();
-      toast.success(vars.action === 'add' ? 'Tugas ditambahkan ke sprint.' : 'Tugas dikeluarkan ke Backlog.');
+      toast.success(vars.action === 'add' ? 'Task added to sprint.' : 'Task moved back to Backlog.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -73,7 +73,7 @@ export function SprintDetailPage() {
     mutationFn: () => repo.sprints.start(id, true),
     onSuccess: () => {
       invalidate();
-      toast.success('Sprint diaktifkan.');
+      toast.success('Sprint started.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -87,7 +87,7 @@ export function SprintDetailPage() {
     onSuccess: () => {
       invalidate();
       setCompleteModalOpen(false);
-      toast.success('Sprint ditandai selesai.');
+      toast.success('Sprint marked as completed.');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -96,14 +96,14 @@ export function SprintDetailPage() {
     mutationFn: () => repo.sprints.remove(id),
     onSuccess: () => {
       invalidate();
-      toast.success('Sprint dihapus.');
+      toast.success('Sprint deleted.');
       navigate('/sprints');
     },
     onError: (err) => toast.error(err.message),
   });
 
-  if (isLoading) return <LoadingState label="Memuat detail dan burndown sprint..." rows={4} />;
-  if (isError) return <ErrorState title="Gagal memuat detail sprint" message={error?.message} onRetry={refetch} />;
+  if (isLoading) return <LoadingState label="Loading sprint details and burndown..." rows={4} />;
+  if (isError) return <ErrorState title="Failed to load sprint details" message={error?.message} onRetry={refetch} />;
 
   const sprint = data?.sprint;
   const tasks = data?.tasks || [];
@@ -118,7 +118,7 @@ export function SprintDetailPage() {
           className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
         >
           <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-          <span>Kembali ke Daftar Sprints</span>
+          <span>Back to Sprints</span>
         </Link>
 
         <header className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -128,7 +128,7 @@ export function SprintDetailPage() {
                 {sprint.status.toUpperCase()}
               </StatusBadge>
               <span className="text-xs text-[var(--color-text-muted)]">
-                {formatDateId(sprint.start_date)} s.d. {formatDateId(sprint.end_date)}
+                {formatDateId(sprint.start_date)} to {formatDateId(sprint.end_date)}
               </span>
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-text-primary)]">{sprint.name}</h1>
@@ -140,26 +140,26 @@ export function SprintDetailPage() {
             {sprint.status === 'planned' && (
               <Button onClick={() => startMutation.mutate()} isLoading={startMutation.isPending}>
                 <Play className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Mulai Sprint</span>
+                <span>Start Sprint</span>
               </Button>
             )}
             {sprint.status === 'active' && (
               <Button onClick={() => setCompleteModalOpen(true)}>
                 <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                <span>Selesaikan Sprint</span>
+                <span>Complete Sprint</span>
               </Button>
             )}
             <Button variant="outline" onClick={() => setAssignModalOpen(true)}>
               <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Assign dari Backlog</span>
+              <span>Assign from Backlog</span>
             </Button>
             <Button variant="secondary" onClick={() => openQuickAdd({ sprintId: sprint.id })}>
               <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Buat Tugas Baru</span>
+              <span>Create New Task</span>
             </Button>
             <Button
               variant="ghost"
-              aria-label="Hapus sprint"
+              aria-label="Delete sprint"
               className="text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]"
               onClick={() => setConfirmDeleteOpen(true)}
             >
@@ -172,7 +172,7 @@ export function SprintDetailPage() {
       {/* Sprint Metrics Bar */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <p className="text-xs text-[var(--color-text-secondary)]">Progress Sprint</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">Sprint Progress</p>
           <p className="mt-1 font-mono-num text-2xl font-semibold text-[var(--color-accent-text)]">
             {sprint.progress_percent}%
           </p>
@@ -182,14 +182,14 @@ export function SprintDetailPage() {
         </div>
 
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <p className="text-xs text-[var(--color-text-secondary)]">Tugas Selesai</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">Completed Tasks</p>
           <p className="mt-1 font-mono-num text-2xl font-semibold text-[var(--color-success)]">
             {sprint.completed_tasks} <span className="text-sm font-normal text-[var(--color-text-muted)]">/ {sprint.total_tasks}</span>
           </p>
         </div>
 
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <p className="text-xs text-[var(--color-text-secondary)]">Tugas Tersisa</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">Remaining Tasks</p>
           <p className="mt-1 font-mono-num text-2xl font-semibold text-[var(--color-text-primary)]">
             {sprint.remaining_tasks}
           </p>
@@ -200,17 +200,17 @@ export function SprintDetailPage() {
       <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="mb-4">
           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-            Sisa tugas sprint terhadap target harian (Ideal vs Aktual)
+            Remaining sprint tasks vs daily target (Ideal vs Actual)
           </h2>
           <p className="text-xs text-[var(--color-text-secondary)]">
-            Garis aktual berhenti pada hari berjalan dan mencerminkan penyelesaian tugas nyata di kolom Done.
+            The actual line stops at today and reflects real tasks moved to the Done column.
           </p>
         </div>
 
         {tasks.length === 0 ? (
           <EmptyState
-            title="Belum ada tugas di sprint ini untuk digambar ke grafik burndown"
-            description="Tambahkan tugas pada panel Daftar Tugas Sprint di bawah untuk memantau kurva burndown."
+            title="No tasks in this sprint to plot on the burndown chart"
+            description="Add tasks in the Sprint Tasks section below to start tracking the burndown curve."
           />
         ) : (
           <div className="h-64 w-full">
@@ -232,7 +232,7 @@ export function SprintDetailPage() {
                 <Line
                   type="monotone"
                   dataKey="ideal_remaining"
-                  name="Target Ideal"
+                  name="Ideal Target"
                   stroke="var(--color-text-muted)"
                   strokeWidth={2}
                   strokeDasharray="5 5"
@@ -242,7 +242,7 @@ export function SprintDetailPage() {
                 <Line
                   type="monotone"
                   dataKey="actual_remaining"
-                  name="Sisa Aktual"
+                  name="Actual Remaining"
                   stroke="var(--color-primary)"
                   strokeWidth={2.5}
                   dot={{ r: 4, fill: 'var(--color-primary)' }}
@@ -258,16 +258,16 @@ export function SprintDetailPage() {
       {/* Sprint Task List */}
       <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <h2 className="mb-3 text-base font-semibold text-[var(--color-text-primary)]">
-          Daftar Tugas dalam Sprint ({tasks.length})
+          Sprint Tasks ({tasks.length})
         </h2>
 
         {tasks.length === 0 ? (
           <EmptyState
-            title="Sprint ini belum memiliki tugas"
-            description="Assign tugas yang sudah ada di Backlog atau buat tugas baru langsung ke sprint ini."
+            title="This sprint has no tasks yet"
+            description="Assign existing tasks from Backlog or create a new task directly into this sprint."
             action={
               <Button size="sm" onClick={() => setAssignModalOpen(true)}>
-                Assign dari Backlog
+                Assign from Backlog
               </Button>
             }
           />
@@ -300,7 +300,7 @@ export function SprintDetailPage() {
                       {overdue && <OverdueTag />}
                       {task.due_date && (
                         <span className="text-xs text-[var(--color-text-muted)]">
-                          Tenggat: {formatDateId(task.due_date)}
+                          Due: {formatDateId(task.due_date)}
                         </span>
                       )}
                     </div>
@@ -310,11 +310,11 @@ export function SprintDetailPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => assignMutation.mutate({ taskId: task.id, action: 'remove' })}
-                    aria-label={`Keluarkan ${task.title} dari sprint`}
+                    aria-label={`Remove ${task.title} from sprint`}
                     className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-danger)]"
                   >
                     <X className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                    <span>Keluarkan</span>
+                    <span>Remove</span>
                   </Button>
                 </li>
               );
@@ -327,13 +327,13 @@ export function SprintDetailPage() {
       <Modal
         open={assignModalOpen}
         onClose={() => setAssignModalOpen(false)}
-        title="Assign Tugas dari Backlog"
-        subtitle="Pilih tugas yang belum masuk sprint mana pun."
+        title="Assign Tasks from Backlog"
+        subtitle="Select tasks not currently assigned to any sprint."
       >
         {backlogTasks.length === 0 ? (
           <EmptyState
-            title="Tidak ada tugas di Backlog"
-            description="Semua tugas Anda sudah terpasang ke sprint atau Anda belum membuat tugas baru."
+            title="No tasks in Backlog"
+            description="All of your tasks are already assigned to sprints or you have not created any yet."
             action={
               <Button
                 size="sm"
@@ -342,7 +342,7 @@ export function SprintDetailPage() {
                   openQuickAdd({ sprintId: sprint.id });
                 }}
               >
-                Buat Tugas Baru ke Sprint Ini
+                Create Task in This Sprint
               </Button>
             }
           />
@@ -378,29 +378,29 @@ export function SprintDetailPage() {
       <Modal
         open={completeModalOpen}
         onClose={() => setCompleteModalOpen(false)}
-        title={`Selesaikan ${sprint.name}?`}
-        subtitle={`Selesai: ${sprint.completed_tasks} tugas | Belum selesai: ${sprint.remaining_tasks} tugas`}
+        title={`Complete ${sprint.name}?`}
+        subtitle={`Completed: ${sprint.completed_tasks} tasks | Remaining: ${sprint.remaining_tasks} tasks`}
       >
         <div className="space-y-4">
           {sprint.remaining_tasks > 0 ? (
             <>
               <p className="text-sm text-[var(--color-text-secondary)]">
-                Masih terdapat {sprint.remaining_tasks} tugas yang belum berstatus Done. Pilih tujuan pemindahan tugas tersisa:
+                There are still {sprint.remaining_tasks} tasks not marked as Done. Choose where to move remaining tasks:
               </p>
               <Dropdown
-                label="Tindakan untuk tugas tersisa"
+                label="Action for remaining tasks"
                 value={carryoverAction}
                 onChange={setCarryoverAction}
                 options={[
-                  { value: 'backlog', label: 'Kembalikan ke Backlog (Tanpa Sprint)' },
+                  { value: 'backlog', label: 'Return to Backlog (No Sprint)' },
                   ...(plannedTargets.length > 0
-                    ? [{ value: 'sprint', label: 'Pindahkan ke Sprint Terencana Lain' }]
+                    ? [{ value: 'sprint', label: 'Move to Another Planned Sprint' }]
                     : []),
                 ]}
               />
               {carryoverAction === 'sprint' && (
                 <Dropdown
-                  label="Pilih Sprint Tujuan"
+                  label="Select Destination Sprint"
                   value={targetSprintId || plannedTargets[0]?.id || ''}
                   onChange={setTargetSprintId}
                   options={plannedTargets.map((pt) => ({ value: pt.id, label: pt.name }))}
@@ -409,13 +409,13 @@ export function SprintDetailPage() {
             </>
           ) : (
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Seluruh tugas pada sprint ini sudah selesai. Menutup sprint akan menyimpannya ke Sprint History.
+              Every task in this sprint is complete. Closing the sprint will save it to Sprint History.
             </p>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setCompleteModalOpen(false)}>
-              Batal
+              Cancel
             </Button>
             <Button
               isLoading={completeMutation.isPending}
@@ -426,7 +426,7 @@ export function SprintDetailPage() {
                 completeMutation.mutate();
               }}
             >
-              Selesaikan Sprint
+              Complete Sprint
             </Button>
           </div>
         </div>
@@ -437,9 +437,9 @@ export function SprintDetailPage() {
         onClose={() => setConfirmDeleteOpen(false)}
         onConfirm={() => deleteMutation.mutate()}
         isLoading={deleteMutation.isPending}
-        title={`Hapus Sprint "${sprint.name}"?`}
-        description="Sprint akan dihapus permanen, sedangkan seluruh tugas di dalamnya tetap aman dan dikembalikan ke Backlog."
-        confirmLabel="Ya, Hapus Sprint"
+        title={`Delete Sprint "${sprint.name}"?`}
+        description="This sprint will be permanently deleted, while all tasks inside remain safe and return to Backlog."
+        confirmLabel="Yes, Delete Sprint"
       />
     </div>
   );

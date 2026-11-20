@@ -15,7 +15,7 @@ export function ReminderField({
   defaultDays = 1,
   onChange,
   disabled = false,
-  label = 'Pengingat Deadline (Reminder)',
+  label = 'Deadline Reminder',
 }) {
   const customInputId = useId();
   const normalizedValue = value === undefined ? defaultDays : value;
@@ -78,7 +78,7 @@ export function ReminderField({
         {(selectValue === 'custom' || customOpen) && (
           <div className="flex flex-col gap-1.5">
             <label htmlFor={customInputId} className="text-xs font-medium text-[var(--color-text-secondary)]">
-              Custom Hari Sebelum Deadline
+              Custom Days Before Deadline
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -98,7 +98,7 @@ export function ReminderField({
                 }}
                 className="min-h-[42px] w-24 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-center font-mono-num text-base sm:text-sm text-[var(--color-text-primary)]"
               />
-              <span className="text-xs text-[var(--color-text-secondary)]">hari sebelum tenggat</span>
+              <span className="text-xs text-[var(--color-text-secondary)]">days before due date</span>
             </div>
           </div>
         )}
@@ -108,14 +108,18 @@ export function ReminderField({
         <Bell className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
         <span>
           {normalizedValue === null ? (
-            'Pengingat dimatikan untuk tugas ini.'
+            'Reminders are disabled for this task.'
           ) : !dueDate ? (
-            `Jadwal pengingat siap di ${numericValue === 0 ? 'Hari H' : `${numericValue} hari sebelum deadline`}. Isi Tenggat Waktu agar pengingat aktif otomatis.`
+            `Reminder ready for ${
+              numericValue === 0 ? 'the due date' : `${numericValue} ${numericValue === 1 ? 'day' : 'days'} before deadline`
+            }. Set a Due Date to activate automatically.`
           ) : triggerIso && triggerIso <= todayIso ? (
-            `Pengingat aktif segera: notifikasi pengingat untuk deadline ${formatDateId(dueDate, 'd MMMM yyyy')} akan muncul hari ini.`
+            `Reminder active now: notification for deadline ${formatDateId(dueDate, 'MMMM d, yyyy')} will appear today.`
           ) : (
-            `Notifikasi pengingat akan muncul mulai ${formatDateId(triggerIso, 'd MMMM yyyy')} (${
-              numericValue === 0 ? 'tepat di tanggal deadline' : `${numericValue} hari sebelum deadline`
+            `Reminder notification starts on ${formatDateId(triggerIso, 'MMMM d, yyyy')} (${
+              numericValue === 0
+                ? 'on the due date'
+                : `${numericValue} ${numericValue === 1 ? 'day' : 'days'} before deadline`
             }).`
           )}
         </span>

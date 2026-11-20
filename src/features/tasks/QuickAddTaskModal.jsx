@@ -14,9 +14,9 @@ import { repo } from '../../services/repositories/index.js';
 
 const schema = z
   .object({
-    title: z.string().trim().min(1, 'Judul tugas wajib diisi.').max(160, 'Maksimal 160 karakter.'),
+    title: z.string().trim().min(1, 'Task title is required.').max(160, 'Maximum 160 characters.'),
     description: z.string().optional(),
-    column_id: z.string().min(1, 'Kolom status wajib dipilih.'),
+    column_id: z.string().min(1, 'Status column is required.'),
     priority: z.enum(['low', 'medium', 'high', 'urgent']),
     category_id: z.string().optional(),
     sprint_id: z.string().optional(),
@@ -26,7 +26,7 @@ const schema = z
   })
   .refine(
     (vals) => !vals.start_date || !vals.due_date || vals.due_date >= vals.start_date,
-    { message: 'Tanggal mulai tidak boleh melewati tenggat waktu.', path: ['due_date'] }
+    { message: 'Start date cannot be after the due date.', path: ['due_date'] }
   );
 
 const PRIORITY_OPTIONS = [
@@ -118,11 +118,11 @@ export function QuickAddTaskModal() {
       queryClient.invalidateQueries({ queryKey: ['sprint'] });
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
-      toast.success('Tugas baru berhasil ditambahkan.');
+      toast.success('New task created.');
       closeQuickAdd();
     },
     onError: (err) => {
-      toast.error(err.message || 'Gagal membuat tugas.');
+      toast.error(err.message || 'Failed to create task.');
     },
   });
 
@@ -139,33 +139,33 @@ export function QuickAddTaskModal() {
 
   const columnOptions = columns.map((col) => ({ value: col.id, label: col.name }));
   const categoryOptions = [
-    { value: '', label: 'Tanpa kategori' },
+    { value: '', label: 'No category' },
     ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
   ];
   const sprintOptions = [
-    { value: '', label: 'Backlog (Tanpa Sprint)' },
+    { value: '', label: 'Backlog (No Sprint)' },
     ...sprints
       .filter((sp) => sp.status === 'active' || sp.status === 'planned')
       .map((sp) => ({
         value: sp.id,
         label: sp.name,
-        hint: sp.status === 'active' ? 'Sprint Aktif' : 'Terencana',
+        hint: sp.status === 'active' ? 'Active Sprint' : 'Planned',
       })),
   ];
 
   return (
-    <Modal open={open} onClose={closeQuickAdd} title="Buat Tugas Baru" subtitle="Tambahkan tugas ke papan kerja dan sprint Anda.">
+    <Modal open={open} onClose={closeQuickAdd} title="Create New Task" subtitle="Add a task to your board and sprint.">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
-          label="Judul Tugas"
-          placeholder="Mis. Implementasi validasi form sprint"
+          label="Task Title"
+          placeholder="e.g. Implement sprint form validation"
           error={errors.title?.message}
           {...register('title')}
         />
 
         <Textarea
-          label="Deskripsi (Opsional)"
-          placeholder="Catatan teknis, konteks, atau target penyelesaian..."
+          label="Description (Optional)"
+          placeholder="Technical notes, context, or acceptance criteria..."
           rows={3}
           error={errors.description?.message}
           {...register('description')}
@@ -177,7 +177,7 @@ export function QuickAddTaskModal() {
             control={control}
             render={({ field }) => (
               <Dropdown
-                label="Status Kolom"
+                label="Status Column"
                 value={field.value}
                 onChange={field.onChange}
                 options={columnOptions}
@@ -191,7 +191,7 @@ export function QuickAddTaskModal() {
             control={control}
             render={({ field }) => (
               <Dropdown
-                label="Prioritas"
+                label="Priority"
                 value={field.value}
                 onChange={field.onChange}
                 options={PRIORITY_OPTIONS}
@@ -205,7 +205,7 @@ export function QuickAddTaskModal() {
             control={control}
             render={({ field }) => (
               <Dropdown
-                label="Kategori"
+                label="Category"
                 value={field.value}
                 onChange={field.onChange}
                 options={categoryOptions}
@@ -218,7 +218,7 @@ export function QuickAddTaskModal() {
             control={control}
             render={({ field }) => (
               <Dropdown
-                label="Assign ke Sprint"
+                label="Assign to Sprint"
                 value={field.value}
                 onChange={field.onChange}
                 options={sprintOptions}
@@ -226,8 +226,8 @@ export function QuickAddTaskModal() {
             )}
           />
 
-          <Input label="Tanggal Mulai" type="date" error={errors.start_date?.message} {...register('start_date')} />
-          <Input label="Tenggat Waktu (Due Date)" type="date" error={errors.due_date?.message} {...register('due_date')} />
+          <Input label="Start Date" type="date" error={errors.start_date?.message} {...register('start_date')} />
+          <Input label="Due Date" type="date" error={errors.due_date?.message} {...register('due_date')} />
         </div>
 
         <Controller
@@ -245,10 +245,10 @@ export function QuickAddTaskModal() {
 
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--color-border)] pt-4 sm:flex-row sm:justify-end">
           <Button variant="outline" onClick={closeQuickAdd}>
-            Batal
+            Cancel
           </Button>
           <Button type="submit" isLoading={mutation.isPending}>
-            Simpan Tugas
+            Save Task
           </Button>
         </div>
       </form>

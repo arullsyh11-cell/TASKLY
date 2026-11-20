@@ -30,20 +30,20 @@ export function GlobalReminderEngine() {
           description: entry.message,
           duration: 9000,
           action: {
-            label: 'Lihat Tugas',
+            label: 'View Task',
             onClick: () => openTaskDrawer(entry.task.id),
           },
         });
       });
     } else {
       const lead = fresh[0];
-      const summaryMsg = `${lead.message} (+${fresh.length - 1} tugas lainnya mendekati deadline.)`;
-      sendReminderNotification(`Pengingat ${fresh.length} Tugas Mendekati Deadline`, summaryMsg, 'taskly-rem-batch');
-      toast.warning(`${fresh.length} Tugas Memasuki Pengingat Deadline`, {
+      const summaryMsg = `${lead.message} (+${fresh.length - 1} more tasks approaching deadline.)`;
+      sendReminderNotification(`Reminder: ${fresh.length} Tasks Near Deadline`, summaryMsg, 'taskly-rem-batch');
+      toast.warning(`${fresh.length} Tasks Have Active Deadline Reminders`, {
         description: lead.message,
         duration: 9500,
         action: {
-          label: 'Lihat Tugas',
+          label: 'View Task',
           onClick: () => openTaskDrawer(lead.task.id),
         },
       });

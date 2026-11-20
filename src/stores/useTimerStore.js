@@ -78,7 +78,10 @@ export const useTimerStore = create((set, get) => ({
   targetEndMs: saved?.targetEndMs || null,
   startedAtIso: saved?.startedAtIso || null,
   selectedTaskId: saved?.selectedTaskId || null,
-  selectedTaskTitle: saved?.selectedTaskTitle || 'Fokus Umum',
+  selectedTaskTitle:
+    saved?.selectedTaskTitle && saved.selectedTaskTitle !== 'Fokus Umum'
+      ? saved.selectedTaskTitle
+      : 'General Focus',
   pendingSync: loadPendingSync(),
   isRinging: false,
   islandMode: 'compact', // 'compact' | 'expanded'
@@ -151,7 +154,7 @@ export const useTimerStore = create((set, get) => ({
   selectTask(taskId, taskTitle) {
     const patch = {
       selectedTaskId: taskId || null,
-      selectedTaskTitle: taskId ? taskTitle || 'Tugas Terpilih' : 'Fokus Umum',
+      selectedTaskTitle: taskId ? taskTitle || 'Selected Task' : 'General Focus',
     };
     set(patch);
     saveTimer({ ...get(), ...patch });

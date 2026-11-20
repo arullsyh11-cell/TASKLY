@@ -21,47 +21,47 @@ describe('TASKLY UI Components & States', () => {
   it('opens directly into localStorage workspace Dashboard without login gate', async () => {
     window.history.pushState({}, '', '/dashboard');
     render(<App />);
-    expect(await screen.findByText(/Workspace Anda siap digunakan/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Masuk ke Workspace/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Muat Proyek Contoh/i })).not.toBeInTheDocument();
+    expect(await screen.findByText(/Your workspace is ready/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Sign In to Workspace/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Load Sample Project/i })).not.toBeInTheDocument();
   });
 
   it('renders Loading, Empty, and Error states with clear actions', () => {
     const onRetry = vi.fn();
     render(
       <div>
-        <LoadingState label="Memuat papan..." rows={2} />
-        <EmptyState title="Kosong" description="Belum ada data" action={<button type="button">Buat</button>} />
-        <ErrorState message="Jaringan terputus" onRetry={onRetry} />
+        <LoadingState label="Loading board..." rows={2} />
+        <EmptyState title="Empty" description="No items yet" action={<button type="button">Create</button>} />
+        <ErrorState message="Network disconnected" onRetry={onRetry} />
       </div>
     );
 
-    expect(screen.getByText('Memuat papan...')).toBeInTheDocument();
-    expect(screen.getByText('Kosong')).toBeInTheDocument();
-    expect(screen.getByText('Jaringan terputus')).toBeInTheDocument();
+    expect(screen.getByText('Loading board...')).toBeInTheDocument();
+    expect(screen.getByText('Empty')).toBeInTheDocument();
+    expect(screen.getByText('Network disconnected')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Coba Lagi/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Try Again/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it('closes Modal on Escape key press', () => {
     const onClose = vi.fn();
     render(
-      <Modal open={true} onClose={onClose} title="Dialog Uji">
-        <p>Konten dialog</p>
+      <Modal open={true} onClose={onClose} title="Test Dialog">
+        <p>Dialog content</p>
       </Modal>
     );
 
-    expect(screen.getByRole('dialog', { name: 'Dialog Uji' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Test Dialog' })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('renders accessible Input label and validation error linkage', () => {
-    render(<Input label="Judul Tugas" error="Judul tugas wajib diisi." />);
-    const input = screen.getByLabelText('Judul Tugas');
+    render(<Input label="Task Title" error="Task title is required." />);
+    const input = screen.getByLabelText('Task Title');
     expect(input).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByRole('alert')).toHaveTextContent('Judul tugas wajib diisi.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Task title is required.');
   });
 
   it('renders TasklyLogo Concept 02 Task Flow mark and wordmark', () => {
@@ -73,7 +73,7 @@ describe('TASKLY UI Components & States', () => {
     const onChange = vi.fn();
     render(
       <Dropdown
-        label="Prioritas"
+        label="Priority"
         searchable
         value="medium"
         onChange={onChange}
@@ -85,7 +85,7 @@ describe('TASKLY UI Components & States', () => {
       />
     );
 
-    const trigger = screen.getByRole('combobox', { name: 'Prioritas' });
+    const trigger = screen.getByRole('combobox', { name: 'Priority' });
     expect(trigger).toHaveTextContent('Medium');
     fireEvent.click(trigger);
 
@@ -104,8 +104,8 @@ describe('TASKLY UI Components & States', () => {
         <LoginPage />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: /Masuk ke Workspace/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Email dan kata sandi wajib diisi.');
+    fireEvent.click(screen.getByRole('button', { name: /Sign In to Workspace/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Email and password are required.');
   });
 
   it('defaults workspace theme to light and switches to monochrome', async () => {
@@ -128,24 +128,24 @@ describe('TASKLY UI Components & States', () => {
     expect(useTimerStore.getState().isRinging).toBe(false);
   });
 
-  it('supports default H-1 and custom reminder days in ReminderField', () => {
+  it('supports default D-1 and custom reminder days in ReminderField', () => {
     const onChange = vi.fn();
     render(<ReminderField dueDate="2026-11-25" value={1} defaultDays={1} onChange={onChange} />);
 
-    const trigger = screen.getByRole('combobox', { name: /Pengingat Deadline/i });
-    expect(trigger).toHaveTextContent('1 hari sebelum deadline (Default)');
+    const trigger = screen.getByRole('combobox', { name: /Deadline Reminder/i });
+    expect(trigger).toHaveTextContent('1 day before deadline (Default)');
 
     fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole('option', { name: /Custom jumlah hari/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Custom days/i }));
 
-    const numInput = screen.getByLabelText(/Custom Hari Sebelum Deadline/i);
+    const numInput = screen.getByLabelText(/Custom Days Before Deadline/i);
     fireEvent.change(numInput, { target: { value: '5' } });
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
   it('renders FocusExpandedPopup automatically when timer runs and stays persistent until stopped', async () => {
     const { useTimerStore } = await import('../src/stores/useTimerStore.js');
-    useTimerStore.getState().selectTask('t-focus', 'Review Desain UI');
+    useTimerStore.getState().selectTask('t-focus', 'UI Design Review');
     useTimerStore.getState().start();
 
     const qc = new QueryClient();
@@ -157,13 +157,13 @@ describe('TASKLY UI Components & States', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByRole('region', { name: 'Popup timer Focus Mode' })).toBeInTheDocument();
-    expect(screen.getByText(/Sedang fokus: Review Desain UI/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Buka Fokus/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Focus Mode timer popup' })).toBeInTheDocument();
+    expect(screen.getByText(/Focusing on: UI Design Review/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Focus/i })).toBeInTheDocument();
 
     // Clicking outside or pressing Escape must NOT hide the active Dynamic Island popup
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.getByRole('region', { name: 'Popup timer Focus Mode' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Focus Mode timer popup' })).toBeInTheDocument();
 
     act(() => {
       useTimerStore.getState().reset();

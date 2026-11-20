@@ -35,7 +35,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Eksekusi',
+    label: 'Execution',
     items: [
       { to: '/sprints', label: 'Sprints', icon: Zap },
       { to: '/calendar', label: 'Calendar', icon: CalendarDays },
@@ -43,7 +43,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Sistem',
+    label: 'System',
     items: [
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/settings', label: 'Settings', icon: Settings },
@@ -63,12 +63,12 @@ const MOBILE_DOCK_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard },
   { to: '/board', label: 'Kanban Board', shortLabel: 'Board', icon: Columns3 },
   { to: '/analytics', label: 'Analytics', shortLabel: 'Stats', icon: BarChart3 },
-  { to: '/settings', label: 'Settings', shortLabel: 'Profil', icon: Settings },
+  { to: '/settings', label: 'Settings', shortLabel: 'Settings', icon: Settings },
 ];
 
 function NavGroupList({ collapsed, onNavigate }) {
   return (
-    <nav aria-label="Navigasi utama" className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+    <nav aria-label="Primary navigation" className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
       {NAV_GROUPS.map((group) => (
         <div key={group.label}>
           {!collapsed && (
@@ -176,7 +176,7 @@ export function Sidebar() {
             type="button"
             onClick={toggleSidebar}
             aria-expanded={!collapsed}
-            aria-label="Kecilkan sidebar"
+            aria-label="Collapse sidebar"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
           >
             <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -190,7 +190,7 @@ export function Sidebar() {
             type="button"
             onClick={toggleSidebar}
             aria-expanded={!collapsed}
-            aria-label="Perluas sidebar"
+            aria-label="Expand sidebar"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
           >
             <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -202,14 +202,14 @@ export function Sidebar() {
         <div className="px-3 pt-3">
           <NavLink
             to="/focus"
-            title="Kembali ke Focus Mode"
+            title="Return to Focus Mode"
             className={`flex items-center rounded-[var(--radius-md)] border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] px-3 py-2 text-xs font-medium text-[var(--color-accent-text)] ${
               collapsed ? 'justify-center px-1' : 'justify-between'
             }`}
           >
             <span className="inline-flex items-center gap-1.5">
               <Timer className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-              {!collapsed && <span>{timerStatus === 'running' ? 'Fokus Aktif' : 'Dijeda'}</span>}
+              {!collapsed && <span>{timerStatus === 'running' ? 'Focus Active' : 'Paused'}</span>}
             </span>
             {!collapsed && <span className="font-mono-num font-semibold">{formatSecondsClock(remainingSec)}</span>}
           </NavLink>
@@ -222,8 +222,8 @@ export function Sidebar() {
         <button
           type="button"
           onClick={handleThemeToggle}
-          aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
-          title={collapsed ? (theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace') : undefined}
+          aria-label={theme === 'light' ? 'Switch to Monochrome theme' : 'Switch to Light Workspace theme'}
+          title={collapsed ? (theme === 'light' ? 'Theme: Monochrome' : 'Theme: Light Workspace') : undefined}
           className={`flex min-h-[40px] w-full items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)] ${
             collapsed ? 'justify-center px-0' : ''
           }`}
@@ -233,15 +233,15 @@ export function Sidebar() {
           ) : (
             <Sun className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} aria-hidden="true" />
           )}
-          {!collapsed && <span className="whitespace-nowrap">{theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace'}</span>}
+          {!collapsed && <span className="whitespace-nowrap">{theme === 'light' ? 'Theme: Monochrome' : 'Theme: Light Workspace'}</span>}
         </button>
 
         <div className={`flex items-center gap-2 rounded-[var(--radius-md)] px-2.5 py-2 ${collapsed ? 'justify-center px-0' : 'justify-between'}`}>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'Pengguna'}</p>
+              <p className="truncate text-xs font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'User'}</p>
               <p className="truncate text-[11px] text-[var(--color-text-muted)]">
-                {isLocalMode ? 'Penyimpanan Lokal (Browser)' : user?.email}
+                {isLocalMode ? 'Local Storage (Browser)' : user?.email}
               </p>
             </div>
           )}
@@ -249,8 +249,8 @@ export function Sidebar() {
             <button
               type="button"
               onClick={handleLogout}
-              aria-label="Keluar dari akun"
-              title="Keluar"
+              aria-label="Sign out"
+              title="Sign out"
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger)]"
             >
               <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -265,7 +265,7 @@ export function Sidebar() {
 export function MobileBottomDock() {
   return (
     <nav
-      aria-label="Navigasi cepat mobile"
+      aria-label="Quick mobile navigation"
       className="liquid-glass fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-40 mx-auto max-w-md rounded-full border p-1.5 md:hidden"
     >
       <ul className="flex items-center justify-between gap-1">
@@ -366,7 +366,7 @@ function SlideNavDrawer({ open, onClose, returnFocusRef }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Menu navigasi"
+        aria-label="Navigation menu"
         className={`flex h-[100dvh] w-72 max-w-[85vw] flex-col border-r border-[var(--color-border)] bg-[var(--color-bg)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl ${
           isClosing ? 'drawer-panel-exit' : 'drawer-panel-enter'
         }`}
@@ -376,7 +376,7 @@ function SlideNavDrawer({ open, onClose, returnFocusRef }) {
           <button
             type="button"
             onClick={closeSheet}
-            aria-label="Tutup menu navigasi"
+            aria-label="Close navigation menu"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-transform active:scale-95 hover:bg-[var(--color-surface)]"
           >
             <X className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
@@ -396,20 +396,20 @@ function SlideNavDrawer({ open, onClose, returnFocusRef }) {
             ) : (
               <Sun className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
             )}
-            <span>{theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace'}</span>
+            <span>{theme === 'light' ? 'Theme: Monochrome' : 'Theme: Light Workspace'}</span>
           </button>
           <div className="flex items-center justify-between px-3 py-1.5">
             <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'Pengguna'}</p>
+              <p className="truncate text-xs font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'User'}</p>
               <p className="truncate text-[11px] text-[var(--color-text-muted)]">
-                {isLocalMode ? 'Penyimpanan Lokal (Browser)' : user?.email}
+                {isLocalMode ? 'Local Storage (Browser)' : user?.email}
               </p>
             </div>
             {!isLocalMode && (
               <button
                 type="button"
                 onClick={handleLogout}
-                aria-label="Keluar dari akun"
+                aria-label="Sign out"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]"
               >
                 <LogOut className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -507,14 +507,14 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
       ref={containerRef}
       role="dialog"
       aria-modal="false"
-      aria-label="Menu navigasi"
+      aria-label="Navigation menu"
       className={`fixed left-0 md:left-5 top-1/2 z-50 -translate-y-1/2 flex flex-col items-start md:items-center gap-3 ${
         expanded ? 'pointer-events-auto' : 'pointer-events-none'
       }`}
     >
       {/* Compact Half-Circle on Mobile (<768px) anchored to left edge; Full Circle on Web (>=768px) docked on the left */}
       <nav
-        aria-label="Navigasi utama"
+        aria-label="Primary navigation"
         className={`radial-stage relative h-[336px] w-[172px] rounded-r-[168px] border-y border-r border-[var(--color-border-strong)] md:h-[384px] md:w-[384px] md:rounded-full md:border select-none overflow-visible ${
           expanded ? 'scale-100 opacity-100' : 'scale-75 opacity-0'
         }`}
@@ -646,8 +646,8 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
         <button
           type="button"
           onClick={handleThemeToggle}
-          aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
-          title={theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace'}
+          aria-label={theme === 'light' ? 'Switch to Monochrome theme' : 'Switch to Light Workspace theme'}
+          title={theme === 'light' ? 'Theme: Monochrome' : 'Theme: Light Workspace'}
           className={`absolute left-[68px] top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] text-[var(--color-accent-text)] shadow-md transition-all duration-300 md:hidden ${
             expanded ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
           }`}
@@ -663,7 +663,7 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
         <button
           type="button"
           onClick={closeSheet}
-          aria-label="Tutup menu navigasi"
+          aria-label="Close navigation menu"
           className={`radial-hub absolute left-[18px] top-1/2 z-10 -ml-5 -mt-5 inline-flex h-10 w-10 md:left-1/2 md:-ml-8 md:-mt-8 md:h-16 md:w-16 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] active:scale-95 hover:bg-[var(--color-primary-hover)] ${
             expanded ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-90 opacity-0'
           }`}
@@ -681,7 +681,7 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
         <button
           type="button"
           onClick={handleThemeToggle}
-          aria-label={theme === 'light' ? 'Beralih ke Tema Monochrome' : 'Beralih ke Tema Light Workspace'}
+          aria-label={theme === 'light' ? 'Switch to Monochrome theme' : 'Switch to Light Workspace theme'}
           className="inline-flex min-h-[34px] items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-semibold text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-border-strong)]"
         >
           {theme === 'light' ? (
@@ -689,7 +689,7 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
           ) : (
             <Sun className="h-3.5 w-3.5 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
           )}
-          <span>{theme === 'light' ? 'Tema: Monochrome' : 'Tema: Light Workspace'}</span>
+          <span>{theme === 'light' ? 'Theme: Monochrome' : 'Theme: Light Workspace'}</span>
         </button>
 
         {(timerStatus === 'running' || timerStatus === 'paused') && (
@@ -704,13 +704,13 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
         )}
 
         <div className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-xs">
-          <span className="font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'Pengguna'}</span>
-          <span className="text-[11px] text-[var(--color-text-muted)]">({isLocalMode ? 'Lokal' : user?.email})</span>
+          <span className="font-semibold text-[var(--color-text-primary)]">{user?.full_name || 'User'}</span>
+          <span className="text-[11px] text-[var(--color-text-muted)]">({isLocalMode ? 'Local' : user?.email})</span>
           {!isLocalMode && (
             <button
               type="button"
               onClick={handleLogout}
-              aria-label="Keluar dari akun"
+              aria-label="Sign out"
               className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]"
             >
               <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />

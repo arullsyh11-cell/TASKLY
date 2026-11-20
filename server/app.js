@@ -56,7 +56,7 @@ export function createApp({ dbPath = process.env.TASKLY_DB_PATH || './data/taskl
     res.status(500).json({
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'Terjadi kesalahan internal pada server.',
+        message: 'An internal server error occurred.',
         retryable: true,
       },
     });

@@ -18,7 +18,7 @@ async function getSupabase() {
 async function getCurrentUserId() {
   const sb = await getSupabase();
   const { data, error } = await sb.auth.getUser();
-  if (error || !data?.user) throw new Error('Sesi pengguna Supabase tidak ditemukan.');
+  if (error || !data?.user) throw new Error('Supabase user session not found.');
   return data.user.id;
 }
 
@@ -48,10 +48,10 @@ export const supabaseAdapter = {
       const sb = await getSupabase();
       const { error } = await sb.auth.resetPasswordForEmail(email);
       if (error) throw new Error(error.message);
-      return { message: 'Tautan pemulihan kata sandi telah dikirim ke email Anda.' };
+      return { message: 'A password recovery link has been sent to your email.' };
     },
     async resetPassword() {
-      throw new Error('Gunakan tautan pemulihan yang dikirim ke email Anda.');
+      throw new Error('Use the recovery link sent to your email.');
     },
     async logout() {
       const sb = await getSupabase();
@@ -60,7 +60,7 @@ export const supabaseAdapter = {
     async me() {
       const sb = await getSupabase();
       const { data: authData, error } = await sb.auth.getUser();
-      if (error || !authData?.user) throw new Error('Sesi tidak valid.');
+      if (error || !authData?.user) throw new Error('Invalid session.');
       const { data: profile } = await sb.from('users').select('*').eq('id', authData.user.id).single();
       const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', authData.user.id).single();
       return {
@@ -83,10 +83,10 @@ export const supabaseAdapter = {
       const sb = await getSupabase();
       const { error } = await sb.auth.updateUser({ password: newPassword });
       if (error) throw new Error(error.message);
-      return { message: 'Kata sandi diperbarui.' };
+      return { message: 'Password updated.' };
     },
     async deleteAccount() {
-      throw new Error('Penghapusan akun Supabase memerlukan Edge Function admin.');
+      throw new Error('Deleting a Supabase account requires an admin Edge Function.');
     },
   },
 
@@ -351,7 +351,7 @@ export const supabaseAdapter = {
         .order('started_at', { ascending: false })
         .limit(limit);
       if (error) throw new Error(error.message);
-      return (data || []).map((s) => ({ ...s, task_label: s.tasks?.title || 'Fokus Umum' }));
+      return (data || []).map((s) => ({ ...s, task_label: s.tasks?.title || 'General Focus' }));
     },
     async getStats() {
       const sessions = await this.listSessions(200);
@@ -487,10 +487,10 @@ export const supabaseAdapter = {
     },
     async exportCsv() {
       const tasks = await supabaseAdapter.tasks.list();
-      return ['Judul,Status,Prioritas,Tenggat,Pengingat', ...tasks.map((t) => `"${t.title}",${t.column_name},${t.priority},${t.due_date || ''},${t.reminder_days_before ?? ''}`)].join('\n');
+      return ['Title,Status,Priority,Due Date,Reminder', ...tasks.map((t) => `"${t.title}",${t.column_name},${t.priority},${t.due_date || ''},${t.reminder_days_before ?? ''}`)].join('\n');
     },
     async seedSampleWorkspace() {
-      throw new Error('Gunakan pembuatan tugas & sprint langsung pada workspace Supabase.');
+      throw new Error('Create tasks and sprints directly in your Supabase workspace.');
     },
   },
 };

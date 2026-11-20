@@ -49,23 +49,23 @@ export function LoginPage() {
     e.preventDefault();
     setErrorMsg('');
     if (!email.trim() || !password) {
-      setErrorMsg('Email dan kata sandi wajib diisi.');
+      setErrorMsg('Email and password are required.');
       return;
     }
     setSubmitting(true);
     try {
       await login({ email: email.trim(), password });
-      toast.success('Berhasil masuk ke workspace TASKLY.');
+      toast.success('Signed in to TASKLY workspace.');
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setErrorMsg(err.message || 'Gagal masuk. Periksa kembali kredensial Anda.');
+      setErrorMsg(err.message || 'Sign in failed. Please check your credentials.');
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <AuthShell title="Masuk ke TASKLY" subtitle="Lanjutkan pengelolaan tugas, sprint, dan sesi fokus Anda.">
+    <AuthShell title="Sign in to TASKLY" subtitle="Continue managing your tasks, sprints, and focus sessions.">
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {errorMsg && (
           <div role="alert" className="rounded-[var(--radius-sm)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-bg)] px-3 py-2.5 text-xs font-medium text-[var(--color-danger)]">
@@ -77,7 +77,7 @@ export function LoginPage() {
           label="Email"
           type="email"
           autoComplete="email"
-          placeholder="email@domain.com"
+          placeholder="email@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -85,10 +85,10 @@ export function LoginPage() {
 
         <div className="relative">
           <Input
-            label="Kata Sandi"
+            label="Password"
             type={showPw ? 'text' : 'password'}
             autoComplete="current-password"
-            placeholder="Minimal 8 karakter"
+            placeholder="Minimum 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="pr-10"
@@ -97,7 +97,7 @@ export function LoginPage() {
           <button
             type="button"
             onClick={() => setShowPw((v) => !v)}
-            aria-label={showPw ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
+            aria-label={showPw ? 'Hide password' : 'Show password'}
             className="absolute right-2 top-[29px] inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
             {showPw ? <EyeOff className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" /> : <Eye className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}
@@ -106,18 +106,18 @@ export function LoginPage() {
 
         <div className="flex justify-end">
           <Link to="/forgot-password" className="text-xs font-medium text-[var(--color-accent-text)] hover:underline">
-            Lupa kata sandi?
+            Forgot password?
           </Link>
         </div>
 
         <Button type="submit" isLoading={submitting} className="w-full">
-          Masuk ke Workspace
+          Sign In to Workspace
         </Button>
 
         <p className="pt-2 text-center text-xs text-[var(--color-text-secondary)]">
-          Belum punya akun?{' '}
+          Don&apos;t have an account?{' '}
           <Link to="/register" className="font-semibold text-[var(--color-accent-text)] hover:underline">
-            Buat Akun Baru
+            Create New Account
           </Link>
         </p>
       </form>
@@ -145,9 +145,9 @@ export function RegisterPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     const nextErrs = {};
-    if (fullName.trim().length < 2) nextErrs.fullName = 'Nama lengkap minimal 2 karakter.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) nextErrs.email = 'Alamat email tidak valid.';
-    if (password.length < 8) nextErrs.password = 'Kata sandi minimal 8 karakter.';
+    if (fullName.trim().length < 2) nextErrs.fullName = 'Full name must be at least 2 characters.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) nextErrs.email = 'Invalid email address.';
+    if (password.length < 8) nextErrs.password = 'Password must be at least 8 characters.';
     setFieldErrors(nextErrs);
     setGeneralError('');
     if (Object.keys(nextErrs).length > 0) return;
@@ -155,17 +155,17 @@ export function RegisterPage() {
     setSubmitting(true);
     try {
       await registerUser({ fullName: fullName.trim(), email: email.trim(), password });
-      toast.success('Akun berhasil dibuat. Selamat datang di TASKLY.');
+      toast.success('Account created. Welcome to TASKLY.');
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setGeneralError(err.message || 'Gagal mendaftar akun baru.');
+      setGeneralError(err.message || 'Failed to create account.');
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <AuthShell title="Buat Akun TASKLY" subtitle="Siapkan workspace produktivitas pribadi Anda dalam hitungan detik.">
+    <AuthShell title="Create TASKLY Account" subtitle="Set up your personal productivity workspace in seconds.">
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {generalError && (
           <div role="alert" className="rounded-[var(--radius-sm)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-bg)] px-3 py-2.5 text-xs font-medium text-[var(--color-danger)]">
@@ -174,10 +174,10 @@ export function RegisterPage() {
         )}
 
         <Input
-          label="Nama Lengkap"
+          label="Full Name"
           type="text"
           autoComplete="name"
-          placeholder="Nama Anda"
+          placeholder="Your Name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           error={fieldErrors.fullName}
@@ -188,7 +188,7 @@ export function RegisterPage() {
           label="Email"
           type="email"
           autoComplete="email"
-          placeholder="email@domain.com"
+          placeholder="email@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={fieldErrors.email}
@@ -197,10 +197,10 @@ export function RegisterPage() {
 
         <div className="relative">
           <Input
-            label="Kata Sandi"
+            label="Password"
             type={showPw ? 'text' : 'password'}
             autoComplete="new-password"
-            placeholder="Minimal 8 karakter"
+            placeholder="Minimum 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
@@ -210,7 +210,7 @@ export function RegisterPage() {
           <button
             type="button"
             onClick={() => setShowPw((v) => !v)}
-            aria-label={showPw ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
+            aria-label={showPw ? 'Hide password' : 'Show password'}
             className="absolute right-2 top-[29px] inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
             {showPw ? <EyeOff className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" /> : <Eye className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}
@@ -218,13 +218,13 @@ export function RegisterPage() {
         </div>
 
         <Button type="submit" isLoading={submitting} className="w-full">
-          Daftar &amp; Masuk
+          Create Account
         </Button>
 
         <p className="pt-2 text-center text-xs text-[var(--color-text-secondary)]">
-          Sudah punya akun?{' '}
+          Already have an account?{' '}
           <Link to="/login" className="font-semibold text-[var(--color-accent-text)] hover:underline">
-            Masuk di Sini
+            Sign In Here
           </Link>
         </p>
       </form>
@@ -276,7 +276,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthShell title="Pemulihan Kata Sandi" subtitle="Atur ulang kata sandi akun TASKLY Anda.">
+    <AuthShell title="Password Recovery" subtitle="Reset the password for your TASKLY account.">
       {err && (
         <div role="alert" className="mb-4 rounded-[var(--radius-sm)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-bg)] px-3 py-2 text-xs text-[var(--color-danger)]">
           {err}
@@ -286,7 +286,7 @@ export function ForgotPasswordPage() {
         <div className="mb-4 rounded-[var(--radius-sm)] border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] px-3 py-2 text-xs text-[var(--color-accent-text)]">
           <p>{msg}</p>
           {localHintCode && (
-            <p className="mt-1 font-mono-num font-semibold">Kode pemulihan lokal: {localHintCode}</p>
+            <p className="mt-1 font-mono-num font-semibold">Local recovery code: {localHintCode}</p>
           )}
         </div>
       )}
@@ -294,44 +294,44 @@ export function ForgotPasswordPage() {
       {step === 1 ? (
         <form onSubmit={handleRequest} className="space-y-4">
           <Input
-            label="Email Terdaftar"
+            label="Registered Email"
             type="email"
-            placeholder="email@domain.com"
+            placeholder="email@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
           <Button type="submit" isLoading={loading} className="w-full">
-            Kirim Kode Pemulihan
+            Send Recovery Code
           </Button>
         </form>
       ) : (
         <form onSubmit={handleReset} className="space-y-4">
           <Input
-            label="Kode Pemulihan"
+            label="Recovery Code"
             type="text"
-            placeholder="6 digit kode"
+            placeholder="6-digit code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
           />
           <Input
-            label="Kata Sandi Baru"
+            label="New Password"
             type="password"
-            placeholder="Minimal 8 karakter"
+            placeholder="Minimum 8 characters"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
           />
           <Button type="submit" isLoading={loading} className="w-full">
-            Simpan Kata Sandi Baru
+            Save New Password
           </Button>
         </form>
       )}
 
       <p className="mt-4 text-center text-xs text-[var(--color-text-secondary)]">
         <Link to="/login" className="font-semibold text-[var(--color-accent-text)] hover:underline">
-          Kembali ke Halaman Masuk
+          Back to Sign In
         </Link>
       </p>
     </AuthShell>

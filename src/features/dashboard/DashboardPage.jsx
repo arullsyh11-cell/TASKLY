@@ -43,23 +43,23 @@ function describeActivity(item) {
   const meta = item.metadata || {};
   switch (item.action) {
     case 'task_created':
-      return `Membuat tugas "${meta.title || ''}" di ${meta.column_name || 'papan'}`;
+      return `Created task "${meta.title || ''}" in ${meta.column_name || 'board'}`;
     case 'task_completed':
-      return `Menyelesaikan tugas "${meta.title || ''}"`;
+      return `Completed task "${meta.title || ''}"`;
     case 'task_moved':
-      return `Memindahkan "${meta.title || ''}" ke ${meta.to_column || 'kolom baru'}`;
+      return `Moved "${meta.title || ''}" to ${meta.to_column || 'new column'}`;
     case 'task_deleted':
-      return `Menghapus tugas "${meta.title || ''}"`;
+      return `Deleted task "${meta.title || ''}"`;
     case 'sprint_created':
-      return `Merencanakan sprint "${meta.name || ''}"`;
+      return `Planned sprint "${meta.name || ''}"`;
     case 'sprint_started':
-      return `Memulai sprint aktif "${meta.name || ''}"`;
+      return `Started active sprint "${meta.name || ''}"`;
     case 'sprint_completed':
-      return `Menyelesaikan sprint "${meta.name || ''}"`;
+      return `Completed sprint "${meta.name || ''}"`;
     case 'focus_logged':
-      return `Sesi fokus ${meta.minutes || 0} menit (${meta.task_title || 'Fokus Umum'})`;
+      return `Focus session ${meta.minutes || 0} min (${meta.task_title || 'General Focus'})`;
     case 'column_created':
-      return `Menambah kolom kustom "${meta.name || ''}"`;
+      return `Added custom column "${meta.name || ''}"`;
     default:
       return item.action;
   }
@@ -90,13 +90,13 @@ export function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="h-9 w-56 animate-pulse rounded-[var(--radius-md)] bg-[var(--color-surface)]" />
-        <LoadingState label="Memuat ringkasan harian workspace..." rows={4} />
+        <LoadingState label="Loading daily workspace summary..." rows={4} />
       </div>
     );
   }
 
   if (isError) {
-    return <ErrorState title="Gagal memuat Dashboard" message={error?.message} onRetry={refetch} />;
+    return <ErrorState title="Failed to load Dashboard" message={error?.message} onRetry={refetch} />;
   }
 
   const counts = data?.counts || { total: 0, completed: 0, in_progress: 0, overdue: 0 };
@@ -104,7 +104,7 @@ export function DashboardPage() {
   const upcomingDeadlines = data?.upcoming_deadlines || [];
   const daily = data?.daily_overview || { completed_today: 0, focus_sec_today: 0, focus_sessions_today: 0 };
   const activities = data?.recent_activities || [];
-  const todayFormatted = formatDateId(getTodayIso(), 'EEEE, d MMMM yyyy');
+  const todayFormatted = formatDateId(getTodayIso(), 'EEEE, MMMM d, yyyy');
 
   const completionPct = counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0;
   const focusGoalSec = 60 * 60; // 60m daily benchmark display ring
@@ -113,36 +113,36 @@ export function DashboardPage() {
 
   const statCards = [
     {
-      label: 'Total & Selesai',
+      label: 'Total & Done',
       value: `${counts.completed}/${counts.total}`,
-      tag: `${completionPct}% tuntas`,
+      tag: `${completionPct}% done`,
       ringPct: completionPct,
       ringColor: 'var(--color-success)',
       icon: CheckCircle2,
       to: '/tasks?semanticType=done',
     },
     {
-      label: 'Berjalan',
+      label: 'In Progress',
       value: String(counts.in_progress),
-      tag: 'Aktif / Review',
+      tag: 'Active',
       ringPct: counts.total > 0 ? Math.round((counts.in_progress / counts.total) * 100) : 0,
       ringColor: 'var(--color-primary)',
       icon: Zap,
       to: '/tasks?semanticType=in_progress',
     },
     {
-      label: 'Fokus Hari Ini',
+      label: 'Focus Today',
       value: formatDurationHuman(daily.focus_sec_today),
-      tag: `${daily.focus_sessions_today} sesi`,
+      tag: `${daily.focus_sessions_today} ${daily.focus_sessions_today === 1 ? 'session' : 'sessions'}`,
       ringPct: focusPct,
       ringColor: 'var(--color-primary)',
       icon: Clock,
       to: '/focus',
     },
     {
-      label: 'Terlambat',
+      label: 'Overdue',
       value: String(counts.overdue),
-      tag: counts.overdue > 0 ? 'Perlu aksi' : 'Semua aman',
+      tag: counts.overdue > 0 ? 'Action needed' : 'All clear',
       ringPct: overduePct,
       ringColor: counts.overdue > 0 ? 'var(--color-danger)' : 'var(--color-border-strong)',
       icon: AlertCircle,
@@ -159,20 +159,19 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting Block matching reference Screen 1 */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--color-text-primary)]">
-            Halo, {user?.full_name?.split(' ')[0] || 'Pengguna'}
+            Hello, {user?.full_name?.split(' ')[0] || 'User'}
           </h1>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            Ringkasan alur kerja dan fokus Anda untuk {todayFormatted}.
+            Your workflow and focus overview for {todayFormatted}.
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2.5">
           <Button variant="secondary" onClick={() => navigate('/focus')} className="rounded-full px-5">
             <Timer className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-            <span>Buka Focus Mode</span>
+            <span>Open Focus Mode</span>
           </Button>
           <Button onClick={() => openQuickAdd()} className="rounded-full px-5">
             <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -181,7 +180,6 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {/* Mobile Search Pill matching Screen 1 */}
       <div className="relative md:hidden">
         <Search
           className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]"
@@ -190,16 +188,16 @@ export function DashboardPage() {
         />
         <input
           type="search"
-          aria-label="Cari tugas cepat"
+          aria-label="Quick search tasks"
           value={mobileQuery}
           onChange={(e) => setMobileQuery(e.target.value)}
-          placeholder="Cari tugas atau label..."
+          placeholder="Search tasks or labels..."
           className="h-11 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] pl-11 pr-4 text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
         />
         {mobileQuery.trim().length > 0 && (
           <div className="mt-2 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] p-2">
             {mobileResults.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-[var(--color-text-muted)]">Tidak ditemukan tugas.</p>
+              <p className="px-3 py-2 text-xs text-[var(--color-text-muted)]">No tasks found.</p>
             ) : (
               <ul className="space-y-1">
                 {mobileResults.slice(0, 5).map((t) => (
@@ -226,7 +224,7 @@ export function DashboardPage() {
       {/* Active Deadline Reminder Banner (shown only when unread reminders are due today) */}
       {unreadDueNow.length > 0 && (
         <section
-          aria-label="Pengingat deadline aktif"
+          aria-label="Active deadline reminders"
           className="rounded-[var(--radius-lg)] border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] p-4"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -237,7 +235,7 @@ export function DashboardPage() {
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[var(--color-accent-text)]">
                   {unreadDueNow[0].title}
-                  {unreadDueNow.length > 1 ? ` (+${unreadDueNow.length - 1} pengingat lain)` : ''}
+                  {unreadDueNow.length > 1 ? ` (+${unreadDueNow.length - 1} more)` : ''}
                 </p>
                 <p className="mt-0.5 text-sm font-medium text-[var(--color-text-primary)]">
                   {unreadDueNow[0].message}
@@ -253,7 +251,7 @@ export function DashboardPage() {
                   openTaskDrawer(unreadDueNow[0].task.id);
                 }}
               >
-                Lihat Tugas
+                View Task
               </Button>
               <Button
                 size="sm"
@@ -262,22 +260,22 @@ export function DashboardPage() {
                 onClick={() => markAcknowledged(unreadDueNow[0].signature)}
               >
                 <Check className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                <span>Tandai Dibaca</span>
+                <span>Mark Read</span>
               </Button>
             </div>
           </div>
         </section>
       )}
 
-      {/* Ringkasan Hari Ini (Solid Tactile Stat Cards with Circular Progress Rings) */}
-      <section aria-label="Ringkasan statistik hari ini" className="space-y-3">
+      {/* Today's Summary */}
+      <section aria-label="Today's summary stats" className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="inline-flex items-center gap-2 text-base font-semibold text-[var(--color-text-primary)]">
             <Layers className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
-            <span>Ringkasan Hari Ini</span>
+            <span>Today&apos;s Summary</span>
           </h2>
           <Link to="/tasks" className="text-xs font-medium text-[var(--color-accent-text)] hover:underline">
-            Lihat semua
+            View all
           </Link>
         </div>
 
@@ -301,37 +299,36 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* First-Run Honest Empty Workspace State OR Reference Hero + Queues */}
+      {/* First-Run Honest Empty Workspace State OR Active Sprint + Queues */}
       {counts.total === 0 && !activeSprint ? (
         <EmptyState
           icon={FolderPlus}
-          title="Workspace Anda siap digunakan"
-          description="Belum ada tugas atau sprint yang tercatat. Buat tugas pertama Anda atau susun sprint berbatas waktu untuk mulai mengatur alur kerja."
+          title="Your workspace is ready"
+          description="No tasks or sprints recorded yet. Create your first task or plan a time-boxed sprint to organize your workflow."
           action={
             <Button onClick={() => openQuickAdd()} className="rounded-full px-5">
               <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Buat Tugas Pertama</span>
+              <span>Create First Task</span>
             </Button>
           }
           secondaryAction={
             <Button variant="secondary" onClick={() => navigate('/sprints')} className="rounded-full px-5">
               <Zap className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-              <span>Rencanakan Sprint</span>
+              <span>Plan a Sprint</span>
             </Button>
           }
         />
       ) : (
         <div className="space-y-6">
-          {/* Featured Highlight Banner matching "Today's workout" card in Screen 1 with subtle texture */}
           <section
-            aria-label="Sprint dan fokus utama"
+            aria-label="Active sprint and primary focus"
             className="surface-texture rounded-[var(--radius-lg)] border border-[var(--color-border-warm)] bg-[var(--color-surface-elevated)] p-5 sm:p-6"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1 space-y-2">
                 <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-accent-text)]">
                   <Target className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                  <span>{activeSprint ? 'Active Sprint' : 'Fokus Prioritas'}</span>
+                  <span>{activeSprint ? 'Active Sprint' : 'Priority Focus'}</span>
                 </p>
 
                 {activeSprint ? (
@@ -342,28 +339,28 @@ export function DashboardPage() {
                     )}
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <span className="inline-flex items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 font-mono-num text-xs font-medium text-[var(--color-text-primary)]">
-                        {activeSprint.completed_tasks}/{activeSprint.total_tasks} Selesai
+                        {activeSprint.completed_tasks}/{activeSprint.total_tasks} Done
                       </span>
                       <span className="inline-flex items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)]">
                         {daysRemaining(activeSprint.end_date) >= 0
-                          ? `Sisa ${daysRemaining(activeSprint.end_date)} hari`
-                          : `Lewat ${Math.abs(daysRemaining(activeSprint.end_date))} hari`}
+                          ? `${daysRemaining(activeSprint.end_date)} days left`
+                          : `${Math.abs(daysRemaining(activeSprint.end_date))} days past end`}
                       </span>
                       <Link
                         to={`/sprints/${activeSprint.id}`}
                         className="inline-flex items-center rounded-full border border-[var(--color-border-warm)] bg-[var(--color-surface-warm)] px-3 py-1 text-xs font-semibold text-[var(--color-accent-text)] hover:underline"
                       >
-                        Detail &amp; Burndown
+                        Details &amp; Burndown
                       </Link>
                     </div>
                   </>
                 ) : (
                   <>
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                      Belum ada sprint aktif saat ini
+                      No active sprint right now
                     </h2>
                     <p className="text-sm text-[var(--color-text-secondary)]">
-                      Aktifkan sprint untuk memantau burndown harian atau langsung mulai sesi fokus pada tugas mendesak.
+                      Start a sprint to track daily burndown or jump straight into a focus session on a priority task.
                     </p>
                   </>
                 )}
@@ -383,15 +380,15 @@ export function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => handleLaunchFocus(leadFocusTask)}
-                    aria-label={`Mulai fokus pada ${leadFocusTask.title}`}
-                    title={`Mulai Fokus: ${leadFocusTask.title}`}
+                    aria-label={`Start focus on ${leadFocusTask.title}`}
+                    title={`Start Focus: ${leadFocusTask.title}`}
                     className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] transition-transform hover:scale-105 hover:bg-[var(--color-primary-hover)]"
                   >
                     <Play className="ml-0.5 h-6 w-6 fill-current" strokeWidth={1.75} aria-hidden="true" />
                   </button>
                 ) : (
                   <Button variant="secondary" onClick={() => navigate('/sprints')} className="rounded-full">
-                    Kelola Sprint
+                    Manage Sprints
                   </Button>
                 )}
               </div>
@@ -405,25 +402,25 @@ export function DashboardPage() {
                 <div>
                   <h2 className="inline-flex items-center gap-2 text-base font-semibold text-[var(--color-text-primary)]">
                     <ListTodo className="h-4 w-4 text-[var(--color-accent-text)]" strokeWidth={1.75} aria-hidden="true" />
-                    <span>Antrean Prioritas &amp; Tenggat Terdekat</span>
+                    <span>Priority Queue &amp; Upcoming Deadlines</span>
                   </h2>
                   <p className="text-xs text-[var(--color-text-secondary)]">
-                    Tugas terlambat, jatuh tempo dalam 7 hari, atau prioritas tinggi.
+                    Overdue tasks, items due within 7 days, or high-priority work.
                   </p>
                 </div>
                 <Link to="/board" className="text-xs font-medium text-[var(--color-accent-text)] hover:underline">
-                  Buka Board
+                  Open Board
                 </Link>
               </div>
 
               {upcomingDeadlines.length === 0 ? (
                 <EmptyState
                   icon={CalendarClock}
-                  title="Tidak ada tenggat mendesak dalam 7 hari ke depan"
-                  description="Semua tugas berprioritas tinggi atau berbatas waktu dekat sudah tertangani."
+                  title="No urgent deadlines in the next 7 days"
+                  description="All high-priority or near-term tasks are taken care of."
                   action={
                     <Button size="sm" variant="outline" onClick={() => navigate('/tasks')}>
-                      Tinjau Semua Tugas
+                      Review All Tasks
                     </Button>
                   }
                 />
@@ -464,7 +461,7 @@ export function DashboardPage() {
 
                         <Button variant="outline" size="sm" onClick={() => handleLaunchFocus(task)} className="shrink-0 rounded-full">
                           <Timer className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                          <span>Fokus</span>
+                          <span>Focus</span>
                         </Button>
                       </li>
                     );
@@ -476,15 +473,15 @@ export function DashboardPage() {
             <section className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Aktivitas Terbaru</h2>
-                  <p className="text-xs text-[var(--color-text-secondary)]">Riwayat aksi workspace terkini.</p>
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Recent Activity</h2>
+                  <p className="text-xs text-[var(--color-text-secondary)]">Latest actions in your workspace.</p>
                 </div>
                 <Activity className="h-4 w-4 text-[var(--color-text-muted)]" strokeWidth={1.75} aria-hidden="true" />
               </div>
 
               {activities.length === 0 ? (
                 <p className="text-xs text-[var(--color-text-secondary)]">
-                  Belum ada aktivitas tercatat. Setiap perubahan tugas, sprint, atau sesi fokus akan muncul di sini.
+                  No activity recorded yet. Changes to tasks, sprints, and focus sessions will appear here.
                 </p>
               ) : (
                 <ul className="space-y-3">

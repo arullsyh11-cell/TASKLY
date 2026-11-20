@@ -95,7 +95,7 @@ export function createTasksRouter(db) {
   router.get('/:id', (req, res) => {
     const tasks = queryEnrichedTasks(db, req.user.id, 'AND t.id = ?', [req.params.id]);
     if (tasks.length === 0) {
-      return sendError(res, 404, 'NOT_FOUND', 'Tugas tidak ditemukan.');
+      return sendError(res, 404, 'NOT_FOUND', 'Task not found.');
     }
     res.json({ task: tasks[0] });
   });
@@ -112,23 +112,23 @@ export function createTasksRouter(db) {
     const reminderDaysBefore = normalizeReminderDays(rawReminder, defaultReminderDays);
 
     if (!title || title.length > 160) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Judul tugas wajib diisi (maks. 160 karakter).', 'title');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Task title is required (max 160 characters).', 'title');
     }
     if (!VALID_PRIORITIES.has(priority)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Prioritas tugas tidak valid.', 'priority');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid task priority.', 'priority');
     }
     if (startDate === undefined) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Format tanggal mulai tidak valid (YYYY-MM-DD).', 'start_date');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid start date format (YYYY-MM-DD).', 'start_date');
     }
     if (dueDate === undefined) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Format tenggat waktu tidak valid (YYYY-MM-DD).', 'due_date');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid due date format (YYYY-MM-DD).', 'due_date');
     }
     if (reminderDaysBefore === undefined) {
       return sendError(
         res,
         400,
         'VALIDATION_ERROR',
-        'Hari pengingat harus berupa bilangan bulat antara 0 sampai 60 hari.',
+        'Reminder lead time must be an integer between 0 and 60 days.',
         'reminder_days_before'
       );
     }
@@ -137,7 +137,7 @@ export function createTasksRouter(db) {
         res,
         400,
         'VALIDATION_ERROR',
-        'Tanggal mulai tidak boleh melewati tenggat waktu.',
+        'Start date cannot be later than due date.',
         'due_date'
       );
     }
@@ -152,20 +152,20 @@ export function createTasksRouter(db) {
         .get(req.user.id);
     }
     if (!column) {
-      return sendError(res, 400, 'INVALID_COLUMN', 'Kolom Kanban tidak ditemukan.', 'column_id');
+      return sendError(res, 400, 'INVALID_COLUMN', 'Kanban column not found.', 'column_id');
     }
     columnId = column.id;
 
     const categoryId = req.body?.category_id || req.body?.categoryId || null;
     if (categoryId) {
       const cat = db.prepare('SELECT id FROM task_categories WHERE id = ? AND user_id = ?').get(categoryId, req.user.id);
-      if (!cat) return sendError(res, 400, 'INVALID_CATEGORY', 'Kategori tidak ditemukan.', 'category_id');
+      if (!cat) return sendError(res, 400, 'INVALID_CATEGORY', 'Category not found.', 'category_id');
     }
 
     const sprintId = req.body?.sprint_id || req.body?.sprintId || null;
     if (sprintId) {
       const sp = db.prepare('SELECT id FROM sprints WHERE id = ? AND user_id = ?').get(sprintId, req.user.id);
-      if (!sp) return sendError(res, 400, 'INVALID_SPRINT', 'Sprint tidak ditemukan.', 'sprint_id');
+      if (!sp) return sendError(res, 400, 'INVALID_SPRINT', 'Sprint not found.', 'sprint_id');
     }
 
     const labelIds = Array.isArray(req.body?.label_ids || req.body?.labelIds)
@@ -177,7 +177,7 @@ export function createTasksRouter(db) {
         .prepare(`SELECT id FROM task_labels WHERE user_id = ? AND id IN (${ph})`)
         .all(req.user.id, ...labelIds);
       if (validLabels.length !== labelIds.length) {
-        return sendError(res, 400, 'INVALID_LABEL', 'Terdapat label yang tidak valid.');
+        return sendError(res, 400, 'INVALID_LABEL', 'One or more labels are invalid.');
       }
     }
 
@@ -253,7 +253,7 @@ export function createTasksRouter(db) {
     const taskIds = Array.isArray(req.body?.taskIds) ? [...new Set(req.body.taskIds)] : [];
     const action = req.body?.action;
     if (taskIds.length === 0) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Pilih minimal satu tugas.');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Select at least one task.');
     }
 
     const ph = taskIds.map(() => '?').join(',');
@@ -261,7 +261,7 @@ export function createTasksRouter(db) {
       .prepare(`SELECT id FROM tasks WHERE user_id = ? AND id IN (${ph})`)
       .all(req.user.id, ...taskIds);
     if (owned.length !== taskIds.length) {
-      return sendError(res, 404, 'NOT_FOUND', 'Sebagian tugas tidak ditemukan.');
+      return sendError(res, 404, 'NOT_FOUND', 'Some tasks were not found.');
     }
 
     const now = new Date().toISOString();
@@ -273,7 +273,7 @@ export function createTasksRouter(db) {
 
     if (action === 'move_column') {
       const col = db.prepare('SELECT * FROM kanban_columns WHERE id = ? AND user_id = ?').get(req.body?.columnId, req.user.id);
-      if (!col) return sendError(res, 400, 'INVALID_COLUMN', 'Kolom tujuan tidak valid.');
+      if (!col) return sendError(res, 400, 'INVALID_COLUMN', 'Invalid destination column.');
       if (col.semantic_type === 'done') {
         db.prepare(
           `UPDATE tasks SET column_id = ?, completed_at = COALESCE(completed_at, ?), updated_at = ? WHERE user_id = ? AND id IN (${ph})`
@@ -288,7 +288,7 @@ export function createTasksRouter(db) {
 
     if (action === 'set_priority') {
       if (!VALID_PRIORITIES.has(req.body?.priority)) {
-        return sendError(res, 400, 'VALIDATION_ERROR', 'Prioritas tidak valid.');
+        return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid priority.');
       }
       db.prepare(`UPDATE tasks SET priority = ?, updated_at = ? WHERE user_id = ? AND id IN (${ph})`).run(
         req.body.priority,
@@ -303,7 +303,7 @@ export function createTasksRouter(db) {
       const sprintId = req.body?.sprintId || null;
       if (sprintId) {
         const sp = db.prepare('SELECT id FROM sprints WHERE id = ? AND user_id = ?').get(sprintId, req.user.id);
-        if (!sp) return sendError(res, 400, 'INVALID_SPRINT', 'Sprint tujuan tidak valid.');
+        if (!sp) return sendError(res, 400, 'INVALID_SPRINT', 'Invalid destination sprint.');
       }
       withTransaction(db, () => {
         for (const tid of taskIds) {
@@ -327,22 +327,22 @@ export function createTasksRouter(db) {
       return res.json({ updatedCount: taskIds.length });
     }
 
-    return sendError(res, 400, 'VALIDATION_ERROR', 'Aksi massal tidak dikenali.');
+    return sendError(res, 400, 'VALIDATION_ERROR', 'Unknown bulk action.');
   });
 
   router.patch('/:id', (req, res) => {
     const existing = db.prepare('SELECT * FROM tasks WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Tugas tidak ditemukan.');
+    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Task not found.');
 
     const title = req.body?.title !== undefined ? String(req.body.title).trim() : existing.title;
     if (!title || title.length > 160) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Judul tugas wajib diisi (maks. 160 karakter).', 'title');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Task title is required (max 160 characters).', 'title');
     }
 
     const description = req.body?.description !== undefined ? String(req.body.description) : existing.description;
     const priority = req.body?.priority !== undefined ? String(req.body.priority) : existing.priority;
     if (!VALID_PRIORITIES.has(priority)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Prioritas tugas tidak valid.', 'priority');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid task priority.', 'priority');
     }
 
     const startDate =
@@ -359,14 +359,14 @@ export function createTasksRouter(db) {
         : existing.reminder_days_before;
 
     if (startDate === undefined || dueDate === undefined) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Format tanggal tidak valid (YYYY-MM-DD).');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid date format (YYYY-MM-DD).');
     }
     if (reminderDaysBefore === undefined) {
       return sendError(
         res,
         400,
         'VALIDATION_ERROR',
-        'Hari pengingat harus berupa bilangan bulat antara 0 sampai 60 hari.',
+        'Reminder lead time must be an integer between 0 and 60 days.',
         'reminder_days_before'
       );
     }
@@ -375,14 +375,14 @@ export function createTasksRouter(db) {
         res,
         400,
         'VALIDATION_ERROR',
-        'Tanggal mulai tidak boleh melewati tenggat waktu.',
+        'Start date cannot be later than due date.',
         'due_date'
       );
     }
 
     const nextColumnId = req.body?.column_id || req.body?.columnId || existing.column_id;
     const nextCol = db.prepare('SELECT * FROM kanban_columns WHERE id = ? AND user_id = ?').get(nextColumnId, req.user.id);
-    if (!nextCol) return sendError(res, 400, 'INVALID_COLUMN', 'Kolom tujuan tidak ditemukan.', 'column_id');
+    if (!nextCol) return sendError(res, 400, 'INVALID_COLUMN', 'Destination column not found.', 'column_id');
 
     const prevCol = db.prepare('SELECT * FROM kanban_columns WHERE id = ? AND user_id = ?').get(existing.column_id, req.user.id);
 
@@ -392,7 +392,7 @@ export function createTasksRouter(db) {
         : existing.category_id;
     if (categoryId) {
       const cat = db.prepare('SELECT id FROM task_categories WHERE id = ? AND user_id = ?').get(categoryId, req.user.id);
-      if (!cat) return sendError(res, 400, 'INVALID_CATEGORY', 'Kategori tidak ditemukan.');
+      if (!cat) return sendError(res, 400, 'INVALID_CATEGORY', 'Category not found.');
     }
 
     const sprintId =
@@ -401,7 +401,7 @@ export function createTasksRouter(db) {
         : existing.sprint_id;
     if (sprintId) {
       const sp = db.prepare('SELECT id FROM sprints WHERE id = ? AND user_id = ?').get(sprintId, req.user.id);
-      if (!sp) return sendError(res, 400, 'INVALID_SPRINT', 'Sprint tidak ditemukan.');
+      if (!sp) return sendError(res, 400, 'INVALID_SPRINT', 'Sprint not found.');
     }
 
     const positionInColumn =
@@ -427,7 +427,7 @@ export function createTasksRouter(db) {
         .prepare(`SELECT id FROM task_labels WHERE user_id = ? AND id IN (${ph})`)
         .all(req.user.id, ...labelIdsInput);
       if (validLabels.length !== labelIdsInput.length) {
-        return sendError(res, 400, 'INVALID_LABEL', 'Terdapat label yang tidak valid.');
+        return sendError(res, 400, 'INVALID_LABEL', 'One or more labels are invalid.');
       }
     }
 
@@ -489,7 +489,7 @@ export function createTasksRouter(db) {
 
   router.delete('/:id', (req, res) => {
     const existing = db.prepare('SELECT id, title FROM tasks WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Tugas tidak ditemukan.');
+    if (!existing) return sendError(res, 404, 'NOT_FOUND', 'Task not found.');
     db.prepare('DELETE FROM tasks WHERE id = ? AND user_id = ?').run(existing.id, req.user.id);
     logActivity(db, req.user.id, 'task', existing.id, 'task_deleted', { title: existing.title });
     res.json({ deletedId: existing.id });
@@ -498,10 +498,10 @@ export function createTasksRouter(db) {
   // Subtasks
   router.post('/:id/subtasks', (req, res) => {
     const task = db.prepare('SELECT id FROM tasks WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
-    if (!task) return sendError(res, 404, 'NOT_FOUND', 'Tugas tidak ditemukan.');
+    if (!task) return sendError(res, 404, 'NOT_FOUND', 'Task not found.');
     const title = String(req.body?.title || '').trim();
     if (!title || title.length > 160) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Judul subtask wajib diisi (maks. 160 karakter).', 'title');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Subtask title is required (max 160 characters).', 'title');
     }
     const maxPos = db.prepare('SELECT COALESCE(MAX(position), -1) AS mp FROM subtasks WHERE task_id = ?').get(task.id);
     const id = crypto.randomUUID();
@@ -522,10 +522,10 @@ export function createTasksRouter(db) {
     const sub = db
       .prepare('SELECT s.* FROM subtasks s JOIN tasks t ON t.id = s.task_id WHERE s.id = ? AND s.task_id = ? AND t.user_id = ?')
       .get(req.params.subtaskId, req.params.id, req.user.id);
-    if (!sub) return sendError(res, 404, 'NOT_FOUND', 'Subtask tidak ditemukan.');
+    if (!sub) return sendError(res, 404, 'NOT_FOUND', 'Subtask not found.');
 
     const title = req.body?.title !== undefined ? String(req.body.title).trim() : sub.title;
-    if (!title) return sendError(res, 400, 'VALIDATION_ERROR', 'Judul subtask tidak boleh kosong.');
+    if (!title) return sendError(res, 400, 'VALIDATION_ERROR', 'Subtask title cannot be empty.');
     const isCompleted =
       req.body?.is_completed !== undefined || req.body?.isCompleted !== undefined
         ? req.body.is_completed ?? req.body.isCompleted
@@ -543,7 +543,7 @@ export function createTasksRouter(db) {
     const sub = db
       .prepare('SELECT s.id, s.task_id FROM subtasks s JOIN tasks t ON t.id = s.task_id WHERE s.id = ? AND s.task_id = ? AND t.user_id = ?')
       .get(req.params.subtaskId, req.params.id, req.user.id);
-    if (!sub) return sendError(res, 404, 'NOT_FOUND', 'Subtask tidak ditemukan.');
+    if (!sub) return sendError(res, 404, 'NOT_FOUND', 'Subtask not found.');
     db.prepare('DELETE FROM subtasks WHERE id = ?').run(sub.id);
     db.prepare('UPDATE tasks SET updated_at = ? WHERE id = ?').run(new Date().toISOString(), sub.task_id);
     res.json({ deletedId: sub.id });

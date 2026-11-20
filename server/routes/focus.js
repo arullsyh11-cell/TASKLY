@@ -26,7 +26,7 @@ export function createFocusRouter(db) {
     res.json({
       sessions: rows.map((r) => ({
         ...r,
-        task_label: r.task_title || (r.task_id ? 'Tugas telah dihapus' : 'Fokus Umum'),
+        task_label: r.task_title || (r.task_id ? 'Deleted task' : 'General Focus'),
       })),
     });
   });
@@ -90,20 +90,20 @@ export function createFocusRouter(db) {
     const endedAt = req.body?.ended_at || req.body?.endedAt || new Date().toISOString();
 
     if (!VALID_MODES.has(mode)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Mode sesi fokus tidak valid.', 'mode');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid focus session mode.', 'mode');
     }
     if (!VALID_STATUSES.has(status)) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Status sesi fokus tidak valid.', 'status');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid focus session status.', 'status');
     }
     if (!Number.isFinite(planned) || planned <= 0) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Durasi rencana tidak valid.');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid planned duration.');
     }
     if (!Number.isFinite(actual) || actual < 0) {
-      return sendError(res, 400, 'VALIDATION_ERROR', 'Durasi aktual tidak valid.');
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid actual duration.');
     }
 
     let validTaskId = null;
-    let taskTitle = 'Fokus Umum';
+    let taskTitle = 'General Focus';
     if (taskId) {
       const task = db.prepare('SELECT id, title FROM tasks WHERE id = ? AND user_id = ?').get(taskId, req.user.id);
       if (task) {
@@ -141,7 +141,7 @@ export function createFocusRouter(db) {
     res.status(201).json({
       session: {
         ...created,
-        task_label: created.task_title || 'Fokus Umum',
+        task_label: created.task_title || 'General Focus',
       },
     });
   });

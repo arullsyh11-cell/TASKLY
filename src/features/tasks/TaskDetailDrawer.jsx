@@ -115,9 +115,9 @@ export function TaskDetailDrawer() {
     mutationFn: (payload) => repo.tasks.update(activeTaskId, payload),
     onSuccess: () => {
       invalidateAll();
-      toast.success('Perubahan tugas disimpan.');
+      toast.success('Task changes saved.');
     },
-    onError: (err) => toast.error(err.message || 'Gagal menyimpan perubahan.'),
+    onError: (err) => toast.error(err.message || 'Failed to save changes.'),
   });
 
   const deleteMutation = useMutation({
@@ -126,9 +126,9 @@ export function TaskDetailDrawer() {
       invalidateAll();
       setConfirmDeleteOpen(false);
       closeTaskDrawer();
-      toast.success('Tugas dihapus.');
+      toast.success('Task deleted.');
     },
-    onError: (err) => toast.error(err.message || 'Gagal menghapus tugas.'),
+    onError: (err) => toast.error(err.message || 'Failed to delete task.'),
   });
 
   const addSubtaskMutation = useMutation({
@@ -137,7 +137,7 @@ export function TaskDetailDrawer() {
       setNewSubtaskTitle('');
       invalidateAll();
     },
-    onError: (err) => toast.error(err.message || 'Gagal menambah subtask.'),
+    onError: (err) => toast.error(err.message || 'Failed to add subtask.'),
   });
 
   const toggleSubtaskMutation = useMutation({
@@ -160,17 +160,17 @@ export function TaskDetailDrawer() {
       setSelectedLabelIds(nextIds);
       updateMutation.mutate({ label_ids: nextIds });
     },
-    onError: (err) => toast.error(err.message || 'Gagal membuat label.'),
+    onError: (err) => toast.error(err.message || 'Failed to create label.'),
   });
 
   function handleSaveDetails(e) {
     e.preventDefault();
     if (!title.trim()) {
-      toast.error('Judul tugas tidak boleh kosong.');
+      toast.error('Task title cannot be empty.');
       return;
     }
     if (startDate && dueDate && dueDate < startDate) {
-      setDateError('Tanggal mulai tidak boleh melewati tenggat waktu.');
+      setDateError('Start date cannot be after the due date.');
       return;
     }
     setDateError('');
@@ -209,10 +209,10 @@ export function TaskDetailDrawer() {
       <Drawer
         open={Boolean(activeTaskId)}
         onClose={closeTaskDrawer}
-        title={task?.title || 'Detail Tugas'}
-        subtitle={task ? `Kolom: ${task.column_name}` : undefined}
+        title={task?.title || 'Task Details'}
+        subtitle={task ? `Column: ${task.column_name}` : undefined}
       >
-        {isLoading && <LoadingState label="Memuat detail tugas..." rows={4} />}
+        {isLoading && <LoadingState label="Loading task details..." rows={4} />}
         {isError && <ErrorState message={error?.message} onRetry={refetch} />}
 
         {task && !isLoading && (
@@ -220,7 +220,7 @@ export function TaskDetailDrawer() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Button variant="secondary" size="sm" onClick={handleFocusThisTask}>
                 <Timer className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                <span>Fokus ke Tugas Ini</span>
+                <span>Focus on This Task</span>
               </Button>
               <Button
                 variant="ghost"
@@ -229,36 +229,36 @@ export function TaskDetailDrawer() {
                 onClick={() => setConfirmDeleteOpen(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                <span>Hapus Tugas</span>
+                <span>Delete Task</span>
               </Button>
             </div>
 
             <form onSubmit={handleSaveDetails} className="space-y-4">
               <Input
-                label="Judul Tugas"
+                label="Task Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
               />
 
               <Textarea
-                label="Deskripsi"
+                label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tambahkan konteks pekerjaan atau kriteria selesai..."
+                placeholder="Add work context or completion criteria..."
                 rows={3}
               />
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Dropdown
-                  label="Status Kolom"
+                  label="Status Column"
                   value={columnId}
                   onChange={setColumnId}
                   options={columns.map((c) => ({ value: c.id, label: c.name }))}
                 />
 
                 <Dropdown
-                  label="Prioritas"
+                  label="Priority"
                   value={priority}
                   onChange={setPriority}
                   options={[
@@ -270,11 +270,11 @@ export function TaskDetailDrawer() {
                 />
 
                 <Dropdown
-                  label="Kategori"
+                  label="Category"
                   value={categoryId}
                   onChange={setCategoryId}
                   options={[
-                    { value: '', label: 'Tanpa kategori' },
+                    { value: '', label: 'No category' },
                     ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
                   ]}
                 />
@@ -284,20 +284,20 @@ export function TaskDetailDrawer() {
                   value={sprintId}
                   onChange={setSprintId}
                   options={[
-                    { value: '', label: 'Backlog (Tanpa Sprint)' },
+                    { value: '', label: 'Backlog (No Sprint)' },
                     ...sprints.map((sp) => ({ value: sp.id, label: sp.name, hint: sp.status })),
                   ]}
                 />
 
                 <Input
-                  label="Tanggal Mulai"
+                  label="Start Date"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
 
                 <Input
-                  label="Tenggat Waktu (Due Date)"
+                  label="Due Date"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
@@ -314,7 +314,7 @@ export function TaskDetailDrawer() {
 
               {/* Labels multi-select */}
               <div className="space-y-2">
-                <p className="text-xs font-medium text-[var(--color-text-secondary)]">Label</p>
+                <p className="text-xs font-medium text-[var(--color-text-secondary)]">Labels</p>
                 <div className="flex flex-wrap gap-1.5">
                   {labels.map((lb) => {
                     const active = selectedLabelIds.includes(lb.id);
@@ -338,10 +338,10 @@ export function TaskDetailDrawer() {
                   <div className="flex items-center gap-1">
                     <input
                       type="text"
-                      aria-label="Buat label baru"
+                      aria-label="Create new label"
                       value={newLabelName}
                       onChange={(e) => setNewLabelName(e.target.value)}
-                      placeholder="+ Label baru"
+                      placeholder="+ New label"
                       className="h-7 w-28 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
                     />
                     {newLabelName.trim() && (
@@ -351,7 +351,7 @@ export function TaskDetailDrawer() {
                         className="h-7 px-2 text-xs"
                         onClick={() => createLabelMutation.mutate(newLabelName.trim())}
                       >
-                        Tambah
+                        Add
                       </Button>
                     )}
                   </div>
@@ -362,13 +362,13 @@ export function TaskDetailDrawer() {
               <div className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs">
                 <span className="inline-flex items-center gap-2 text-[var(--color-text-secondary)]">
                   <User className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                  Assignee (Workspace Pribadi)
+                  Assignee (Personal Workspace)
                 </span>
-                <span className="font-medium text-[var(--color-text-primary)]">{user?.full_name || 'Pemilik Akun'}</span>
+                <span className="font-medium text-[var(--color-text-primary)]">{user?.full_name || 'Account Owner'}</span>
               </div>
 
               <Button type="submit" isLoading={updateMutation.isPending} className="w-full sm:w-auto">
-                Simpan Perubahan
+                Save Changes
               </Button>
             </form>
 
@@ -377,7 +377,7 @@ export function TaskDetailDrawer() {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Checklist / Subtasks</h3>
                 <span className="font-mono-num text-xs text-[var(--color-text-secondary)]">
-                  {completedSubtasks}/{totalSubtasks} selesai
+                  {completedSubtasks}/{totalSubtasks} done
                 </span>
               </div>
 
@@ -407,7 +407,7 @@ export function TaskDetailDrawer() {
                     <button
                       type="button"
                       onClick={() => removeSubtaskMutation.mutate(st.id)}
-                      aria-label={`Hapus subtask ${st.title}`}
+                      aria-label={`Delete subtask ${st.title}`}
                       className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger)]"
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
@@ -426,15 +426,15 @@ export function TaskDetailDrawer() {
               >
                 <input
                   type="text"
-                  aria-label="Tambah langkah subtask baru"
+                  aria-label="Add new subtask step"
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder="Tambah langkah subtask..."
+                  placeholder="Add a subtask step..."
                   className="min-h-[40px] flex-1 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]"
                 />
                 <Button type="submit" variant="secondary" isLoading={addSubtaskMutation.isPending}>
                   <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
-                  <span>Tambah</span>
+                  <span>Add</span>
                 </Button>
               </form>
             </div>
@@ -442,11 +442,11 @@ export function TaskDetailDrawer() {
             {/* Metadata Timestamps */}
             <div className="grid grid-cols-2 gap-3 border-t border-[var(--color-border)] pt-4 text-xs text-[var(--color-text-muted)]">
               <div>
-                <p className="font-medium text-[var(--color-text-secondary)]">Dibuat Pada</p>
+                <p className="font-medium text-[var(--color-text-secondary)]">Created At</p>
                 <p className="mt-0.5">{formatRelativeDateTime(task.created_at)}</p>
               </div>
               <div>
-                <p className="font-medium text-[var(--color-text-secondary)]">Terakhir Diperbarui</p>
+                <p className="font-medium text-[var(--color-text-secondary)]">Last Updated</p>
                 <p className="mt-0.5">{formatRelativeDateTime(task.updated_at)}</p>
               </div>
             </div>
@@ -459,9 +459,9 @@ export function TaskDetailDrawer() {
         onClose={() => setConfirmDeleteOpen(false)}
         onConfirm={() => deleteMutation.mutate()}
         isLoading={deleteMutation.isPending}
-        title="Hapus Tugas Permanen?"
-        description={`Tugas "${task?.title || ''}" beserta seluruh subtask di dalamnya akan dihapus permanen.`}
-        confirmLabel="Ya, Hapus Tugas"
+        title="Delete Task Permanently?"
+        description={`Task "${task?.title || ''}" and all of its subtasks will be permanently deleted.`}
+        confirmLabel="Yes, Delete Task"
       />
     </>
   );

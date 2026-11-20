@@ -65,7 +65,7 @@ function renderDynamicIslandCanvas(state) {
     mode = 'focus',
     plannedSec = 1500,
     remainingSec = 1500,
-    selectedTaskTitle = 'Fokus Umum',
+    selectedTaskTitle = 'General Focus',
     isRinging = false,
     theme = 'light',
   } = state;
@@ -97,15 +97,15 @@ function renderDynamicIslandCanvas(state) {
   ctx2d.fillStyle = theme === 'monochrome' ? '#0c0c0c' : '#13100e';
   ctx2d.fill();
 
-  let headline = `Sedang fokus: ${selectedTaskTitle}`;
+  let headline = `Focusing on: ${selectedTaskTitle}`;
   if (isDone) {
-    headline = mode === 'short_break' || mode === 'long_break' ? 'Waktu istirahat selesai!' : `Sesi selesai: ${selectedTaskTitle}`;
+    headline = mode === 'short_break' || mode === 'long_break' ? 'Break finished!' : `Session complete: ${selectedTaskTitle}`;
   } else if (status === 'paused') {
-    headline = `Timer dijeda: ${selectedTaskTitle}`;
+    headline = `Timer paused: ${selectedTaskTitle}`;
   } else if (mode === 'short_break') {
-    headline = 'Istirahat singkat sedang berjalan...';
+    headline = 'Short break in progress...';
   } else if (mode === 'long_break') {
-    headline = 'Istirahat panjang sedang berjalan...';
+    headline = 'Long break in progress...';
   }
   if (headline.length > 42) {
     headline = `${headline.slice(0, 40)}...`;
@@ -119,7 +119,7 @@ function renderDynamicIslandCanvas(state) {
   ctx2d.textAlign = 'left';
   ctx2d.fillStyle = 'rgba(255, 255, 255, 0.65)';
   ctx2d.font = '500 24px "IBM Plex Sans", system-ui, sans-serif';
-  const statusLabel = isDone ? 'Selesai' : status === 'paused' ? 'Dijeda' : 'Timer';
+  const statusLabel = isDone ? 'Done' : status === 'paused' ? 'Paused' : 'Timer';
   ctx2d.fillText(statusLabel, 48, 172);
 
   const labelWidth = ctx2d.measureText(statusLabel).width;
@@ -174,7 +174,7 @@ function renderDynamicIslandCanvas(state) {
   ctx2d.font = '600 23px "IBM Plex Sans", system-ui, sans-serif';
   ctx2d.textAlign = 'left';
   ctx2d.fillText(
-    status === 'paused' ? 'Dijeda (Klik Play untuk lanjut)' : isDone ? 'Sesi Fokus Selesai' : 'TASKLY Focus Aktif',
+    status === 'paused' ? 'Paused (Click Play to resume)' : isDone ? 'Focus Session Complete' : 'TASKLY Focus Active',
     82,
     284
   );
@@ -236,9 +236,9 @@ function syncMediaSession(state) {
     }
     if (typeof MediaMetadata !== 'undefined') {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: `${formatSecondsClock(state.remainingSec)} • ${state.selectedTaskTitle || 'Fokus Umum'}`,
+        title: `${formatSecondsClock(state.remainingSec)} • ${state.selectedTaskTitle || 'General Focus'}`,
         artist: 'TASKLY Focus Mode',
-        album: state.status === 'paused' ? 'Timer Dijeda' : 'Sedang Fokus',
+        album: state.status === 'paused' ? 'Timer Paused' : 'Focusing',
       });
     }
     navigator.mediaSession.playbackState = state.status === 'running' ? 'playing' : 'paused';
@@ -282,9 +282,9 @@ function syncBackgroundLiveNotification(state) {
 
   try {
     const title = `Timer ${formatSecondsClock(state.remainingSec)} • ${
-      state.status === 'paused' ? 'Dijeda' : 'Fokus Aktif'
+      state.status === 'paused' ? 'Paused' : 'Focus Active'
     }`;
-    const body = `Sedang fokus: ${state.selectedTaskTitle || 'Fokus Umum'}`;
+    const body = `Focusing on: ${state.selectedTaskTitle || 'General Focus'}`;
     const n = new Notification(title, {
       body,
       icon: '/icon-192.png',

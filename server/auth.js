@@ -86,7 +86,7 @@ export function createAuthMiddleware(db, secret) {
       return res.status(401).json({
         error: {
           code: 'UNAUTHORIZED',
-          message: 'Sesi autentikasi tidak ditemukan. Silakan masuk kembali.',
+          message: 'Authentication session not found. Please sign in again.',
           retryable: false,
         },
       });
@@ -96,7 +96,7 @@ export function createAuthMiddleware(db, secret) {
       return res.status(401).json({
         error: {
           code: 'INVALID_TOKEN',
-          message: 'Sesi telah kedaluwarsa atau tidak valid. Silakan masuk kembali.',
+          message: 'Session has expired or is invalid. Please sign in again.',
           retryable: false,
         },
       });
@@ -106,7 +106,7 @@ export function createAuthMiddleware(db, secret) {
       return res.status(401).json({
         error: {
           code: 'USER_NOT_FOUND',
-          message: 'Akun tidak lagi tersedia.',
+          message: 'Account is no longer available.',
           retryable: false,
         },
       });

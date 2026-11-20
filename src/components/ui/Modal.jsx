@@ -91,7 +91,7 @@ export function Modal({ open, onClose, title, subtitle, maxWidth = 'max-w-lg', c
             type="button"
             data-close-modal="true"
             onClick={onClose}
-            aria-label="Tutup dialog"
+            aria-label="Close dialog"
             className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
           >
             <X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
@@ -164,7 +164,7 @@ export function Drawer({ open, onClose, title, subtitle, children }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Tutup panel detail"
+            aria-label="Close detail panel"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)]"
           >
             <X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />

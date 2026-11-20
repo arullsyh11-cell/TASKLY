@@ -17,7 +17,7 @@ const AnalyticsPage = lazy(() => import('../features/analytics/AnalyticsPage.jsx
 const SettingsPage = lazy(() => import('../features/settings/SettingsPage.jsx').then((m) => ({ default: m.SettingsPage })));
 
 function PageSuspense({ children }) {
-  return <Suspense fallback={<LoadingState label="Memuat halaman..." rows={4} />}>{children}</Suspense>;
+  return <Suspense fallback={<LoadingState label="Loading page..." rows={4} />}>{children}</Suspense>;
 }
 
 export function AppRouter() {
