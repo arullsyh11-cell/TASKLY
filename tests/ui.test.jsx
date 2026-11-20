@@ -143,7 +143,7 @@ describe('TASKLY UI Components & States', () => {
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
-  it('renders FocusExpandedPopup when timer runs and minimizes on Escape', async () => {
+  it('renders FocusExpandedPopup automatically when timer runs and stays persistent until stopped', async () => {
     const { useTimerStore } = await import('../src/stores/useTimerStore.js');
     useTimerStore.getState().selectTask('t-focus', 'Review Desain UI');
     useTimerStore.getState().start();
@@ -161,8 +161,10 @@ describe('TASKLY UI Components & States', () => {
     expect(screen.getByText(/Sedang fokus: Review Desain UI/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Buka Fokus/i })).toBeInTheDocument();
 
+    // Clicking outside or pressing Escape must NOT hide the active Dynamic Island popup
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(useTimerStore.getState().islandMode).toBe('compact');
+    expect(screen.getByRole('region', { name: 'Popup timer Focus Mode' })).toBeInTheDocument();
+
     act(() => {
       useTimerStore.getState().reset();
     });

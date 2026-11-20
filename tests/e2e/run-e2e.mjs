@@ -112,18 +112,17 @@ async function run() {
       await radialDialog.waitFor({ state: 'detached' });
     }
 
-    // 4. My Tasks: Radial Sidebar navigation + custom filter dropdowns
-    await openRadialAndNavigate('My Tasks', 'v8_desktop_radial_light.png');
+    // 4. My Tasks: navigate from Dashboard & test custom filter dropdowns
+    await page.getByRole('link', { name: 'Lihat semua' }).click();
     await page.waitForURL('**/tasks');
     await page.getByRole('combobox', { name: 'Filter prioritas' }).click();
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v2_dropdown_open.png') });
     await page.getByRole('option', { name: 'High' }).click();
     await page.getByText('Finalisasi integrasi Sprint & Kanban').first().waitFor({ state: 'visible' });
-    results.push('My Tasks: Radial Sidebar navigation + custom Filter Prioritas dropdown work without clipping');
+    results.push('My Tasks: custom Filter Prioritas dropdown works without clipping');
 
     // 5. Kanban Board + Custom Column
-    await openRadialAndNavigate('Kanban Board');
-    await page.waitForURL('**/board');
+    await page.goto(`${baseUrl}/board`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { name: 'Backlog' }).waitFor({ state: 'visible' });
     await page.getByRole('button', { name: /Tambah Kolom/i }).click();
     await page.getByLabel('Nama Kolom').fill('QA Staging');
@@ -131,8 +130,16 @@ async function run() {
     await page.getByRole('heading', { name: 'QA Staging' }).waitFor({ state: 'visible' });
     results.push('Kanban Board: displays default columns & custom column QA Staging');
 
-    // 6. Sprints + Burndown
-    await openRadialAndNavigate('Sprints');
+    // 6. Sprints (via 5-item Radial Sidebar) + Burndown
+    await page.getByRole('button', { name: 'Buka menu navigasi' }).click();
+    const radialNav = page.getByRole('navigation', { name: 'Navigasi utama' });
+    await radialNav.waitFor({ state: 'visible' });
+    const radialLinkCount = await radialNav.getByRole('link').count();
+    assert(radialLinkCount === 5, `Radial Sidebar must contain exactly 5 items, got ${radialLinkCount}`);
+    await page.waitForTimeout(420);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v8_desktop_radial_light.png') });
+    await radialNav.getByRole('link', { name: 'Sprints' }).click();
+    await page.getByRole('dialog', { name: 'Menu navigasi' }).waitFor({ state: 'detached' });
     await page.waitForURL('**/sprints');
     await page.getByRole('button', { name: /Buat Sprint Baru/i }).click();
     await page.getByLabel('Nama Sprint').fill('Sprint 01 Verifikasi');
@@ -150,9 +157,12 @@ async function run() {
     await page.getByText('Sisa tugas sprint terhadap target harian').waitFor({ state: 'visible' });
     results.push('Sprint Management: creates sprint, starts sprint, assigns task, renders Burndown');
 
-    // 7. Focus Mode with searchable custom dropdown + Dynamic Island Live Popup (Image 1 & 2) + alert test
+    // 7. Focus Mode: automatic Dynamic Island popup without "Tampilkan Popup" button, persists across navigation
     await openRadialAndNavigate('Focus Mode');
     await page.waitForURL('**/focus');
+    const showPopupBtnCount = await page.getByRole('button', { name: /Tampilkan Popup/i }).count();
+    assert(showPopupBtnCount === 0, '"Tampilkan Popup" button must be removed');
+
     await page.getByRole('combobox', { name: /Tugas yang Dikerjakan/i }).click();
     await page.getByRole('option', { name: /Finalisasi integrasi Sprint & Kanban/i }).click();
     await page.getByRole('button', { name: /Tes Notif|Tes Nada/i }).click();
@@ -160,21 +170,23 @@ async function run() {
 
     const focusPopup = page.getByRole('region', { name: 'Popup timer Focus Mode' });
     await focusPopup.waitFor({ state: 'visible' });
+    const showPopupAfterStart = await page.getByRole('button', { name: /Tampilkan Popup/i }).count();
+    assert(showPopupAfterStart === 0, '"Tampilkan Popup" button must never appear');
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_expanded_light.png') });
+
+    // Navigate away to Calendar while timer is running -> Popup must stay visible automatically!
+    await openRadialAndNavigate('Calendar');
+    await page.waitForURL('**/calendar');
+    await focusPopup.waitFor({ state: 'visible' });
     await focusPopup.getByRole('button', { name: 'Pause sesi fokus' }).click();
     await focusPopup.getByRole('button', { name: 'Resume sesi fokus' }).waitFor({ state: 'visible' });
-    await focusPopup.getByRole('button', { name: 'Sembunyikan popup timer' }).click();
-    await focusPopup.waitFor({ state: 'detached' });
-
-    const pillCount = await page.getByRole('button', { name: /Buka popup Dynamic Focus Timer/i }).count();
-    assert(pillCount === 0, 'Compact navbar capsule pill should be removed cleanly');
-
-    await page.getByRole('button', { name: /Tampilkan Popup/i }).click();
+    await focusPopup.getByRole('link', { name: /Buka Fokus/i }).click();
+    await page.waitForURL('**/focus');
     await focusPopup.waitFor({ state: 'visible' });
     await focusPopup.getByRole('button', { name: 'Hentikan timer fokus' }).click();
     await focusPopup.waitFor({ state: 'detached' });
-    results.push('Focus Mode: Focus popup opens on start, pauses/resumes, hides/reopens cleanly without header capsule pill');
+    results.push('Focus Mode: Popup appears automatically on start, stays running when leaving page, and has no Tampilkan Popup button');
 
     // 8. Calendar
     await openRadialAndNavigate('Calendar');
@@ -331,11 +343,6 @@ async function run() {
         await mobilePopup.waitFor({ state: 'visible' });
         await page.waitForTimeout(300);
         await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'v10_focus_island_mobile_light.png') });
-        await mobilePopup.getByRole('button', { name: 'Sembunyikan popup timer' }).click();
-        await mobilePopup.waitFor({ state: 'detached' });
-
-        const mobPillCount = await page.getByRole('button', { name: /Buka popup Dynamic Focus Timer/i }).count();
-        assert(mobPillCount === 0, 'Mobile header must remain free of timer capsule pills');
 
         await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).click();
         await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).waitFor({ state: 'visible' });
@@ -343,7 +350,8 @@ async function run() {
         await page.getByRole('button', { name: 'Keluar Layar Penuh', exact: true }).click();
         await page.getByRole('button', { name: 'Mode Layar Penuh', exact: true }).waitFor({ state: 'visible' });
 
-        await page.getByRole('button', { name: /Reset timer/i }).click();
+        await mobilePopup.getByRole('button', { name: 'Hentikan timer fokus' }).click();
+        await mobilePopup.waitFor({ state: 'detached' });
       }
     }
 

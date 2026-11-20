@@ -111,7 +111,9 @@ export function AppShell() {
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const user = useAuthStore((s) => s.user);
   const timerStatus = useTimerStore((s) => s.status);
-  const setIslandMode = useTimerStore((s) => s.setIslandMode);
+  const isRinging = useTimerStore((s) => s.isRinging);
+  const timerPopupActive =
+    timerStatus === 'running' || timerStatus === 'paused' || timerStatus === 'completed' || isRinging;
 
   const menuBtnRef = useRef(null);
   const location = useLocation();
@@ -203,11 +205,6 @@ export function AppShell() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
             <Link
               to="/focus"
-              onClick={() => {
-                if (timerStatus === 'running' || timerStatus === 'paused') {
-                  setIslandMode('expanded');
-                }
-              }}
               aria-label="Focus Mode"
               title="Buka Focus Mode"
               className={`hidden sm:inline-flex h-10 items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition-colors ${
@@ -273,7 +270,11 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 px-4 py-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-6 md:pb-10">
+        <main
+          className={`flex-1 min-w-0 px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 md:pb-10 transition-[padding-top] duration-200 ${
+            timerPopupActive ? 'pt-36 sm:pt-32' : 'py-5 lg:py-6'
+          }`}
+        >
           <div className="mx-auto max-w-[1360px]">
             <Outlet />
           </div>

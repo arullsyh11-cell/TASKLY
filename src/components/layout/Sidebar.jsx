@@ -52,14 +52,11 @@ const NAV_GROUPS = [
 ];
 
 const RADIAL_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard, desktopAngle: -90 },
-  { to: '/tasks', label: 'My Tasks', shortLabel: 'Tasks', icon: CheckSquare, desktopAngle: -45 },
-  { to: '/board', label: 'Kanban Board', shortLabel: 'Board', icon: Columns3, desktopAngle: 0 },
-  { to: '/sprints', label: 'Sprints', shortLabel: 'Sprints', icon: Zap, desktopAngle: 45 },
-  { to: '/calendar', label: 'Calendar', shortLabel: 'Calendar', icon: CalendarDays, desktopAngle: 90 },
-  { to: '/focus', label: 'Focus Mode', shortLabel: 'Focus', icon: Timer, desktopAngle: 135 },
-  { to: '/analytics', label: 'Analytics', shortLabel: 'Stats', icon: BarChart3, desktopAngle: 180 },
-  { to: '/settings', label: 'Settings', shortLabel: 'Settings', icon: Settings, desktopAngle: -135 },
+  { to: '/sprints', label: 'Sprints', shortLabel: 'Sprints', icon: Zap, desktopAngle: -90 },
+  { to: '/calendar', label: 'Calendar', shortLabel: 'Calendar', icon: CalendarDays, desktopAngle: -18 },
+  { to: '/focus', label: 'Focus Mode', shortLabel: 'Focus', icon: Timer, desktopAngle: 54 },
+  { to: '/analytics', label: 'Analytics', shortLabel: 'Analytics', icon: BarChart3, desktopAngle: 126 },
+  { to: '/settings', label: 'Settings', shortLabel: 'Settings', icon: Settings, desktopAngle: 198 },
 ];
 
 const MOBILE_DOCK_ITEMS = [
@@ -580,17 +577,17 @@ function RadialNavSheet({ open, onClose, returnFocusRef }) {
           />
         </svg>
 
-        {/* 8 Satellite Navigation Nodes */}
+        {/* 5 Satellite Navigation Nodes (Sprints, Calendar, Focus Mode, Analytics, Settings) */}
         <ul className="contents">
           {RADIAL_ITEMS.map((item, idx) => {
             const Icon = item.icon;
-            // Mobile semicircle angle: -80.5 deg (top) to +80.5 deg (bottom), 23 deg step
-            const mobileAngleDeg = -80.5 + idx * 23;
+            // Mobile semicircle angle: -72 deg (top) to +72 deg (bottom), 36 deg step for 5 nodes
+            const mobileAngleDeg = -72 + idx * 36;
             const mRad = (mobileAngleDeg * Math.PI) / 180;
             const mx = `${(Math.cos(mRad) * mobileRadius).toFixed(1)}px`;
             const my = `${(Math.sin(mRad) * mobileRadius).toFixed(1)}px`;
 
-            // Desktop full-circle angle: -90 deg (top) clockwise 45 deg step
+            // Desktop full-circle angle: -90 deg (top) clockwise 72 deg step for 5 nodes
             const dRad = (item.desktopAngle * Math.PI) / 180;
             const dx = `${(Math.cos(dRad) * desktopRadius).toFixed(1)}px`;
             const dy = `${(Math.sin(dRad) * desktopRadius).toFixed(1)}px`;
